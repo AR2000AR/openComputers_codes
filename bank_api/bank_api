@@ -1,0 +1,43 @@
+NAME
+  bank_api - provide method to communicate with a bank server
+
+SYNOPSIS
+  local bank = require("bank_api")
+
+DESCIPTION
+  This API allow easy communication with the bank server
+
+  Data structure
+    cbData : see man libCB
+    rawCBdata : see man libCB
+
+  Method list
+    getCredit(cbData):int,int
+    makeTransaction(uuid_cible,cbData,amount):int
+
+    setModemTimeout(t)
+
+  Returned values
+    The first returned value is a status code
+      0 = OK
+      1 = NO_ACCOUNT
+      2 = ERROR_ACCOUNT
+      3 = ERROR_CB
+      4 = ERROR_AMOUNT
+      -1 = timeout
+      -2 = wrong message
+    The second returned value is optional
+
+CONFIGURATION
+
+FILES
+  /usr/lib/bank_api.lua
+    the library
+  /etc/bank/api/conf.cfg
+    the config file location
+
+SEE ALSO
+  libCB
+
+AUTHOR
+  AR2000

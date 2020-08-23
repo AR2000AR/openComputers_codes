@@ -1,0 +1,37 @@
+NAME
+  libCB - provide a way to use credit card
+
+SYNOPSIS
+  local libCB = require("libCB")
+
+DESCIPTION
+  Use this lib to access a credit card. A credit card is a special unmanaged floppy disk
+
+  Data structure
+    cbData:table
+      uudi,	--account uuid
+      cbUUID,	--card uuid
+      sig		--card signature made form uuid & card's drive component's uuid
+
+      rawCBdata:table
+        uudi,	--account uuid
+        sig		--card signature made form uuid & card's drive component's uuid
+        pink_check
+
+  Method list
+    getCB(cbDrive,pin):cbData
+      cbDrive:uuid > the drive component address of the cb
+      pin:str > user pin code
+
+  Returned values
+    cbData
+
+FILE
+  /usr/lib/libCB.lua
+    the library
+
+  SEE ALSO
+    bank_api
+
+AUTHOR
+  AR2000
