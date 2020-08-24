@@ -8,7 +8,7 @@ local args,opts = shell.parse(...)
 
 if(fs.exists(args[1]) and not fs.isDirectory(args[1])) then
   local bk = gpu.getBackground()
-  gpu.setBackground(tonumber(args[2],16) or bk)
+  gpu.setBackground(tonumber(args[2]or bk,16))
   term.clear()
   libgui.drawImg(libgui.openPAM(args[1]),1,1)
   os.sleep(1)
