@@ -5,7 +5,7 @@ local fs = require("filesystem")
 
 local args,opts = shell.parse(...)
 
-local fileName = args[1] or "home/id.txt"
+local fileName = args[1] or "/home/id.txt"
 local openMode = "a"
 if(not fs.exists(fileName)) then openMode = "w" end
 local file = io.open(fileName,openMode)
