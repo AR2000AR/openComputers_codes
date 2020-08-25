@@ -13,13 +13,18 @@ local function deepcopy(orig)
     return copy
 end
 
+local function callConstructor(self,...)
+  for _,constructor in ipairs(self.class.parentConstructor) do constructor(self,...) end
+  self:constructor(...)
+end
+
 local construcMetaTable = {
   __call = function(self,...)
     local cp = deepcopy(self)
     local cpMeta = getmetatable(cp)
     cpMeta.__call = nil
     setmetatable(cp,cpMeta)
-    cp.class.callConstructor(cp,...) -- call the constructor
+    callConstructor(cp,...) -- call the constructor
     return cp
   end
 }
@@ -27,13 +32,8 @@ local construcMetaTable = {
 local Object = {
   constructor = nil, --object constructor
   class = {
-    type = "object",
-    parentConstructor = {}, --the parents constructor
-    callConstructor = function(self,...)
-      print(...)
-      for _,constructor in ipairs(self.class.parentConstructor) do constructor(...) end
-      self:constructor(...)
-    end,
+    type = "Object",
+    parentConstructor = {} --the parents constructor
   },
   clone = function(self) return deepcopy(self) end
 }
