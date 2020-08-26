@@ -15,7 +15,7 @@ end
 
 local function callConstructor(self,...)
   for _,constructor in ipairs(self.class.parentConstructor) do constructor(self,...) end
-  self:constructor(...)
+  if(self.constructor) then self:constructor(...) end
 end
 
 local construcMetaTable = {
@@ -33,7 +33,8 @@ local Object = {
   constructor = nil, --object constructor
   class = {
     type = "Object",
-    parentConstructor = {} --the parents constructor
+    parentConstructor = {}, --the parents constructor
+    parentsType = {} --list of parent class type fo instanceOf
   },
   clone = function(self) return deepcopy(self) end
 }
