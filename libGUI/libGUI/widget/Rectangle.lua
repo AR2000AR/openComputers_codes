@@ -13,6 +13,12 @@ Rectangle.getHeight = function(self) return self.private.height end
 Rectangle.getSize = function(self) return self:getWidth(), self:getHeight() end
 Rectangle.getColor = function(self) return self.private.color end
 Rectangle.constructor = function(self,x,y,width,height,color) self:setWidth(width) self:setHeight(height) self:setColor(color) end
+Rectangle.collide = function(self,x,y)
+  local wx1,wy1 = self:getPos()
+  local wx2 = self:getX()+self:getWidth()-1
+  local wy2 = self:getY()+self:getHeight()-1
+  return ((x-wx1)*(wx2-x) >= 0 and (y-wy1)*(wy2-y) >= 0)
+end
 Rectangle.draw = function(self)
   local bk = gpu.setBackground(self:getColor())
   gpu.fill(self:getX(),self:getY(),self:getWidth(),self:getHeight()," ")

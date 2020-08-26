@@ -7,6 +7,7 @@ local libGUI = {widget={}}
 libGUI.widget.Widget = require("libGUI/widget/Widget")
 libGUI.widget.Rectangle = require("libGUI/widget/Rectangle")
 libGUI.widget.Image = require("libGUI/widget/Image")
+libGUI.Screen = require("libGUI/Screen")
 libGUI.Image = require("libGUI/Image")
 
 return libGUI
