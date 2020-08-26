@@ -16,11 +16,8 @@ end
 Screen.trigger = function(self,...) self.private.clickHandler(self,...) end
 Screen.private = {}
 Screen.private.clickHandler = function(self,eventName,uuid,x,y)
-  print(eventName,x,y)
   if(eventName == "touch") then --filter only "touch" events
-    print("ok touch")
     for _,widget in ipairs(self.childs) do
-      print("collide ",widget:collide(x,y))
       if(widget:collide(x,y)) then --test colision
         widget:trigger(eventName,uuid,x,y)
       end
