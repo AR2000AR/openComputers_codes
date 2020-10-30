@@ -1,7 +1,7 @@
 local Class = require("libClass")
 local fs = require("filesystem")
 
-local function deepcopy(orig)
+local function deepcopy(orig) --copy the table orig, metatable included. Sub-tables are also copied
     local orig_type = type(orig)
     local copy
     if orig_type == 'table' then
@@ -30,7 +30,7 @@ local function openPAM(path)
       img.property[propertyName] = tonumber(propertyValue) or propertyValue
     end
   until line == "ENDHDR"
-  assert(tonumber(img.property.MAXVAL) <= 255,"can read this image")
+  assert(tonumber(img.property.MAXVAL) <= 255,"can't read this image")
   for i = 1, tonumber(img.property.WIDTH) do
     img.pixel[i] = {}
   end
