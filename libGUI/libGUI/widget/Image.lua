@@ -1,4 +1,4 @@
-local ImageFile = require("libGUI/Image")
+local ImageFile = require("libGUI/ImageFile")
 local gpu = require("component").gpu
 
 local Image = require("libClass").newClass("Image",require("libGUI/widget/Widget"))
