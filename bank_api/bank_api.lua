@@ -4,15 +4,20 @@
 --LOAD LIB
 local event = require("event")
 local serialization = require("serialization")
+local io = require("io")
 --INIT CONST
 local BANK_PORT = 351
 local CONF_DIR = "/etc/bank/api/"
+local CONF_FILE_NAME = CONF_DIR.."api.conf"
 local MODEM_TIMEDOUT = -1
 --INIT COMPONENT
 local modem = require("component").modem
 --INIT VAR
-local bank_addr = "ecdc8d43-5e73-4a9c-ba43-051716c71dc8" --fetched from conf file
-local timeout = 5
+local confFile = io.open(CONF_FILE_NAME,"r")
+local config = serialization.unserialize(confFile:read("*a"))
+confFile:close()
+config.bank_addr = config.bank_addr or "ecdc8d43-5e73-4a9c-ba43-051716c71dc8" --fetched from conf file
+config.timeout = config.timeout or 5
 
 local bank = {} --table returned by require
 
@@ -32,7 +37,7 @@ local PROTOCOLE_ERROR_RECEIVING_ACCOUNT = 5
 local PROTOCOLE_ERROR_UNKNOWN = 999
 --=====================================
 local function reciveMessage() --recive a message from the modem component
-  local _,_,from,port,_,status,command,message = event.pull(timeout,"modem_message")
+  local _,_,from,port,_,status,command,message = event.pull(config.timeout,"modem_message")
   if(not status) then status = MODEM_TIMEDOUT end
   if(not command) then command = "" end
   if(not message) then message = "" end
@@ -45,7 +50,7 @@ end
 -- @return status:int,command:string,message:table
 local function sendRequest(requestType,requestData) --format and send a request to the server
   modem.open(BANK_PORT)
-  modem.send(bank_addr,BANK_PORT,requestType,serialization.serialize(requestData))
+  modem.send(config.bank_addr,BANK_PORT,requestType,serialization.serialize(requestData))
   local status,command,message = reciveMessage()
   modem.close(BANK_PORT)
   return status,command,message
