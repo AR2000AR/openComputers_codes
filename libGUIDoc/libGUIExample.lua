@@ -1,0 +1,10 @@
+local libGUI = require("libGUI")
+local colors = require("colors")
+
+local screen = libGUI.Screen()
+local rectangle = libGUI.widget.Rectangle(1,1,10,3,0xff0000)
+local text = libGUI.widget.Text(1,5,6,3,0xffffff,"test")
+text:setBackground(0x006dff)
+screen:addChild(rectangle)
+screen:addChild(text)
+screen:draw()
