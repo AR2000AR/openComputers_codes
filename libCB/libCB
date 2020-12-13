@@ -16,7 +16,7 @@ DESCIPTION
       rawCBdata:table
         uudi,	--account uuid
         sig		--card signature made form uuid & card's drive component's uuid
-        pink_check
+        pin_check
 
   Method list
     getCB(cbDrive,pin):cbData
