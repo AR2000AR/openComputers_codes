@@ -83,7 +83,6 @@ function Keypad.private.screenHandler(self,eventName,ScreenUUID,x,y,button,playe
   x = (x - self:getX())/2
   y = (y - self:getY()-1)/2
 
-  print(x.." "..y)
   if(x>=1 and x<=3 and y>=1 and y<=4) then --keys[y][x] might be null if the event is not on  a key
     if(keys[y][x] == 'X') then --if X got pressed
       self.private.input = self:getInput():sub(1,#self:getInput()-1) --remove the last char from the input
