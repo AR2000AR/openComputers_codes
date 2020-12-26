@@ -18,7 +18,7 @@ end
 
 local function openPAM(path)
   local file = io.open(path,"rb")
-  if(file:read("*l")~="P7") then error("The file is not a pam image",2) end
+  if(file:read("*l")~="P7") then error("The file is not a pam ImageFile",2) end
   local img = {property = {},pixel = {}}
   local line = ""
   repeat
@@ -30,7 +30,7 @@ local function openPAM(path)
       img.property[propertyName] = tonumber(propertyValue) or propertyValue
     end
   until line == "ENDHDR"
-  assert(tonumber(img.property.MAXVAL) <= 255,"can't read this image")
+  assert(tonumber(img.property.MAXVAL) <= 255,"can't read this ImageFile")
   for i = 1, tonumber(img.property.WIDTH) do
     img.pixel[i] = {}
   end
@@ -64,9 +64,9 @@ local function openPAM(path)
   return img
 end
 
-local Image = Class.newClass("Image")
-Image.private = {property = {}, pixel = {}}
-Image.getPixel = function(self,x,y)
+local ImageFile = Class.newClass("ImageFile")
+ImageFile.private = {property = {}, pixel = {}}
+ImageFile.getPixel = function(self,x,y)
   if(x) then
     if(x > #self.private.pixel) then error("x out of range",2) end
     if(y) then
@@ -78,7 +78,7 @@ Image.getPixel = function(self,x,y)
     return deepcopy(self.private.pixel)
   end
 end
-Image.open = function(self,path)
+ImageFile.open = function(self,path)
   local imgTable = {}
   if(not (fs.exists(path) and not fs.isDirectory(path))) then
     error("No file with path : "..path,2)
@@ -91,9 +91,9 @@ Image.open = function(self,path)
   self.private.property = imgTable.property
   self.private.pixel = imgTable.pixel
 end
-Image.getWidth = function(self) return #self.private.pixel end
-Image.getHeight = function(self) return #self.private.pixel[1] end
-Image.getSize = function(self) return self:getWidth(), self:getHeight() end
-Image.constructor = function(self,path) if(path) then self:open(path) end end
+ImageFile.getWidth = function(self) return #self.private.pixel end
+ImageFile.getHeight = function(self) return #self.private.pixel[1] end
+ImageFile.getSize = function(self) return self:getWidth(), self:getHeight() end
+ImageFile.constructor = function(self,path) if(path) then self:open(path) end end
 
-return Image
+return ImageFile
