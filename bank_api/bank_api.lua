@@ -36,9 +36,10 @@ local PROTOCOLE_DENIED = 4
 local PROTOCOLE_ERROR_RECEIVING_ACCOUNT = 5
 local PROTOCOLE_ERROR_UNKNOWN = 999
 --=====================================
-local function reciveMessage() --recive a message from the modem component
+local function reciveMessage() --recive a message from the modem component.
   local _,_,from,port,_,status,command,message = event.pull(config.timeout,"modem_message")
   if(not status) then status = MODEM_TIMEDOUT end
+  --make sure no nil value is returned
   if(not command) then command = "" end
   if(not message) then message = "" end
   return status,command,serialization.unserialize(message)

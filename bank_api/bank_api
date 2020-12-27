@@ -15,7 +15,12 @@ DESCIPTION
     getCredit(cbData):int,int
     makeTransaction(uuid_cible,cbData,amount):int
 
+    createAccount(secret):int,sting
+    requestNewCBdata(secret,accountUUID,cbUUID):int:string:rawCBdata
+
     setModemTimeout(t)
+
+
 
   Returned values
     The first returned value is a status code
