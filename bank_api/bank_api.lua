@@ -4,15 +4,31 @@
 --LOAD LIB
 local event = require("event")
 local serialization = require("serialization")
+local io = require("io")
+local fs = require("filesystem")
 --INIT CONST
 local BANK_PORT = 351
 local CONF_DIR = "/etc/bank/api/"
+local CONF_FILE_NAME = CONF_DIR.."api.conf"
 local MODEM_TIMEDOUT = -1
 --INIT COMPONENT
 local modem = require("component").modem
+local data = require("component").data
 --INIT VAR
-local bank_addr = "ecdc8d43-5e73-4a9c-ba43-051716c71dc8" --fetched from conf file
-local timeout = 5
+
+if(not fs.exists(CONF_FILE_NAME))then
+  local file=io.open(CONF_FILE_NAME,"w")
+  file:write(serialization.serialize({bank_addr="00000000-0000-0000-0000-000000000000",timeout=5,secret=""}))
+  file:close()
+end
+local confFile = io.open(CONF_FILE_NAME,"r")
+local config = serialization.unserialize(confFile:read("*a"))
+confFile:close()
+config.bank_addr = config.bank_addr or "00000000-0000-0000-0000-000000000000" --fetched from conf file
+config.timeout = config.timeout or 5
+config.secret = data.decode64(config.secret) or ""
+
+
 
 local bank = {} --table returned by require
 
@@ -31,9 +47,10 @@ local PROTOCOLE_DENIED = 4
 local PROTOCOLE_ERROR_RECEIVING_ACCOUNT = 5
 local PROTOCOLE_ERROR_UNKNOWN = 999
 --=====================================
-local function reciveMessage() --recive a message from the modem component
-  local _,_,from,port,_,status,command,message = event.pull(timeout,"modem_message")
+local function reciveMessage() --recive a message from the modem component.
+  local _,_,from,port,_,status,command,message = event.pull(config.timeout,"modem_message")
   if(not status) then status = MODEM_TIMEDOUT end
+  --make sure no nil value is returned
   if(not command) then command = "" end
   if(not message) then message = "" end
   return status,command,serialization.unserialize(message)
@@ -45,7 +62,7 @@ end
 -- @return status:int,command:string,message:table
 local function sendRequest(requestType,requestData) --format and send a request to the server
   modem.open(BANK_PORT)
-  modem.send(bank_addr,BANK_PORT,requestType,serialization.serialize(requestData))
+  modem.send(config.bank_addr,BANK_PORT,requestType,serialization.serialize(requestData))
   local status,command,message = reciveMessage()
   modem.close(BANK_PORT)
   return status,command,message
@@ -103,8 +120,8 @@ function bank.makeTransaction(uuid_cible,cbData,amount)
   end
 end
 
-function bank.createAccount(secret)
-  local status,command,msg = sendRequest(PROTOCOLE_NEW_ACCOUNT,{secret=secret})
+function bank.createAccount()
+  local status,command,msg = sendRequest(PROTOCOLE_NEW_ACCOUNT,{secret=config.secret})
   if(command == PROTOCOLE_NEW_ACCOUNT) then
     if(status == PROTOCOLE_OK) then
       return status,msg.uuid
@@ -118,8 +135,8 @@ function bank.createAccount(secret)
   end
 end
 
-function bank.requestNewCBdata(secret,accountUUID,cbUUID)
-  local status,command,msg = sendRequest(PROTOCOLE_NEW_CB,{secret=secret,uuid=accountUUID,cbUUID=cbUUID})
+function bank.requestNewCBdata(accountUUID,cbUUID)
+  local status,command,msg = sendRequest(PROTOCOLE_NEW_CB,{secret=config.secret,uuid=accountUUID,cbUUID=cbUUID})
   if(command == PROTOCOLE_NEW_CB) then
     if(status == PROTOCOLE_OK) then
       return status, msg.pin, msg.rawCBdata

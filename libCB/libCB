@@ -16,12 +16,22 @@ DESCIPTION
       rawCBdata:table
         uudi,	--account uuid
         sig		--card signature made form uuid & card's drive component's uuid
-        pink_check
+        pin_check
 
   Method list
     getCB(cbDrive,pin):cbData
-      cbDrive:uuid > the drive component address of the cb
-      pin:str > user pin code
+      cbDrive:uuid > the drive component proxy for the credit card
+      pin:string > user pin code
+    checkCBdata(cbData,publicKey):boolean
+      cbDrive:uuid > the drive component proxy for the credit card
+      publicKey > data card compatible publicKey
+    createNew(uuid,cbUUID,privateKey):rawCBdata
+      uuid > account uuid
+      cbUUID > the future credit card uuid
+      privateKey > data card compatible publicKey
+    writeCB(rawCBdata,cbDrive)
+      rawCBdata > data to be writen to the new credit card
+      cbDrive:uuid > the drive component proxy for the credit card
 
   Returned values
     cbData

@@ -20,24 +20,12 @@ Text.private.width = 0
 Text.private.height = 0
 Text.private.color = {background = -1, foreground = -1 }
 
-function Text.getMinWidth(self)
-  return self.private.minWidth
-end
-function Text.getMinHeight(self)
-  return self.private.minHeight
-end
-function Text.getMinSize(self)
-  return self:getMinWidth(), self:getMinHeight()
-end
-function Text.getMaxWidth(self)
-  return self.private.maxWidth
-end
-function Text.getMaxHeight(self)
-  return self.private.maxHeight
-end
-function Text.getMaxSize(self)
-  return self:getMaxWidth(), self:getMaxHeight()
-end
+function Text.getMinWidth(self) return self.private.minWidth end
+function Text.getMinHeight(self) return self.private.minHeight end
+function Text.getMinSize(self) return self:getMinWidth(), self:getMinHeight() end
+function Text.getMaxWidth(self) return self.private.maxWidth end
+function Text.getMaxHeight(self) return self.private.maxHeight end
+function Text.getMaxSize(self) return self:getMaxWidth(), self:getMaxHeight() end
 function Text.getWidth(self)
   local tmp = #self:getText() --set the width to the text length
   if(self.private.width == 0) then --if no width is set adapt the widget size
@@ -61,63 +49,35 @@ function Text.getHeight(self)
   tmp = math.max(tmp,self:getMinHeight()) --get the max between the previous result and the minimun height
   return tmp
 end
-function Text.getSize(self)
-  return self:getWidth(), self:getHeight()
-end
+function Text.getSize(self) return self:getWidth(), self:getHeight() end
 
-function Text.setMinWidth(self,int)
-  self.private.minWidth = int or 0
-end
-function Text.setMinHeight(self,int)
-  self.private.minHeight = int or 0
-end
+function Text.setMinWidth(self,int) self.private.minWidth = int or 0 end
+function Text.setMinHeight(self,int) self.private.minHeight = int or 0 end
 function Text.setMinSize(self,width,height)
   self:setMinWidth(width)
   self:setMinHeight(height)
 end
-function Text.setMaxWidth(self,int)
-  self.private.maxWidth = int or math.math.huge
-end
-function Text.setMaxHeight(self,int)
-  self.private.maxHeight = int or math.huge
-end
+function Text.setMaxWidth(self,int) self.private.maxWidth = int or math.math.huge end
+function Text.setMaxHeight(self,int) self.private.maxHeight = int or math.huge end
 function Text.setMaxSize(self,width,height)
   self:setMaxWidth(width)
   self:setMaxHeight(height)
 end
-function Text.setWidth(self,int)
-  self.private.Width = int or 0
-end
-function Text.setHeight(self,int)
-  self.private.Width = int or 0
-end
-function Text.setSize(self,width,height)
-  self:setWidth(width)
-  self:setHeight(height)
-end
+--function Text.setWidth(self,int) self.private.Width = int or 0 end
+--function Text.setHeight(self,int) self.private.Width = int or 0 end
+--function Text.setSize(self,width,height)
+--  self:setWidth(width)
+--  self:setHeight(height)
+--end
 
-function Text.getText(self)
-  return self.private.text
-end
-function Text.setText(self,text)
-  self.private.text = text
-end
+function Text.getText(self) return self.private.text end
+function Text.setText(self,text) self.private.text = text end
 
-function Text.getForeground(self)
-  return self.private.color.foreground
-end
-function Text.getBackground(self)
-  return self.private.color.background
-end
-function Text.setForeground(self,color)
-  self.private.color.foreground = color or -1
-end
-function Text.setBackground(self,color)
-  self.private.color.background = color or -1
-end
-function Text.setColor(self,color)
-  self:setForeground(color)
-end
+function Text.getForeground(self) return self.private.color.foreground end
+function Text.getBackground(self) return self.private.color.background end
+function Text.setForeground(self,color) self.private.color.foreground = color or -1 end
+function Text.setBackground(self,color) self.private.color.background = color or -1 end
+function Text.setColor(self,color) self:setForeground(color) end
 
 function Text.draw(self)
   local x,y = self:getPos()
@@ -138,8 +98,8 @@ function Text.draw(self)
   gpu.setForeground(fg)
 end
 
-function Text.constructor(self,x,y,text,width,height)
-  self:setSize(width,height)
+function Text.constructor(self,x,y,width,height,color,text)
+  --self:setSize(width,height)
   self:setText(text)
 end
 

@@ -1,0 +1,10 @@
+NAME
+  itemIdCatcher - save the item id of any item in the input chest
+
+SYNOPSIS
+  itemIdCatcher [save file]
+
+DESCIPTION
+  This tool can be used to generate a list of item id. Useful for modpack making
+  The default save file is /home/id.txt
+  The script will stop after 3 empty loop in the inventory (3 beep)

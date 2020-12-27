@@ -1,0 +1,88 @@
+libGUI
+http://odp.tuxfamily.org/plantuml?nLPDR-8m43ql4l_1ntGX_s0FrRAgw06fAYlHgkh1s6vYrTWeCKlOBlzznrya3ixIbIer1mXldcVUpDXZhckDAxtRYF6825pNQ4agnYHw6uyGF1EaAruKhCgk790Z8ZXvdMD9HOjEq2_5ASAKpaekQBRYj60Q4VCZflJSUPHMU9-EW5vsacYkPE1Rd_NJCt8nngDZK7wxmGMxuO85yJdQLchBAdruUZuXl64Y_9oW9UYH1G97TyQGSQbHCpMVXrWX-96PPs-nBazMmuNbe4QNMH-TCrwK-WnUyj_CW21zYyaho4PxLp6ll9DGW8QZ_IFYoJJjHMwDDhlQkeHrXhOtpfCSxzoGIlkQPDaOmL4n7M1pazmFh75enj5zkQI_vddRpsvDxXdHM1OYgalkD9j4kw2BsaU94ggAmS-hGc3FZ2XBj_9IdVt0ddk32teLbTzL-IThT5nW3O3R_brqm-KgLVaDRbPSqtESotcoAR0WRR3bWDFUZzsMRk4rNEZQ8eI-r3WWHhqhB_LkOP9zXu2GuaK1kFa_0QPROJPfU8z8zMd2MLhImOsgM56fdQIPfv_lmjPFXvtqzXr6slkzTTZnJiHh866Y_PPSHGCoZdYdQZ-vKNTqnwG7HqdQ7hFXTJCin1f4PWHUy1ec3_58wamz94_Qu-3XDD87AdERgc_l_dIMjLB255bmoX9NM6VvMwZgCRfppPEZfd_u3cUdqMVUkvMTqPIhSqfz6ttVllq94_qSFirqPsf7lBMQRMklIl_FH04Mxlvh9YdyT_dowSzV
+@startuml
+class Screen {
+    + trigger()
+    - clickHandler()
+    + void addChild(Widget child)
+    + void trigger()
+    + void draw()
+    - clickHandler function
+    + childs[] Widget
+}
+class ImageFile {
+    - property[]
+    - pixel[]
+    + String getPixel(int x,int y)
+    + void open(String path)
+    + int getWidth()
+    + int getHeight()
+    + int getSize()
+}
+package widget {
+    class Image {
+        + int getWidth()
+        + int getHeight()
+        + int,int getSize()
+        + void setWidht(int width)
+        + void setHeight(int height)
+        + void setSize(int widtg,int height)
+        + imageData[]
+    }
+    Image *-- ImageFile
+    class Rectangle {
+        - width int
+        - height int
+        - color int
+        + void setWidht(int width)
+        + void setHeight(int height)
+        + void setSize(int widtg,int height)
+        + void setColor(int color)
+        + int getWidth()
+        + int getHeight()
+        + int,int getSize()
+        + int getColor()
+    }
+    class Text {
+        - txt String
+        - minWidth int
+        - maxWitdh int
+        - minHeight int
+        - maxHeight int
+        - color[] String
+        + void setMinWidth(int width)
+        + void setMinHeight(int height)
+        + void setMinSize(int width,int height)
+        + void setMaxWidth(int width)
+        + void setMaxHeight(int height)
+        + void setMaxSize(int width,int height)
+        + void setText(String text)
+        + string getText()
+        + void setForeground(string color)
+        + string getForeground()
+        + void setBackground(string color)
+        + string getBackground()
+    }
+    abstract class Widget {
+        + void setPos(int x, int y)
+        + void setX(int x)
+        + void setY(int y)
+        + void setCallback(callable callback)
+        + int getX()
+        + int getY()
+        + int,int getPos()
+        + string getId()
+        + void trigger()
+        + bool collide(int x,int y)
+        + void {abstract} draw()
+        - x int
+        - y int
+        - callback function
+        - id string
+    }
+    Widget <|-- Image
+    Widget <|-- Rectangle
+    Rectangle <|-- Text
+}
+Screen o-- Widget
+@enduml
