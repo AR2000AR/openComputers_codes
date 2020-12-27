@@ -167,8 +167,7 @@ end
 -- @param secret:string
 local function handlerCreateAccount(address,secret)
   log("-> handlerCreateAccount")
-  --if(dataCard.ecdsa(address,getKey(true),secret)) then --check if the client have the write to call this command
-  if(true) then --TODO : remove this test
+  if(dataCard.ecdsa(address,getKey(true),secret)) then --check if the client have the write to call this command
     local newUUID
     repeat
       newUUID = uuid.next()
@@ -197,8 +196,7 @@ end
 
 local function hanlerMakeCreditCard(address,secret,targetUUID,cbUUID)
   log("-> hanlerMakeCreditCard")
-  --if(dataCard.ecdsa(address,getKey(true),secret)) then --check if the client have the write to call this command
-  if(true) then --TODO : remove this test
+  if(dataCard.ecdsa(address,getKey(true),secret)) then --check if the client have the write to call this command
     local account = loadAccount(targetUUID)
     log("account "..serialization.serialize(account,true))
     if(account == PROTOCOLE_NO_ACCOUNT or account == PROTOCOLE_ERROR_ACCOUNT) then -- check if the account exists

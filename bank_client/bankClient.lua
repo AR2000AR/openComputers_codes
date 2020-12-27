@@ -46,11 +46,11 @@ end
 local function creerCompte(drive)
   statusBar:setText("demmande du compte")
   screen:draw()
-  local status,acUUID = bank_api.createAccount("") --TODO add secret
+  local status,acUUID = bank_api.createAccount() --TODO add secret
   statusBar:setText("creation de compte : "..status)
   screen:draw()
   if(status == 0) then
-    local status,pin,rawCBdata = bank_api.requestNewCBdata("",acUUID,drive.address) --TODO add secret
+    local status,pin,rawCBdata = bank_api.requestNewCBdata(acUUID,drive.address) --TODO add secret
     libCB.writeCB(rawCBdata,drive)
     diskWaitPopup:setVisible(false)
     diskWaitPopup:enable(false)
