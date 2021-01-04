@@ -30,6 +30,7 @@ local PROTOCOLE_GET_CREDIT = "GET_CREDIT"
 local PROTOCOLE_MAKE_TRANSACTION = "MAKE_TRANSACTION"
 local PROTOCOLE_NEW_ACCOUNT = "NEW_ACCOUNT"
 local PROTOCOLE_NEW_CB = "NEW_CB"
+local PROTOCOLE_EDIT = "EDIT"
 --protocole status constants
 local PROTOCOLE_OK = 0
 local PROTOCOLE_NO_ACCOUNT = 1
@@ -156,6 +157,7 @@ local function handlerMakeTransaction(address,from,to,amount)
         end
       end
     else
+      log("secret error")
       sendMsg(address,PROTOCOLE_ERROR_AMOUNT,PROTOCOLE_MAKE_TRANSACTION)
     end
   end
@@ -175,6 +177,7 @@ local function handlerCreateAccount(address,secret)
     writeAccount(newUUID,0)
     sendMsg(address,PROTOCOLE_OK,PROTOCOLE_NEW_ACCOUNT,{uuid=newUUID})
   else
+    log("secret error")
     sendMsg(address,PROTOCOLE_DENIED,PROTOCOLE_NEW_ACCOUNT)
   end
   log("<- handlerCreateAccount")
@@ -215,6 +218,40 @@ local function hanlerMakeCreditCard(address,secret,targetUUID,cbUUID)
   log("<- hanlerMakeCreditCard")
 end
 
+local function handlerEditBalance(address,secret,targetUUID,amount)
+  log("-> hanglerEditBalance")
+  if(dataCard.ecdsa(address,getKey(true),secret)) then --check if the client have the write to call this command
+    local account = loadAccount(targetUUID)
+    log("account "..serialization.serialize(account,true))
+    if(account == PROTOCOLE_NO_ACCOUNT or account == PROTOCOLE_ERROR_ACCOUNT) then -- check if the account exists
+      log("error "..account)
+      sendMsg(address,account,PROTOCOLE_EDIT) --error
+    else
+      if(amount < 0) then
+        if(account.solde < math.abs(amount)) then
+          sendMsg(address,PROTOCOLE_ERROR_AMOUNT,PROTOCOLE_EDIT)
+        else
+          if(editAccount(account.uuid,amount)) then
+            sendMsg(address,PROTOCOLE_OK,PROTOCOLE_EDIT)
+          else
+            sendMsg(address,PROTOCOLE_ERROR_UNKNOWN,PROTOCOLE_EDIT)
+          end
+        end
+      else
+        if(editAccount(account.uuid,amount)) then
+          sendMsg(address,PROTOCOLE_OK,PROTOCOLE_EDIT)
+        else
+          sendMsg(address,PROTOCOLE_ERROR_UNKNOWN,PROTOCOLE_EDIT)
+        end
+      end
+    end
+  else
+    log("secret error")
+    sendMsg(address,PROTOCOLE_DENIED,PROTOCOLE_EDIT)
+  end
+  log("<- hanglerEditBalance")
+end
+
 -- main function
 local function listener(sig,local_add,remote_add,port,dist,command,arg)
   if(sig~="modem_message") then return end --check the signal type
@@ -229,14 +266,16 @@ local function listener(sig,local_add,remote_add,port,dist,command,arg)
     if(cb.checkCBdata(arg.cbData,getKey(true)))then
       handlerGetCredit(remote_add,arg.cbData)
     else
-      sendMsg(remote_add,PROTOCOLE_GET_CREDIT,PROTOCOLE_ERROR_CB)
+      log("PROTOCOLE_GET_CREDIT : error cb")
+      sendMsg(remote_add,PROTOCOLE_ERROR_CB,PROTOCOLE_GET_CREDIT)
     end
   -------------------------------------
   elseif(command == PROTOCOLE_MAKE_TRANSACTION) then
     if(cb.checkCBdata(arg.cbData,getKey(true)))then
       handlerMakeTransaction(remote_add,arg.cbData.uuid,arg.dst,arg.amount)
     else
-      sendMsg(remote_add,command,PROTOCOLE_ERROR_CB)
+      log("PROTOCOLE_MAKE_TRANSACTION : error cb")
+      sendMsg(remote_add,PROTOCOLE_ERROR_CB,command)
     end
   -------------------------------------
   elseif(command == PROTOCOLE_NEW_ACCOUNT) then
@@ -244,7 +283,16 @@ local function listener(sig,local_add,remote_add,port,dist,command,arg)
   -------------------------------------
   elseif(command == PROTOCOLE_NEW_CB) then
     hanlerMakeCreditCard(remote_add,arg.secret,arg.uuid,arg.cbUUID)
+  -------------------------------------
+  elseif(command == PROTOCOLE_EDIT) then
+    if(cb.checkCBdata(arg.cbData,getKey(true))) then
+      handlerEditBalance(remote_add,arg.secret,arg.cbData.uuid,arg.amount)
+    else
+      log("PROTOCOLE_EDIT : error cb")
+      sendMsg(remote_add,PROTOCOLE_ERROR_CB,command)
+    end
   else
+    pcall(log("Unknown error : "..command))
     --TODO : error handling
   end
 end

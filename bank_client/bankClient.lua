@@ -122,7 +122,7 @@ local function diskEventHandler(eventName,componentAdd,componentName)
       if(#kp:getInput() == 4) then
         local cbData=libCB.getCB(drive,kp:getInput())
         kp:clearInput()
-        if(cbDate ~= false) then
+        if(cbData ~= false) then
           kp:enable(false)
           kp:setVisible(false)
           screen:draw()

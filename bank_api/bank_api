@@ -18,9 +18,11 @@ DESCIPTION
     createAccount():int,sting
     requestNewCBdata(accountUUID,cbUUID):int:string:rawCBdata
 
+    editAccount(cbData,amount):int
+      Add amount to the account. If amount is < 0 It will be removed form the account
+      A account cant have a negative solde. 
+
     setModemTimeout(t)
-
-
 
   Returned values
     The first returned value is a status code

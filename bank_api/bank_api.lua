@@ -37,6 +37,7 @@ local PROTOCOLE_GET_CREDIT = "GET_CREDIT"
 local PROTOCOLE_MAKE_TRANSACTION = "MAKE_TRANSACTION"
 local PROTOCOLE_NEW_ACCOUNT = "NEW_ACCOUNT"
 local PROTOCOLE_NEW_CB = "NEW_CB"
+local PROTOCOLE_EDIT = "EDIT"
 --protocole status constants
 local PROTOCOLE_OK = 0
 local PROTOCOLE_NO_ACCOUNT = 1
@@ -143,6 +144,17 @@ function bank.requestNewCBdata(accountUUID,cbUUID)
     else
       return status
     end
+  elseif(status)then
+    return -2
+  else
+    return MODEM_TIMEDOUT
+  end
+end
+
+function bank.editAccount(cbData,amount)
+  local status,command = sendRequest(PROTOCOLE_EDIT,{secret=config.secret,cbData=cbData,amount=amount})
+  if(command == PROTOCOLE_EDIT) then
+    return status
   elseif(status)then
     return -2
   else
