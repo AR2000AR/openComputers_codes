@@ -83,18 +83,18 @@ end
 -- @return solde
 function bank.getCredit(cbData)
   local status,command,message = sendRequest(PROTOCOLE_GET_CREDIT,{cbData=cbData})
-  if(status) then
-    if(command == PROTOCOLE_GET_CREDIT) then
-      if(status==PROTOCOLE_OK) then return 0, message.solde
-      elseif(status==PROTOCOLE_NO_ACCOUNT) then return 1, nil
-      elseif(status==PROTOCOLE_ERROR_ACCOUNT) then return 2, nil
-      elseif(status==PROTOCOLE_ERROR_CB) then return 3, nil
-      end
-    else
-      return -2 --wrong message
-    end
+  if(status == MODEM_TIMEDOUT) then
+    return MODEM_TIMEDOUT
   else
-    return MODEM_TIMEDOUT --timeout
+    if(command ~= PROTOCOLE_GET_CREDIT) then
+      return -2 --wrong message
+    else
+      if(status==PROTOCOLE_OK) then
+        return 0, message.solde
+      else
+        return status, nil
+      end
+    end
   end
 end
 
@@ -112,53 +112,61 @@ end
 --  4 : amount error
 function bank.makeTransaction(uuid_cible,cbData,amount)
   local status,command,msg = sendRequest(PROTOCOLE_MAKE_TRANSACTION,{dst=uuid_cible,cbData=cbData,amount=amount})
-  if(command == PROTOCOLE_MAKE_TRANSACTION) then
-    return status
-  elseif(status) then
-    return -2 --wrong message
+  if(status == MODEM_TIMEDOUT) then
+    return MODEM_TIMEDOUT
   else
-    return MODEM_TIMEDOUT --timeout
+    if(command ~= PROTOCOLE_MAKE_TRANSACTION) then
+      return -2 --wrong message
+    else
+      return status
+    end
   end
 end
 
 function bank.createAccount()
   local status,command,msg = sendRequest(PROTOCOLE_NEW_ACCOUNT,{secret=config.secret})
-  if(command == PROTOCOLE_NEW_ACCOUNT) then
-    if(status == PROTOCOLE_OK) then
-      return status,msg.uuid
-    else
-      return status
-    end
-  elseif(status)then
-    return -2
-  else
+  if(status == MODEM_TIMEDOUT) then
     return MODEM_TIMEDOUT
+  else
+    if(command ~= PROTOCOLE_NEW_ACCOUNT) then
+      return -2 --wrong message
+    else
+      if(status == PROTOCOLE_OK) then
+        return status,msg.uuid
+      else
+        return status
+      end
+    end
   end
 end
 
 function bank.requestNewCBdata(accountUUID,cbUUID)
   local status,command,msg = sendRequest(PROTOCOLE_NEW_CB,{secret=config.secret,uuid=accountUUID,cbUUID=cbUUID})
-  if(command == PROTOCOLE_NEW_CB) then
-    if(status == PROTOCOLE_OK) then
-      return status, msg.pin, msg.rawCBdata
-    else
-      return status
-    end
-  elseif(status)then
-    return -2
-  else
+  if(status == MODEM_TIMEDOUT) then
     return MODEM_TIMEDOUT
+  else
+    if(command ~= PROTOCOLE_NEW_CB) then
+      return -2 --wrong message
+    else
+      if(status == PROTOCOLE_OK) then
+        return status, msg.pin, msg.rawCBdata
+      else
+        return status
+      end
+    end
   end
 end
 
 function bank.editAccount(cbData,amount)
   local status,command = sendRequest(PROTOCOLE_EDIT,{secret=config.secret,cbData=cbData,amount=amount})
-  if(command == PROTOCOLE_EDIT) then
-    return status
-  elseif(status)then
-    return -2
-  else
+  if(status == MODEM_TIMEDOUT) then
     return MODEM_TIMEDOUT
+  else
+    if(command ~= PROTOCOLE_EDIT) then
+      return -2 --wrong message
+    else
+      return status
+    end
   end
 end
 
