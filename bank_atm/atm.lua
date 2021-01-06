@@ -48,16 +48,19 @@ local function eject()
   disk_drive.eject()
 end
 local function draw()
+  gpu.setResolution(26,13)
   main_screen:draw()
 end
 local function showMenu()
   mode = MODE_MENU
   card_wait:setVisible(false)
-  error_popup:setVisible(false)
-  success_popup:setVisible(false)
+  error_popup:hide()
+  success_popup:hide()
   main_menu:enable(true)
   keypad:enable(false)
   keypad:setVisible(false)
+  success_popup:hide()
+  error_popup:hide()
   local binVal = coin.getValue(coin.getCoin(EXTERIOR))
   bin_text:setText("Bin   : "..binVal)
   local status
@@ -74,34 +77,43 @@ local function closeClient(...)
   event.cancel(event_eject)
   event.cancel(event_drive)
   gpu.setResolution(old_res_x,old_res_y)
-  keypad:enable(false)
-  keypad:setVisible(false)
+  main_screen:setVisible(false)
+  main_screen:enable(false)
   mode = MODE_CLOSING
   return false
 end
 -- =============================================================================
 local function makeTransaction(amount)
-  local coinGiven,b,s,g,p = 0,0,0,0,0
-  if(mode == MODE_WITHDRAW) then
-    if(solde < amount) then
-      --TODO : erreur
-      amount = 0
-    else
-      amount = amount * -1
-    end
-    b,s,g,p = coin.moveCoin(math.abs(amount),STORAGE,EXTERIOR)
-  elseif(mode == MODE_DEPOSIT) then
-    b,s,g,p = coin.moveCoin(amount,EXTERIOR,STORAGE)
-  end
-  if(b ~= false) then
-    coinGiven = coin.getValue(b,s,g,p)
-    if(mode == MODE_WITHDRAW) then coinGiven = coinGiven * -1 end
-    bank.editAccount(cbData,coinGiven)
-    showMenu()
+  local status = nil
+  status,solde = bank.getCredit(cbData)
+  if(status ~= 0) then
+    error_popup:show("Serveur non disponible",true)
+    eject()
   else
-    --TODO : erreur
-    beep()
-
+    local coinGiven,b,s,g,p = 0,0,0,0,0
+    if(mode == MODE_WITHDRAW) then
+      if(solde < amount) then
+        error_popup:show("Solde insufisant",true)
+        amount = 0
+      else
+        amount = amount * -1
+      end
+      b,s,g,p = coin.moveCoin(math.abs(amount),STORAGE,EXTERIOR)
+    elseif(mode == MODE_DEPOSIT) then
+      b,s,g,p = coin.moveCoin(amount,EXTERIOR,STORAGE)
+    end
+    if(b ~= false) then
+      coinGiven = coin.getValue(b,s,g,p)
+      if(mode == MODE_WITHDRAW) then coinGiven = coinGiven * -1 end
+      bank.editAccount(cbData,coinGiven)
+      if(amount ~= coinGiven) then
+        error_popup:show("Coffre de sortie plein\nPrévenez un admin",true)
+      end
+      showMenu()
+    else
+      error_popup:show("Imposible de distibuer les pièces",true)
+      showMenu()
+    end
   end
 end
 -- =============================================================================
@@ -217,7 +229,6 @@ local function init()
   until transposer.getInventoryName(EXTERIOR) ~= nil
 
   old_res_x,old_res_y = gpu.getResolution()
-  gpu.setResolution(26,13)
 
   main_screen = gui.Screen()
   main_screen:addChild(gui.widget.Rectangle(1,1,26,13,0))
@@ -267,8 +278,48 @@ local function init()
   keypad:setVisible(false)
   main_screen:addChild(keypad)
 
+  local function show(self,text,blocking)
+    self.text:setText(text)
+    self:setVisible(true)
+    self:enable(true)
+    draw()
+    if(blocking) then
+      while(self:isVisible()) do
+        os.sleep()
+      end
+    end
+  end
+
+  local function hide(self,...)
+    success_popup:setVisible(false)
+    success_popup:enable(false)
+    error_popup:setVisible(false)
+    error_popup:enable(false)
+    draw()
+  end
+
   error_popup = gui.Screen()
   success_popup = gui.Screen()
+  error_popup.show = show
+  success_popup.show = show
+  error_popup.hide = hide
+  success_popup.hide = hide
+  local popup_bg = gui.widget.Rectangle(2,5,24,5,0xc3c3c3)
+  popup_bg:setCallback(hide)
+  error_popup:addChild(popup_bg)
+  success_popup:addChild(popup_bg)
+  error_popup.text = gui.widget.Text(3,6,0,0,0,"???")
+  error_popup.text:setMaxWidth(22)
+  error_popup.text:setBackground(popup_bg:getColor())
+  error_popup:addChild(error_popup.text)
+  success_popup.text = error_popup.text
+  success_popup:addChild(success_popup.text)
+  success_popup:addChild(gui.widget.Rectangle(2,5,24,1,0x00ff00))
+  error_popup:addChild(gui.widget.Rectangle(2,5,24,1,0xff0000))
+  main_screen:addChild(success_popup)
+  main_screen:addChild(error_popup)
+  success_popup:hide()
+  error_popup:hide()
 
   event_drive = event.listen("component_added",componentAddedHandler)
   event_eject = event.listen("component_unavailable",driveEjectedHandler)
