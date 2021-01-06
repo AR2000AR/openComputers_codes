@@ -90,19 +90,39 @@ function coin.moveCoin(amount,from,to)
     if(need_bronze > bronze) then
       need_bronze = bronze
     end
-    
+
     local moved_bronze,moved_silver,moved_gold,moved_platinum = 0,0,0,0
     while(moved_bronze < need_bronze) do
-      moved_bronze = moved_bronze + transposer.transferItem(from,to,need_bronze,coin.findFirstStack(from,ID_COIN_BRONZE))
+      local moved_coin = transposer.transferItem(from,to,need_bronze,coin.findFirstStack(from,ID_COIN_BRONZE))
+      if(moved_coin == 0) then
+        break
+      else
+        moved_bronze = moved_bronze + moved_coin
+      end
     end
     while(moved_silver < need_silver) do
-      moved_silver = moved_silver + transposer.transferItem(from,to,need_silver,coin.findFirstStack(from,ID_COIN_SILVER))
+      local moved_coin = transposer.transferItem(from,to,need_silver,coin.findFirstStack(from,ID_COIN_SILVER))
+      if(moved_coin == 0) then
+        break
+      else
+        moved_silver = moved_silver + moved_coin
+      end
     end
     while(moved_gold < need_gold) do
-      moved_gold = moved_gold + transposer.transferItem(from,to,need_gold,coin.findFirstStack(from,ID_COIN_GOLD))
+      local moved_coin = transposer.transferItem(from,to,need_gold,coin.findFirstStack(from,ID_COIN_GOLD))
+      if(moved_coin == 0) then
+        break
+      else
+        moved_gold = moved_gold + moved_coin
+      end
     end
     while(moved_platinum < need_platinum) do
-      moved_platinum = moved_platinum + transposer.transferItem(from,to,need_platinum,coin.findFirstStack(from,ID_COIN_PLATINUM))
+      local moved_coin = transposer.transferItem(from,to,need_platinum,coin.findFirstStack(from,ID_COIN_PLATINUM))
+      if(moved_coin == 0) then
+        break
+      else
+        moved_platinum = moved_platinum + moved_coin
+      end
     end
 
     return moved_bronze,moved_silver,moved_gold,moved_platinum
