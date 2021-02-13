@@ -20,7 +20,7 @@ DESCIPTION
 
     editAccount(cbData,amount):int
       Add amount to the account. If amount is < 0 It will be removed form the account
-      A account cant have a negative solde. 
+      A account cant have a negative solde.
 
     setModemTimeout(t)
 
@@ -40,7 +40,7 @@ CONFIGURATION
 FILES
   /usr/lib/bank_api.lua
     the library
-  /etc/bank/api/conf.cfg
+  /etc/bank/api/conf.conf
     the config file location
 
 SEE ALSO
