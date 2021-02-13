@@ -10,6 +10,7 @@ The bank is made of 2 main part : the server and a client. The client can be an 
 ### Main apps
 #### bank_server
 The main server hosting every files needed for the system to work.
+The opp package provide tools to help setting up clients who need the secret
 
 ### bank_dev_tools
 Add a simple command line program to edit the encrypted accounts info. Don't install it if you don't need it.
