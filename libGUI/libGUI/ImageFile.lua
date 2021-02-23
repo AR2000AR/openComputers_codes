@@ -1,5 +1,6 @@
 local Class = require("libClass")
 local fs = require("filesystem")
+local os = require("os")
 
 local function deepcopy(orig) --copy the table orig, metatable included. Sub-tables are also copied
     local orig_type = type(orig)
@@ -64,6 +65,71 @@ local function openPAM(path)
   return img
 end
 
+local function openPPM(path)
+  local file = io.open(path,"rb")
+
+  local img = {property = {},pixel = {}}
+
+  -- check the image format
+  -- P3 is ASCII
+  -- P6 is raw
+  img.property.TYPE = file:read("*l")
+  if(img.property.TYPE~="P6" and img.property.TYPE~="P3") then error("The file is not a ppm ImageFile",2) end
+  print(img.property.TYPE)
+
+  local line = ""
+
+  -- get image size
+  line = file:read("*l")
+  print(line)
+  local spacePos = line:find(" ")
+  if(spacePos ~= nil) then
+    local width = line:sub(0,spacePos-1)
+    local height = line:sub(spacePos+1)
+    img.property.WIDTH = tonumber(width) or width
+    img.property.HEIGHT = tonumber(height) or height
+  end
+
+  -- get pixel maxval
+  img.property.MAXVAL= file:read("*l")
+  print(img.property.MAXVAL)
+  assert(tonumber(img.property.MAXVAL) <= 255,"can't read this ImageFile")
+
+  -- create pixel array
+  for i = 1, tonumber(img.property.WIDTH) do
+    img.pixel[i] = {}
+  end
+
+  -- read pixel data
+  local i = 0
+  repeat
+    local rgb = {}
+    local pixel = ""
+    if (img.property.TYPE == "P6") then
+      rgb.R = file:read(1):byte()
+      rgb.G = file:read(1):byte()
+      rgb.B = file:read(1):byte()
+      pixel = string.format("%02x%02x%02x",rgb.R,rgb.G,rgb.B)
+      print(pixel)
+    elseif(img.property.TYPE == "P3") then
+      rgb.R = tonumber(file:read("*l"))
+      rgb.G = tonumber(file:read("*l"))
+      rgb.B = tonumber(file:read("*l"))
+      pixel = string.format("%02x%02x%02x",rgb.R,rgb.G,rgb.B)
+      print(pixel)
+    end
+    if(pixel ~= nil) then
+      img.pixel[(i%img.property.WIDTH)+1][(math.floor(i/img.property.WIDTH))+1] = tonumber(pixel,16)
+    else
+      img.pixel[(i%img.property.WIDTH)+1][(math.floor(i/img.property.WIDTH))+1] = "nil"
+    end
+    i=i+1
+  until i == img.property.WIDTH * img.property.HEIGHT
+  file:close()
+  os.sleep(2)
+  return img
+end
+
 local ImageFile = Class.newClass("ImageFile")
 ImageFile.private = {property = {}, pixel = {}}
 ImageFile.getPixel = function(self,x,y)
@@ -85,6 +151,8 @@ ImageFile.open = function(self,path)
   end
   if(path:match("%..+$")==".pam") then
     imgTable = openPAM(path)
+  elseif(path:match("%..+$")==".ppm") then
+    imgTable = openPPM(path)
   else
     error(path:match("%..+$"):sub(2).. "not supported")
   end
