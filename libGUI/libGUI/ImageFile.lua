@@ -75,13 +75,11 @@ local function openPPM(path)
   -- P6 is raw
   img.property.TYPE = file:read("*l")
   if(img.property.TYPE~="P6" and img.property.TYPE~="P3") then error("The file is not a ppm ImageFile",2) end
-  print(img.property.TYPE)
 
   local line = ""
 
   -- get image size
   line = file:read("*l")
-  print(line)
   local spacePos = line:find(" ")
   if(spacePos ~= nil) then
     local width = line:sub(0,spacePos-1)
@@ -92,7 +90,6 @@ local function openPPM(path)
 
   -- get pixel maxval
   img.property.MAXVAL= file:read("*l")
-  print(img.property.MAXVAL)
   assert(tonumber(img.property.MAXVAL) <= 255,"can't read this ImageFile")
 
   -- create pixel array
@@ -110,13 +107,11 @@ local function openPPM(path)
       rgb.G = file:read(1):byte()
       rgb.B = file:read(1):byte()
       pixel = string.format("%02x%02x%02x",rgb.R,rgb.G,rgb.B)
-      print(pixel)
     elseif(img.property.TYPE == "P3") then
       rgb.R = tonumber(file:read("*l"))
       rgb.G = tonumber(file:read("*l"))
       rgb.B = tonumber(file:read("*l"))
       pixel = string.format("%02x%02x%02x",rgb.R,rgb.G,rgb.B)
-      print(pixel)
     end
     if(pixel ~= nil) then
       img.pixel[(i%img.property.WIDTH)+1][(math.floor(i/img.property.WIDTH))+1] = tonumber(pixel,16)
@@ -126,7 +121,6 @@ local function openPPM(path)
     i=i+1
   until i == img.property.WIDTH * img.property.HEIGHT
   file:close()
-  os.sleep(2)
   return img
 end
 
