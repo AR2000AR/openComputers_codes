@@ -30,7 +30,7 @@ end
 --save the config file
 local function saveConfig(newConf)
     local confFile = io.open('/etc/doorCtrl.conf','w')
-    confFile:write(serialization.serialize(newConf,true))
+    confFile:write(serialization.serialize(newConf))
     confFile:close()
 end
 
@@ -147,11 +147,11 @@ if(filesystem.exists(CONFIG_FILE)) then
     confFile:close()
 else
     local confFile = io.open(CONFIG_FILE,'w')
-    configRaw = serialization.serialize({doors={},adminCode="",whitelist={},applyDefault=true},true)
+    configRaw = serialization.serialize({doors={},adminCode="",whitelist={},applyDefault=true})
     confFile:write(configRaw)
     confFile:close()
 end
-verbose(serialization.serialize(configRaw,true))
+verbose(serialization.serialize(configRaw))
 local config = serialization.unserialize(configRaw)
 
 --[[config syntax 
