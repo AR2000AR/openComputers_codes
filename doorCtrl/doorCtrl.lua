@@ -11,6 +11,7 @@ local os = require 'os'
 local term = require 'term'
 local beep = require('computer').beep
 local event = require 'event'
+local text = require 'text'
 
 -- constants
 local CONFIG_FILE = '/etc/doorCtrl.conf'
@@ -179,6 +180,7 @@ print("Found "..#doors.." for "..#redstoneIO.." redstone I/O")
 os.sleep(2)
 
 if(ops.config or ops.c) then
+    local run = true
     --password check
     local try = 0
     if(config.adminCode ~= "") then
@@ -194,7 +196,6 @@ if(ops.config or ops.c) then
             os.exit(1)
         end
     end
-    local run = true
     --main loop
     while run do
         term.clear()
@@ -205,7 +206,7 @@ if(ops.config or ops.c) then
         print("")
         print("n : New door")
         print("d : Apply default (current value : "..tostring(config.applyDefault)..")")
-        print("p : Change password")
+        print("s : Security")
         print("q : Exit")
         io.write(">")
         local op = io.read()
@@ -229,6 +230,7 @@ if(ops.config or ops.c) then
                     print("s : Side")
                     print("t : Toggle")
                     print("b : Back")
+                    print("q : Exit")
                     io.write(">"..doorID..">")
                     local op = io.read()
                     if(op == "r") then
@@ -255,10 +257,9 @@ if(ops.config or ops.c) then
                             config.doors[doorID].side = sides[door:getSide()]
                             saveConfig(config)
                         end
-                    elseif(op == "t") then
-                        door:toggle()
-                    elseif(op == "b") then
-                        break
+                    elseif(op == "t") then door:toggle()
+                    elseif(op == "b") then break
+                    elseif(op == "q") then run = false break
                     end
                 end
             end
@@ -290,24 +291,61 @@ if(ops.config or ops.c) then
         elseif(op == "d") then
             config.applyDefault = not config.applyDefault
             saveConfig(config)
-        elseif(op == "p") then
-            print("Enter new password")
-            io.write(">p>")
-            local p1 = readPassword()
-            io.write("\n")
-            print("Confirm password")
-            io.write(">p>")
-            local p2 = readPassword()
-            if(p1 == p2) then
-                config.adminCode = p1
-                saveConfig(config)
-            else
-                print("Password do not match. Abodring")
+        elseif(op == "s") then
+            while true do
+                term.clear()
+                print("Whiteliste : ")
+                for i, name in ipairs(config.whitelist) do
+                    io.write(text.padRight(i.." : "..name,19))
+                    if(i%4 == 0) then io.write("\n") end
+                end
+                if(#config.whitelist %4 ~= 0) then io.write("\n") end
+                print("")
+                if(#config.whitelist > 0) then
+                    print(text.padRight("[1-"..#config.whitelist.."]",7)..": Remove user")
+                end
+                print("n      : New user")
+                print("p      : Change password ("..((config.adminCode ~= "") and "set" or "unset")..")")
+                print("b      : Back")
+                print("q      : Exit")
+                io.write(">s>")
+                op = io.read()
+                if(op == "p") then
+                    print("Enter new password")
+                    io.write(">s>p>")
+                    local p1 = readPassword()
+                    io.write("\n")
+                    print("Confirm password")
+                    io.write(">s>p>")
+                    local p2 = readPassword()
+                    if(p1 == p2) then
+                        config.adminCode = p1
+                        saveConfig(config)
+                    else
+                        print("Password do not match. Abodring")
+                    end
+                elseif(op == "n") then
+                    print("Enter user name")
+                    io.write(">s>n>")
+                    local name = io.read()
+                    if(name ~= "") then
+                        table.insert(config.whitelist,name)
+                        saveConfig(config)
+                    else
+                        print("No name given. Abording")
+                    end
+                elseif(tonumber(op) and tonumber(op) > 1 and tonumber(op) <= #config.whitelist) then
+                    table.remove(config.whitelist,tonumber(op))
+                    saveConfig(config)
+                elseif(op == "b") then break
+                elseif(op == "q") then run = false break
+                end
             end
         elseif(op == "q") then
-            os.exit(0)
+            run = false
         end
     end
+    term.clear()
 else
 
     local function closeGUI()
@@ -320,7 +358,16 @@ else
     event_touch = nil
     event_term = event.listen("interrupted",closeGUI)
 
-    local function buttonCallback(self,eventName,uuid,x,y)
+    local function buttonCallback(self,eventName,uuid,x,y,button,playerName)
+        local allowed = false
+        if(#config.whitelist > 0) then
+            for index,item in ipairs(config.whitelist) do
+                if(item == playerName) then allowed = true break end
+            end
+        else
+            allowed = true
+        end
+        if(not allowed) then return end
         verbose(self.door:getName())
         beep()
         self.door:toggle()
