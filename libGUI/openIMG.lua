@@ -1,7 +1,7 @@
 local shell = require("shell")
 local term = require("term")
 local fs = require("filesystem")
-local libgui = require("libgui")
+local libgui = require("libGUI")
 local gpu = require("component").gpu
 
 local args,opts = shell.parse(...)
