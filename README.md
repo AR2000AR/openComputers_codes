@@ -33,6 +33,9 @@ Note that the exchange rate is 50:1 instead of the default 100:1.
 ### itemIdCatcher
 Write the item id of every items in the chest on top of the transposer in a file. Item are moved on the chest on the bottom once it's id is saved. The program stop after 3 loop without items in the chest.
 
+### doorCtrl
+Control a number of redstone IO blocs with a single touchscreen. Easy to configure with `doorCtrl -c`
+
 ---
 ## Additional librarys
 
