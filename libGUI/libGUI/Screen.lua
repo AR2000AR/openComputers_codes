@@ -17,15 +17,15 @@ Screen.trigger = function(self,...)
   if(self:isEnabled()) then self.private.clickHandler(self,...) end
 end
 Screen.private = {visible = true,enabled = true}
-Screen.private.clickHandler = function(self,eventName,uuid,x,y)
+Screen.private.clickHandler = function(self,eventName,uuid,x,y,button,playerName)
   if(eventName == "touch") then --filter only "touch" events
     for _,widget in ipairs(self.childs) do
       if(libClass.instanceOf(widget,Widget)) then
         if(widget:collide(x,y)) then --test colision
-          widget:trigger(eventName,uuid,x,y)
+          widget:trigger(eventName,uuid,x,y,button,playerName)
         end
       else --widget is a Screen
-        widget:trigger(eventName,uuid,x,y)
+        widget:trigger(eventName,uuid,x,y,button,playerName)
       end
     end
   end
