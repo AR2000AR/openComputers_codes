@@ -36,6 +36,9 @@ Write the item id of every items in the chest on top of the transposer in a file
 ### doorCtrl
 Control a number of redstone IO blocs with a single touchscreen. Easy to configure with `doorCtrl -c`
 
+### autocrafter
+Use a PC, a Robot, linked card and a transposer to craft items
+
 ---
 ## Additional librarys
 
