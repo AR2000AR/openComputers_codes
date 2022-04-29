@@ -1,4 +1,3 @@
-
 local event = require 'event'
 local component = require 'component'
 local io = require 'io'
@@ -6,11 +5,13 @@ local filesystem = require 'filesystem'
 local serialization = require 'serialization'
 local string = require 'string'
 local term = require 'term'
+local text = require 'text'
 
 local transposer = component.transposer
 
 local RECIPES_FILE = "/etc/autocraft/recipes.list"
 local RECIPES_DIR = "/etc/autocraft/recipes.d/"
+local COLUMNS = 3
 
 --get the keys from a table
 local function getKeys(sourceArray)
@@ -42,13 +43,37 @@ local function loadRecipe(recipePatern,sideStorage,sideRobot)
     local craftingGrid = {1,2,3,5,6,7,9,10,11} --crafting grid slot to robot inventory slot
     emptyCrafter(sideStorage,sideRobot)
     for i,item in pairs(recipePatern) do
-        if(item ~= "minecraft:air" and item ~= "") then
+        if(type(item) ~= "table") then item = {item,false} end
+        if(item[1] ~= "minecraft:air" and item[1] ~= "") then
             local itemSlot = findStack(item,sideStorage)
-            if(itemSlot == 0) then emptyCrafter(sideStorage,sideRobot) return false end --not enough ressources
+            if(itemSlot == 0) then emptyCrafter(sideStorage,sideRobot) return item end --not enough ressources
             transposer.transferItem(sideStorage,sideRobot,1,itemSlot,craftingGrid[i]) --put
         end
     end
     return true
+end
+
+local function craftItem(recipes,itemName,sideStorage,sideRobot)
+    print("Crafing "..itemName)
+    local craftable = true
+    while craftable == true do
+        local loaded = loadRecipe(recipes[itemName],sideStorage,sideRobot)
+        if(loaded == true) then
+            print("Crafted 1 "..itemName)
+            component.tunnel.send("craft")
+            emptyCrafter(sideStorage,sideRobot)
+            return true
+        else
+            if(recipes[loaded[1]]) then
+                craftable = craftItem(recipes,loaded[1],sideStorage,sideRobot)
+            else
+                emptyCrafter(sideStorage,sideRobot)
+                return loaded[1]
+            end
+        end
+    end 
+    emptyCrafter(sideStorage,sideRobot)
+    return craftable
 end
 
 --init
@@ -104,10 +129,10 @@ while run do
     if(pageNumber > maxPage) then pageNumber = maxPage end
     if(pageNumber < 1) then pageNumber = 1 end
     for i, name in ipairs(recipesNames) do
-        io.write(text.padRight(name,19))
-        if(i%4 == 0) then io.write("\n") end
+        io.write(text.padRight(name,math.floor(80/COLUMNS)))
+        if(i%COLUMNS == 0) then io.write("\n") end
     end
-    if(#recipesNames %4 ~= 0) then io.write("\n") end
+    if(#recipesNames %COLUMNS ~= 0) then io.write("\n") end
     print("Page "..pageNumber.."/"..maxPage)
     io.write("<item name>|<new> :")
     local itemName = io.read()
@@ -166,17 +191,11 @@ while run do
         io.write("[item count] (default 1) :")
         local count = io.read()
         if(not tonumber(count)) then count = 1 end
-        print("Crafing "..itemName)
         local crafted = 0
         for i=1,count do
-            if(loadRecipe(recipes[itemName],sideStorage,sideRobot)) then
-                component.tunnel.send(1)
-                crafted = crafted + 1
-                emptyCrafter(sideStorage,sideRobot)
-            else
-                emptyCrafter(sideStorage,sideRobot)
-                break
-            end
+            local craftedItem = craftItem(recipes,itemName,sideStorage,sideRobot)
+            if(craftedItem == true) then crafted = crafted+1
+            else print("Missing "..craftedItem) end
         end
         print("Crafted "..crafted.."/"..count.." "..itemName)
         io.write("Press enter to continue")
