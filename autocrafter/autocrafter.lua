@@ -10,6 +10,7 @@ local text = require 'text'
 local transposer = component.transposer
 
 local RECIPES_FILE = "/etc/autocraft/recipes.list"
+local LABEL_FILE = "/etc/autocraft/label.csv"
 local RECIPES_DIR = "/etc/autocraft/recipes.d/"
 local COLUMNS = 3
 
@@ -25,50 +26,79 @@ end
 --find item in storage
 local function findStack(targetItem,side)
     local slot = 1
-    if(type(targetItem) ~= "table") then targetItem = {targetItem,false} end
+    local itemID = targetItem:match("^[^/]+")
+    local itemDamage = targetItem:match("%d+")
+    if(itemDamage) then itemDamage = tonumber(itemDamage) end
     for item in transposer.getAllStacks(side) do
-        if(item.name == targetItem[1] and (not targetItem[2] or targetItem[2] == item.damage)) then return slot end
+        if(item.name == itemID and (not itemDamage or itemDamage == item.damage)) then return slot end
         slot = slot +1
     end
     return 0
 end
 
+--empty the crafter into the storage
 local function emptyCrafter(sideStorage,sideRobot)
     for slot = 1,transposer.getInventorySize(sideRobot) do
-        transposer.transferItem(sideRobot,sideStorage,64,slot)
+        if(transposer.getStackInSlot(sideRobot,slot)) then transposer.transferItem(sideRobot,sideStorage,64,slot) end
     end
 end
 
+-- put the items for a recipe in the crafter
 local function loadRecipe(recipePatern,sideStorage,sideRobot)
     local craftingGrid = {1,2,3,5,6,7,9,10,11} --crafting grid slot to robot inventory slot
     emptyCrafter(sideStorage,sideRobot)
     for i,item in pairs(recipePatern) do
-        if(type(item) ~= "table") then item = {item,false} end
-        if(item[1] ~= "minecraft:air" and item[1] ~= "") then
+        local itemID = item:match("^[^/]+")
+        local itemDamage = tonumber(item:match("%d+$"))
+        if(itemID and itemID ~= "minecraft:air" and itemID ~= "") then
             local itemSlot = findStack(item,sideStorage)
-            if(itemSlot == 0) then emptyCrafter(sideStorage,sideRobot) return item end --not enough ressources
+            if(itemSlot == 0) then 
+                emptyCrafter(sideStorage,sideRobot) 
+                if(itemDamage) then return string.format("%s/%d",itemID,itemDamage) 
+                else return itemID end
+            end --not enough ressources
             transposer.transferItem(sideStorage,sideRobot,1,itemSlot,craftingGrid[i]) --put
         end
     end
     return true
 end
 
-local function craftItem(recipes,itemName,sideStorage,sideRobot)
-    print("Crafing "..itemName)
+--ask the linked robot to craft and wait for it's answer
+local function craft(...)
+    component.tunnel.send(...)
+    local _,_,_,_,_,m = event.pull(1,"modem_message")
+    --timout of 1s in case the event was recived befor we listen for it
+    return m
+end
+
+--recursive function. Craft a item and it's missing ressouces
+local function craftItem(recipes,labels,itemName,sideStorage,sideRobot)
+    print("Crafing "..labels[itemName] or itemName)
+    local name = itemName:match("^[^/]+")
+    local damage = tonumber(itemName:match("%d+$")) or 0
     local craftable = true
     while craftable == true do
-        local loaded = loadRecipe(recipes[itemName],sideStorage,sideRobot)
+        local loaded = loadRecipe(recipes[name][damage],sideStorage,sideRobot)
         if(loaded == true) then
-            print("Crafted 1 "..itemName)
-            component.tunnel.send("craft")
+            local crafted = craft("craft")
             emptyCrafter(sideStorage,sideRobot)
-            return true
+            return crafted
         else
-            if(recipes[loaded[1]]) then
-                craftable = craftItem(recipes,loaded[1],sideStorage,sideRobot)
+            
+            local loadedName = loaded:match("^[^/]+")
+            local loadedDamage = tonumber(loaded:match("%d+$"))
+            if(recipes[loadedName]) then
+                if(not loadedDamage) then 
+                    for k,r in pairs(recipes[loadedName]) do
+                        craftable = craftItem(recipes,labels,string.format("%s/%d",loadedName,k),sideStorage,sideRobot)
+                        if(craftable == true) then break end
+                    end
+                elseif(recipes[loadedName][loadedDamage]) then
+                    craftable = craftItem(recipes,labels,loaded,sideStorage,sideRobot)
+                end
             else
                 emptyCrafter(sideStorage,sideRobot)
-                return loaded[1]
+                return loaded
             end
         end
     end 
@@ -87,10 +117,14 @@ if(filesystem.exists(RECIPES_FILE)) then
     rFile:close()
     if(fileRecipes) then
         for key,val in pairs(fileRecipes) do
-            recipes[key] = val
+            if(not recipes[key]) then recipes[key] = {} end
+            for d,patern in pairs(val) do
+                recipes[key][d] = patern
+            end
         end
     end
 end
+--load from .d
 if(filesystem.isDirectory(RECIPES_DIR)) then
     for file in filesystem.list(RECIPES_DIR) do
         if(string.sub(file,-1) ~= "/") then 
@@ -99,7 +133,10 @@ if(filesystem.isDirectory(RECIPES_DIR)) then
             rFile:close()
             if(fileRecipes) then
                 for key,val in pairs(fileRecipes) do
-                    recipes[key] = val
+                    if(not recipes[key]) then recipes[key] = {} end
+                    for d,patern in pairs(val) do
+                        recipes[key][d] = patern
+                    end
                 end
             end
         end
@@ -117,89 +154,144 @@ for i=0,5 do
     end
 end
 
+--load item labels
+local labels={}
+if(filesystem.exists(LABEL_FILE) and not filesystem.isDirectory(LABEL_FILE)) then
+    local lFile = io.open(LABEL_FILE)
+    for line in lFile:lines() do
+        local name = line:match("^(.*),")
+        local label = line:match(",(.*)$")
+        labels[name] = label
+    end
+end
+
 -- main loop
-local recipesNames = getKeys(recipes)
-event.listen("interrupted",function() run = false return false end)
+function getRecipesNames(recipes)
+    local recipesNames = {}
+    for itemID,recipesList in pairs(recipes) do
+        for damage,_ in pairs(recipesList) do
+            table.insert(recipesNames,string.format("%s/%d",itemID,damage))
+        end
+    end
+    return recipesNames
+end
+
+recipesNames = getRecipesNames(recipes)
+table.sort(recipesNames)
 run = true
 local pageNumber = 1
 local maxPage = 1
 while run do
-    maxPage = math.ceil(#recipesNames / 23.0)
+
     term.clear()
     if(pageNumber > maxPage) then pageNumber = maxPage end
     if(pageNumber < 1) then pageNumber = 1 end
-    for i, name in ipairs(recipesNames) do
-        io.write(text.padRight(name,math.floor(80/COLUMNS)))
+    maxPage = math.max(1,math.ceil(#recipesNames/(23*COLUMNS)))
+    
+    local firstID=(pageNumber-1)*(23*COLUMNS)+1
+    local lastID= math.min(pageNumber*(23*COLUMNS),#recipesNames)
+    
+    --print(pageNumber,maxPage,firstID,lastID)
+
+    for i=firstID,lastID do
+        io.write(text.padRight(i.." : "..labels[recipesNames[i]] or recipesNames[i],math.floor(80/COLUMNS)))
         if(i%COLUMNS == 0) then io.write("\n") end
     end
     if(#recipesNames %COLUMNS ~= 0) then io.write("\n") end
     print("Page "..pageNumber.."/"..maxPage)
-    io.write("<item name>|<new> :")
-    local itemName = io.read()
-    if(tonumber(itemName))then
-        pageNumber = tonumber(itemName)
-    elseif(itemName == "new") then
+
+    io.write("<id>|<new>|<refreshLabels> :")
+    local userInput = io.read()
+    if(userInput == false) then run = false
+    elseif(string.match(userInput,"^p%d$"))then
+        pageNumber = tonumber(string.match("%d"))
+    elseif(tonumber(userInput)) then
+        userInput=tonumber(userInput)
+        if(userInput >= 1 or userInput <= #recipesNames) then 
+            local itemName = recipesNames[userInput]:match("^[^/]+")
+            local itemDamage = tonumber(recipesNames[userInput]:match("%d+$")) or 0
+            if(recipes[itemName] and recipes[itemName][itemDamage]) then
+                io.write("[item count] (default 1) :")
+                local count = io.read()
+                if(count == false) then goto END_CRAFT
+                elseif(not tonumber(count)) then count = 1 end
+                local crafted = 0
+                for i=1,count do
+                    local craftedItem = craftItem(recipes,labels,recipesNames[userInput],sideStorage,sideRobot)
+                    if(craftedItem == true) then crafted = crafted+1
+                    else print("Missing "..(labels[craftedItem] or craftedItem)) end
+                end
+                print(string.format("Crafted %d/%d %s",crafted,count,labels[recipesNames[userInput]] or recipesNames[userInput]))
+            end
+        end
+        ::END_CRAFT::
+        io.write("Press enter to continue")
+        io.read()
+    elseif(userInput == "new" or userInput == "n") then
         term.clear()
         print("Reading recipe from robot")
         local newPatern = {}
+        local save = ""
         for i,slot in pairs({1,2,3,5,6,7,9,10,11}) do
             local item = transposer.getStackInSlot(sideRobot,slot)
             local itemInf=""
             if(item) then
-                print("slot : "..i,item.name,item.damage)
-                itemInf={item.name,false}
-                io.write("Save damage yN ?")
-                local save = io.read()
-                if(save == "y" or save == "Y") then itemInf[2]=item.damage end
+                print(string.format("slot %d : %s (%s/%d)",i,item.label,item.name,item.damage))
+                itemInf=item.name
+                repeat
+                    if(save ~= "N" and save ~= "Y") then
+                        io.write("Save damage y:yes | Y:yes to all | n:no (default) | N:no to all ?")
+                        save = io.read()
+                    end
+                until(save == false or save:match("^[yYnN]$"))
+                if(save == false) then goto END_NEW
+                elseif(save == "y" or save == "Y") then itemInf=string.format("%s/%d",item.name,item.damage) end
             end
             table.insert(newPatern,itemInf)
         end
-        local newName = ""
-        repeat
-            io.write("Craft name :")
-            newName = io.read()
-        until newName ~= "" and not tonumber(newName) and newName ~= "new" and newName ~= "delete"
-        recipes[newName] = newPatern
-        recipesNames = getKeys(recipes)
+        print("Crafting one")
+        if(not craft("craft")) then goto END_NEW end
+        local newItem = component.transposer.getStackInSlot(sideRobot,1)
+        emptyCrafter(sideStorage,sideRobot)
+        print("Saving recipe for "..string.format("%s (%s/%d)",newItem.label,newItem.name,newItem.damage))
+        --save the label if it does not exists yet
+        if(not labels[string.format("%s/%d",newItem.name,newItem.damage)]) then
+            labels[string.format("%s/%d",newItem.name,newItem.damage)] = newItem.label
+            local lFile = io.open(LABEL_FILE,"a")
+            lFile:write(string.format("%s/%d,%s\n",newItem.name,newItem.damage,newItem.label))
+            lFile:close()
+        end
+        if(not recipes[newItem.name]) then recipes[newItem.name] = {} end
+        recipes[newItem.name][newItem.damage] = newPatern
+        recipesNames = getRecipesNames(recipes)
         --save the new recipe in the main file
         local fRecipes = {}
         if(filesystem.exists(RECIPES_FILE) and not filesystem.isDirectory(RECIPES_FILE)) then
             local rFile = io.open(RECIPES_FILE)
-            fRecipes = serialization.unserialize(rFile:read("*a"))
+            fRecipes = serialization.unserialize(rFile:read("*a")) or {}
             rFile:close()
         end
-        fRecipes[newName] = newPatern
+        if(not fRecipes[newItem.name]) then fRecipes[newItem.name] = {} end
+        fRecipes[newItem.name][newItem.damage] = newPatern
         rFile = io.open(RECIPES_FILE,"w")
         rFile:write(serialization.serialize(fRecipes))
         rFile:close()
-    elseif(itemName == "delete") then
-        term.clear()
-        print("Chose a recipe to delete or leave blanc to cancel.\nOnly recipes in the main config file can be deleted that way.\nYou will need to restart the program to apply the changes")
-        io.write(">")
-        local rName = io.read()
-        local fRecipes = {}
-        if(filesystem.exists(RECIPES_FILE) and not filesystem.isDirectory(RECIPES_FILE)) then
-            local rFile = io.open(RECIPES_FILE)
-            fRecipes = serialization.unserialize(rFile:read("*a"))
-            rFile:close()
+        
+        ::END_NEW::
+    elseif(userInput == "refreshLabels" or userInput == "r") then
+        --scan for unknown label
+        local lFile = io.open(LABEL_FILE,"a")
+        for item in transposer.getAllStacks(sideStorage) do
+            if(item and item.name) then
+                local itemID = string.format("%s/%d",item.name,item.damage)
+                if(not labels[itemID]) then 
+                    labels[itemID] = item.label
+                    lFile:write(string.format("%s,%s\n",itemID,item.label))
+                end
+            end
         end
-        fRecipes[rName] = nil
-        rFile = io.open(RECIPES_FILE,"w")
-        rFile:write(serialization.serialize(fRecipes))
-        rFile:close()
-    elseif(recipes[itemName]) then
-        io.write("[item count] (default 1) :")
-        local count = io.read()
-        if(not tonumber(count)) then count = 1 end
-        local crafted = 0
-        for i=1,count do
-            local craftedItem = craftItem(recipes,itemName,sideStorage,sideRobot)
-            if(craftedItem == true) then crafted = crafted+1
-            else print("Missing "..craftedItem) end
-        end
-        print("Crafted "..crafted.."/"..count.." "..itemName)
-        io.write("Press enter to continue")
-        io.read()
+        lFile:close()
+    elseif(userInput == "exit" or userInput:match("^[eq]$")) then run = false
     end
 end
 term.clear()
