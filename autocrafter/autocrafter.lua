@@ -84,7 +84,6 @@ local function craftItem(recipes,labels,itemName,sideStorage,sideRobot)
             emptyCrafter(sideStorage,sideRobot)
             return crafted
         else
-            
             local loadedName = loaded:match("^[^/]+")
             local loadedDamage = tonumber(loaded:match("%d+$"))
             if(recipes[loadedName]) then
@@ -95,6 +94,9 @@ local function craftItem(recipes,labels,itemName,sideStorage,sideRobot)
                     end
                 elseif(recipes[loadedName][loadedDamage]) then
                     craftable = craftItem(recipes,labels,loaded,sideStorage,sideRobot)
+                else --do know a recipe for the missing item
+                    emptyCrafter(sideStorage,sideRobot)
+                    return loaded
                 end
             else
                 emptyCrafter(sideStorage,sideRobot)
