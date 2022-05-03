@@ -13,6 +13,9 @@ local RECIPES_FILE = "/etc/autocraft/recipes.list"
 local LABEL_FILE = "/etc/autocraft/label.csv"
 local RECIPES_DIR = "/etc/autocraft/recipes.d/"
 local COLUMNS = 3
+local SCREEN_WIDTH,ROW = component.gpu.getResolution()
+SCREEN_WIDTH = math.floor(SCREEN_WIDTH)
+ROW = math.floor(ROW-3)
 
 --get the keys from a table
 local function getKeys(sourceArray)
@@ -198,15 +201,15 @@ while run do
     term.clear()
     if(pageNumber > maxPage) then pageNumber = maxPage end
     if(pageNumber < 1) then pageNumber = 1 end
-    maxPage = math.max(1,math.ceil(#recipesNames/(23*COLUMNS)))
+    maxPage = math.max(1,math.ceil(#recipesNames/(ROW*COLUMNS)))
     
-    local firstID=(pageNumber-1)*(23*COLUMNS)+1
-    local lastID= math.min(pageNumber*(23*COLUMNS),#recipesNames)
+    local firstID=(pageNumber-1)*(ROW*COLUMNS)+1
+    local lastID= math.min(pageNumber*(ROW*COLUMNS),#recipesNames)
     
     --print(pageNumber,maxPage,firstID,lastID)
 
     for i=firstID,lastID do
-        io.write(text.padRight(string.sub(i.." : "..(labels[recipesNames[i]] or recipesNames[i]),1,math.floor(80/COLUMNS)-1),math.floor(80/COLUMNS)))
+        io.write(text.padRight(string.sub(i.." : "..(labels[recipesNames[i]] or recipesNames[i]),1,math.floor(SCREEN_WIDTH/COLUMNS)-1),math.floor(SCREEN_WIDTH/COLUMNS)))
         if(i%COLUMNS == 0) then io.write("\n") end
     end
     if(#recipesNames %COLUMNS ~= 0) then io.write("\n") end
@@ -215,8 +218,8 @@ while run do
     io.write("<id>|<new>|<refreshLabels> :")
     local userInput = io.read()
     if(userInput == false) then run = false
-    elseif(string.match(userInput,"^p%d$"))then
-        pageNumber = tonumber(string.match(userInput,"%d"))
+    elseif(userInput:match("^p%d$"))then
+        pageNumber = tonumber(userInput:match("%d"))
     elseif(tonumber(userInput)) then
         userInput=tonumber(userInput)
         if(userInput >= 1 or userInput <= #recipesNames) then 
