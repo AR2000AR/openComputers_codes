@@ -206,7 +206,7 @@ while run do
     --print(pageNumber,maxPage,firstID,lastID)
 
     for i=firstID,lastID do
-        io.write(text.padRight(string.sub(i.." : "..labels[recipesNames[i]] or recipesNames[i],1,math.floor(80/COLUMNS)-1),math.floor(80/COLUMNS)))
+        io.write(text.padRight(string.sub(i.." : "..(labels[recipesNames[i]] or recipesNames[i]),1,math.floor(80/COLUMNS)-1),math.floor(80/COLUMNS)))
         if(i%COLUMNS == 0) then io.write("\n") end
     end
     if(#recipesNames %COLUMNS ~= 0) then io.write("\n") end
@@ -216,7 +216,7 @@ while run do
     local userInput = io.read()
     if(userInput == false) then run = false
     elseif(string.match(userInput,"^p%d$"))then
-        pageNumber = tonumber(string.match("%d"))
+        pageNumber = tonumber(string.match(userInput,"%d"))
     elseif(tonumber(userInput)) then
         userInput=tonumber(userInput)
         if(userInput >= 1 or userInput <= #recipesNames) then 
