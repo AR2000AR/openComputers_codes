@@ -175,11 +175,21 @@ function getRecipesNames(recipes)
             table.insert(recipesNames,string.format("%s/%d",itemID,damage))
         end
     end
+    table.sort(recipesNames,function(s1,s2)
+        local modID1 = s1:match("^(.*):")
+        local modID2 = s2:match("^(.*):")
+        local itemID1 = s1:match(":(.*)$")
+        local itemID2 = s2:match(":(.*)$")
+        if(modID1 == modID2) then --same mod
+            return itemID1 < itemID2
+        else
+            return modID1<modID2
+        end
+    end)
     return recipesNames
 end
 
 recipesNames = getRecipesNames(recipes)
-table.sort(recipesNames)
 run = true
 local pageNumber = 1
 local maxPage = 1
