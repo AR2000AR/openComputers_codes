@@ -76,7 +76,7 @@ end
 
 --recursive function. Craft a item and it's missing ressouces
 local function craftItem(recipes,labels,itemName,sideStorage,sideRobot)
-    print("Crafing "..labels[itemName] or itemName)
+    print("Crafing "..(labels[itemName] or itemName))
     local name = itemName:match("^[^/]+")
     local damage = tonumber(itemName:match("%d+$")) or 0
     local craftable = true
