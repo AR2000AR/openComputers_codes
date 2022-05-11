@@ -377,6 +377,7 @@ else
             self:setBackground(0xff0000)
         end
         self:draw()
+        
     end
 
     
