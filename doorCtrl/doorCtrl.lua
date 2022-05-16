@@ -377,7 +377,17 @@ else
             self:setBackground(0xff0000)
         end
         self:draw()
-        
+        if(button == 1) then
+            event.timer(1, function ()
+                self.door:toggle()
+                if(self.door:isOpen()) then 
+                    self:setBackground(0x00ff00)
+                else
+                    self:setBackground(0xff0000)
+                end
+                self:draw()
+            end)
+        end
     end
 
     
