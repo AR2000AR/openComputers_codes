@@ -1,6 +1,8 @@
 local libClass = require("libClass")
 local Widget = require("libGUI/widget/Widget")
 local Rectangle = require("libGUI/widget/Rectangle")
+local gpu = require("component").gpu
+local os = require "os"
 
 local Screen = libClass.newClass("Screen")
 Screen.childs = {}
@@ -35,9 +37,14 @@ Screen.isVisible = function(self) return self.private.visible end
 Screen.enable = function(self,enable) self.private.enabled = enable end
 Screen.isEnabled = function(self) return self.private.enabled end
 Screen.draw = function(self)
+  local drawBuffer = gpu.allocateBuffer()
+  gpu.setActiveBuffer(drawBuffer)
   for _,widget in ipairs(self.childs) do
     if(widget:isVisible()) then widget:draw() end
   end
+  gpu.bitblt(0)
+  gpu.setActiveBuffer(0)
+  gpu.freeBuffer(drawBuffer)
 end
 
 return Screen
