@@ -22,6 +22,7 @@ function Text.getBackground(self) return self.private.color.background end
 function Text.setForeground(self,color) self.private.color.foreground = color or -1 end
 function Text.setBackground(self,color) self.private.color.background = color or -1 end
 function Text.setColor(self,color) self:setForeground(color) end
+function Text.getColor(self) return self:getForeground() end
 
 function Text.draw(self)
   local x,y = self:getPos()
