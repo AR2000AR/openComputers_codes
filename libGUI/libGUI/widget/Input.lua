@@ -13,7 +13,7 @@ function Input.private.onKeyDown(self,eventName,component,char,key,player)
         self.private.keyDownEvent = nil
         event.cancel(self.private.touchEvent)
         self.private.touchEvent = nil
-    else
+    elseif(char ~= 0) then
         self:setText(string.format("%s%s",self:getText(),string.char(char)))
     end
 end
@@ -22,9 +22,9 @@ function Input.private.callback(self,eventName,uuid,x,y,button,playerName)
         self.private.keyDownEvent = event.listen("key_down",function(...) self.private.onKeyDown(self,...) end)
         self.private.touchEvent = event.listen("touch", function(eventName,uuid,x,y,button,playerName)
             if(not self:collide(x,y)) then
-                event.cancel(self.private.keyDownEvent)
+                if(self.private.keyDownEvent) then event.cancel(self.private.keyDownEvent) end
                 self.private.keyDownEvent = nil
-                event.cancel(self.private.touchEvent)
+                if(self.private.touchEvent) then event.cancel(self.private.touchEvent) end
                 self.private.touchEvent = nil
             end
         end)
