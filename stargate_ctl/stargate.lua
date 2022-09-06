@@ -32,7 +32,8 @@ local GATE_STATE = {
 
 local GATE_IMG_X, GATE_IMG_Y = 48, -1
 local LIST_TEXT_X, LIST_TEXT_Y = 2, 3 - 1
-local DIALLER_X, DIALLER_Y = 54, 23
+local DIALLER_X, DIALLER_Y = 54, 22
+local PASSWORD_X, PASSWORD_Y = 50,23
 
 --global event listeners ID
 local touchEvent = nil
@@ -41,6 +42,7 @@ local sgIrisStateChangeEvent = nil
 local sgDialOutEvent = nil
 local sgDialInEvent = nil
 local sgChevronEngadedEvent = nil
+local sgMessageRecivedEvent = nil
 local interruptedEvent = nil
 
 -- global vars
@@ -53,6 +55,11 @@ local instantDialed = true
 local oldResX, oldResY = gpu.getResolution()
 local gates = {}
 local waitingForConfirmation = false
+local receivedPassword = false
+local irisManual = true
+local outgoingAuth = false
+local outgoingBlacklist = false
+local lastPassword = ""
 
 --global widgets
 local textRemoteAddr = nil
@@ -68,6 +75,7 @@ local nameInput = nil
 local buttonWhitelist = nil
 local buttonBlacklist = nil
 local inputAddr = nil
+local passwordField = nil
 
 local function closeApp(...)
     if (touchEvent) then
@@ -87,6 +95,9 @@ local function closeApp(...)
     end
     if (sgChevronEngadedEvent) then
         event.cancel(sgChevronEngadedEvent)
+    end
+    if (sgMessageRecivedEvent) then
+        event.cancel(sgMessageRecivedEvent)
     end
     if (interruptedEvent) then
         event.cancel(interruptedEvent)
@@ -137,23 +148,29 @@ local function isGateInList(list, add)
 end
 
 local function findGate(addr,name)
+    local ignoreName = not name
     local id = nil
     for i, gate in ipairs(gates) do
-        if (gateAddressEqual(gate.addr, addr) and gate.name == name) then
+        if (gateAddressEqual(gate.addr, addr) and (gate.name == name or ignoreName)) then
             return i
         end
     end
     return false
 end
 
-
 local function setIrisButton()
-    if (stargate.irisState() == "Open" or stargate.irisState() == "Opening") then
+    buttonIris:setText(stargate.irisState())
+    if(not irisManual) then
+        buttonIris:setBackground(0xff9200)
+        if(not (stargate.irisState() == "Open" or stargate.irisState() == "Opening") and outgoingBlacklist and not outgoingAuth) then
+            buttonIris:setText("BLACKLIST")
+            buttonIris:setBackground(0xff0000)
+        end
+    elseif (stargate.irisState() == "Open" or stargate.irisState() == "Opening") then
         buttonIris:setBackground(0x00ff00)
     else
         buttonIris:setBackground(0xff0000)
     end
-    buttonIris:setText(stargate.irisState())
 end
 
 local function toogleFromList(list, addr)
@@ -168,7 +185,7 @@ end
 local function saveGatesAdd()
     local gFile = io.open(GATE_LIST, "w")
     for i, gate in ipairs(gates) do
-        gFile:write(string.format("%s,%s\n", gate.name, gate.addr))
+        gFile:write(string.format("%s,%s,%s\n", gate.name, gate.addr,gate.password))
     end
     gFile:close()
 end
@@ -202,11 +219,12 @@ local function saveWhitelist()
 end
 
 local function gateButtonTouchHandler(widget, eventName, uuid, x, y, button, playerName)
-    if (eventName ~= "touch") then
-        return
-    end
     if (button == 0) then --left click
+        if(inputAddr:getValue() == formatAddress(widget.addr)) then
+            stargate.dial(widget.addr)
+        end
         inputAddr:setText(formatAddress(widget.addr))
+        passwordField:setText(widget.password)
     else --rightclick
         if (waitingForConfirmation) then
             return
@@ -224,11 +242,11 @@ local function gateButtonTouchHandler(widget, eventName, uuid, x, y, button, pla
         if (not widget:collide(xx, yy)) then
             return
         end
-        if (nameInput:getText() == "") then
+        if (nameInput:getValue() == "") then
             return
         end
-        gates[findGate(widget.addr,widget:getText())].name = nameInput:getText()
-        widget:setText(nameInput:getText())
+        gates[findGate(widget.addr,widget:getText())].name = nameInput:getValue()
+        widget:setText(nameInput:getValue())
         saveGatesAdd()
     end
 end
@@ -290,6 +308,7 @@ end
 local function addGateToList(gate)
     local gateListText = gui.widget.Text(LIST_TEXT_X, LIST_TEXT_Y + (#gatesListTexts + 1), 38, 1, 0xffffff, gate.name)
     gateListText.addr = gate.addr
+    gateListText.password = gate.password
     gateListText:setCallback(gateButtonTouchHandler)
     gateListText:setBackground(0) --need to be set fo the negativ effect to rename
     mainScreen:addChild(gateListText)
@@ -350,11 +369,14 @@ local function onStargateStateChange(eventName, componentAddress, toState, fromS
     --sgStargateStateChange addr to from
     --  Idle -> Dialling -> Opening -> Connected -> Closing -> Idle
     if (fromState == "Idle") then
+        irisManual = false
+        if(dialDirection == "O") then
+            receivedPassword = true
+        end
         stargate.closeIris()
-
-        textRemoteAddr:setText(" " .. getGateName(stargate.remoteAddress()))
+        textRemoteAddr:setText(" "..getGateName(stargate.remoteAddress()))
         textRemoteAddr:setForeground(0xff9200)
-        if (incomingBlacklist) then
+        if (incomingBlacklist or outgoingBlacklist) then
             textRemoteAddr:setForeground(0xff0000)
         end
     end
@@ -369,12 +391,15 @@ local function onStargateStateChange(eventName, componentAddress, toState, fromS
     end
     if (toState == "Connected") then
         vortexLayer:setVisible(true)
-        if (not incomingBlacklist) then
+        if (not incomingBlacklist and not outgoingBlacklist) then
             stargate.openIris()
             textRemoteAddr:setForeground(0x0000ff)
-        else
+        elseif(not outgoingBlacklist) then
             textRemoteAddr:setForeground(0xff0000)
+            stargate.sendMessage("info","blacklist")
         end
+        --send irisState to remote gate
+        stargate.sendMessage("irisState",stargate.irisState())
     end
     if (fromState == "Connected") then
         vortexLayer:setVisible(false)
@@ -383,8 +408,14 @@ local function onStargateStateChange(eventName, componentAddress, toState, fromS
         dialDirection = false
         incomingBlacklist = false
         instantDialed = true
+        receivedPassword = false
+        irisManual = true
+        outgoingAuth = false
+        outgoingBlacklist = false
+        setIrisButton()
         stargate.openIris()
         textRemoteAddr:setForeground(0xff0000)
+        passwordField:setForeground(0xffffff)
         textRemoteAddr:setText(" Idle")
         gateLayer.imageData = gui.Image(GATE_STATE[0])
     end
@@ -392,14 +423,10 @@ end
 local function onIrisStateChange(eventName, componentAddress, toState, fromState)
     --sgIrisStateChange addr to from
     --  Open -> Closing -> Closed -> Opening -> Open
+    --send irisState to remote gate
     irisLayer:setVisible(true)
-    if (incomingBlacklist) then
-        if (toState == "Opening") then
-            stargate.closeIris()
-        end
-        if (toState == "Open") then
-            stargate.disconnect()
-        end
+    if ((toState == "Closing" or toState == "Closed") and (outgoingBlacklist and not outgoingAuth)) then
+        irisManual = false
     end
     setIrisButton()
     if (toState == "Opening" or toState == "Closing") then
@@ -411,6 +438,7 @@ local function onIrisStateChange(eventName, componentAddress, toState, fromState
     if (toState == "Closed") then
         irisLayer.imageData = gui.Image(IRIS_STATE[3])
     end
+    stargate.sendMessage("irisState",stargate.irisState())
 end
 local function onDialOut(eventName, componentAddress, remoteGateAddress)
     --sgDialOut addr remoteGateAddr
@@ -455,6 +483,68 @@ local function onChevronEngaded(eventName, componentAddress, chevronID, chevronC
         gateLayer.imageData = gui.Image(GATE_STATE[chevronID + 1])
     end
 end
+local function onMessageReceived(eventName,componentAddress,...)
+    --sgMessageRecived addr ...
+    local arg=table.pack(...)
+    --error(arg[1])
+    if(arg[1] == "password") then
+        receivedPassword = arg[2] == config.password
+        lastPassword = arg[2]
+        stargate.sendMessage("auth",receivedPassword)
+        if(receivedPassword and not irisManual) then
+            stargate.openIris()
+        end
+    end
+    if(arg[1] == "info") then
+        if(arg[2] == "blacklist") then
+            outgoingBlacklist = true
+            textRemoteAddr:setColor(0xff0000)
+            stargate.sendMessage("password",passwordField:getValue())
+            setIrisButton()
+            if(config.savePassword) then
+                local id = findGate(stargate.remoteAddress())
+                if(gates[id].password ~= passwordField:getValue()) then
+                    gates[id].password = passwordField:getValue()
+                    saveGatesAdd()
+                end
+            end
+        end
+    end
+    if(arg[1] == "auth")then
+        if(arg[2]) then
+            outgoingAuth = true
+            passwordField:setForeground(0x00ff00)
+            textRemoteAddr:setColor(0x0000ff)
+            setIrisButton()
+        else
+            outgoingAuth = false
+            passwordField:setForeground(0xff0000)
+            setIrisButton()
+        end
+    end
+    if(arg[1] == "openIris") then 
+        if(not irisManual and receivedPassword) then
+            stargate.openIris()
+        else
+            stargate.sendMessage("irisState",stargate.irisState())
+        end
+    elseif(arg[1] == "closeIris") then
+            stargate.closeIris()
+    elseif(arg[1] == "getIrisState") then
+        stargate.sendMessage("irisState",stargate.irisState())
+    elseif(arg[1] == "irisState") then
+        if(arg[2] == "Closing" or arg[2] == "Closed") then
+            stargate.closeIris()
+            if(outgoingBlacklist and not outgoingAuth) then
+                irisManual = false
+            end
+        elseif(not irisManual and receivedPassword or dialDirection == "O") then
+            stargate.openIris()
+        else
+            stargate.sendMessage("irisState",stargate.irisState())
+        end
+    end
+end
 --register events
 interruptedEvent = event.listen("interrupted", closeApp)
 sgStargateStateChangeEvent = event.listen("sgStargateStateChange", onStargateStateChange)
@@ -462,6 +552,8 @@ sgIrisStateChangeEvent = event.listen("sgIrisStateChange", onIrisStateChange)
 sgDialOutEvent = event.listen("sgDialOut", onDialOut)
 sgDialInEvent = event.listen("sgDialIn", onDialIn)
 sgChevronEngadedEvent = event.listen("sgChevronEngaged", onChevronEngaded)
+sgMessageRecivedEvent = event.listen("sgMessageReceived", onMessageReceived)
+
 
 --INIT CONFIG==================================================================
 --inti config with default values
@@ -471,7 +563,9 @@ config = {
     dropBlacklistedConnexions = false,
     useBlacklist = false,
     useWhitelist = false,
-    saveNewGate = true
+    saveNewGate = true,
+    savePassword = true,
+    password = ""
 }
 --create the config dir if it doesn't exists already
 if (not filesystem.isDirectory(CONFIG_PATH)) then
@@ -495,7 +589,7 @@ if (filesystem.exists(GATE_LIST) and not filesystem.isDirectory(GATE_LIST)) then
             for v in string.gmatch(line, "([^,]+)") do
                 table.insert(gateInfo, v)
             end
-            table.insert(gates, {addr = gateInfo[2], name = gateInfo[1]})
+            table.insert(gates, {addr = gateInfo[2], name = gateInfo[1], password = gateInfo[3]})
         end
     end
 end
@@ -538,10 +632,10 @@ configScreen:addChild(backgroundColor)
 
 --MAIN SCREEN==================================================================
 --local addr
-local textLocalAddr = gui.widget.Text(1, 1, 14, 1, 0x00ff00, " " .. formatAddress(stargate.localAddress()))
+local textLocalAddr = gui.widget.Text(1, 1, 14, 1, 0x00ff00, " "..formatAddress(stargate.localAddress()))
 mainScreen:addChild(textLocalAddr)
 --remote addr
-textRemoteAddr = gui.widget.Text(16, 1, 14, 1, 0xff0000, " Idle")
+textRemoteAddr = gui.widget.Text(16, 1, 14, 1, 0xff0000, "Idle")
 mainScreen:addChild(textRemoteAddr)
 --disconnect
 local buttonDisconnect = gui.widget.Text(1, 25, 12, 1, 0, "Disconnect")
@@ -557,9 +651,10 @@ buttonIris = gui.widget.Text(14, 25, 12, 1, 0, "Close")
 setIrisButton()
 buttonIris:setCallback(
     function(...)
+        irisManual = true
         if (stargate.irisState() == "Open" or stargate.irisState() == "Opening") then
             stargate.closeIris()
-        else
+        elseif(not outgoingBlacklist or outgoingAuth) then
             stargate.openIris()
         end
     end
@@ -593,13 +688,26 @@ mainScreen:addChild(dialRect)
 dialRect:setCallback(
     function(widget, ...)
         stargate.disconnect()
-        stargate.dial(inputAddr:getText())
+        stargate.dial(inputAddr:getValue())
     end
 )
 local dialText = gui.widget.Input(DIALLER_X + 12, DIALLER_Y, 4, 1, 0x000000, "DIAL")
 dialText:setBackground(0x00ff00)
 dialText.val = inputAddr
 mainScreen:addChild(dialText)
+--password field
+passwordField = gui.widget.Input(PASSWORD_X,PASSWORD_Y,21,1,0xffffff,"")
+passwordField:setPlaceholder("*")
+mainScreen:addChild(passwordField)
+local passwordText = gui.widget.Text(PASSWORD_X+22,PASSWORD_Y,4,1,0,"SEND")
+passwordText:setBackground(0x0000ff)
+local passwordRect = gui.widget.Rectangle(PASSWORD_X+21,PASSWORD_Y,6,1,0x0000ff)
+passwordRect.val = passwordField
+passwordRect:setCallback(function(widget,...)
+    if(not outgoingAuth) then stargate.sendMessage("password",widget.val:getValue()) end
+end)
+mainScreen:addChild(passwordRect)
+mainScreen:addChild(passwordText)
 --Gate list----------------------------
 for i, gate in ipairs(gates) do
     if (i > 19) then
@@ -625,7 +733,7 @@ mainScreen:addChild(gateLayer)
 
 --CONFIG SCREEN================================================================
 --Whitelist
-buttonWhitelist = gui.widget.Text(2, 2, 18, 1, 0, " Whitelist")
+buttonWhitelist = gui.widget.Text(2, 2, 18, 1, 0, "Whitelist")
 buttonWhitelist:setCallback(
     function(widget, ...)
         config.useWhitelist = not config.useWhitelist
@@ -643,7 +751,7 @@ else
 end
 configScreen:addChild(buttonWhitelist)
 --Blacklist
-buttonBlacklist = gui.widget.Text(2, 4, 18, 1, 0, " Blacklist")
+buttonBlacklist = gui.widget.Text(2, 4, 18, 1, 0, "Blacklist")
 buttonBlacklist:setCallback(
     function(widget, ...)
         config.useBlacklist = not config.useBlacklist
@@ -661,7 +769,7 @@ else
 end
 configScreen:addChild(buttonBlacklist)
 --blacklist drop
-local buttonDropBlacklistConnexion = gui.widget.Text(2, 6, 18, 1, 0, " Drop if blacklist")
+local buttonDropBlacklistConnexion = gui.widget.Text(2, 6, 18, 1, 0, "Drop if blacklist")
 buttonDropBlacklistConnexion:setCallback(
     function(widget, ...)
         config.dropBlacklistedConnexions = not config.dropBlacklistedConnexions
@@ -679,7 +787,7 @@ else
 end
 configScreen:addChild(buttonDropBlacklistConnexion)
 --autoLearn
-local buttonLearnNewGates = gui.widget.Text(2, 8, 18, 1, 0, " Learn new gates")
+local buttonLearnNewGates = gui.widget.Text(2, 8, 18, 1, 0, "Learn new gates")
 buttonLearnNewGates:setCallback(
     function(widget, ...)
         config.saveNewGate = not config.saveNewGate
@@ -696,11 +804,37 @@ else
     buttonLearnNewGates:setBackground(0xff0000)
 end
 configScreen:addChild(buttonLearnNewGates)
+--savePassword
+local buttonSavePassword = gui.widget.Text(2,10,18,1,0,"Save password")
+buttonSavePassword:setCallback(
+    function(widget, ...)
+        config.savePassword = not config.savePassword
+        if (config.savePassword) then
+            widget:setBackground(0x00ff00)
+        else
+            widget:setBackground(0xff0000)
+        end
+    end
+)
+if (config.savePassword) then
+    buttonSavePassword:setBackground(0x00ff00)
+else
+    buttonSavePassword:setBackground(0xff0000)
+end
+configScreen:addChild(buttonSavePassword)
+--password
+local passwordLabel = gui.widget.Text(2,12,15,1,0x000000,"Iris password :")
+passwordLabel:setBackground(0x7d7d7d)
+configScreen:addChild(passwordLabel)
+local passwordConfigField = gui.widget.Input(passwordLabel:getX()+passwordLabel:getWidth()+1,passwordLabel:getY(),20,1,0xffffff,"")
+passwordConfigField:setPlaceholder("*")
+configScreen:addChild(passwordConfigField)
 --save
 local buttonSave = gui.widget.Text(1, 25, 12, 1, 0, "Save")
 buttonSave:setBackground(0x00ff00)
 buttonSave:setCallback(
     function(...)
+        config.password = passwordConfigField:getValue()
         --wait a little so no event get processed in the main screen
         event.timer(
             0.1,
@@ -715,6 +849,24 @@ buttonSave:setCallback(
     end
 )
 configScreen:addChild(buttonSave)
+--cancel
+local buttonCancel = gui.widget.Text(14, 25, 12, 1, 0, "Cancel")
+buttonCancel:setBackground(0xff0000)
+buttonCancel:setCallback(
+    function(...)
+        --wait a little so no event get processed in the main screen
+        event.timer(
+            0.1,
+            function(...)
+                mainScreen:enable(true)
+            end
+        )
+        mainScreen:setVisible(true)
+        configScreen:setVisible(false)
+        configScreen:enable(false)
+    end
+)
+configScreen:addChild(buttonCancel)
 --END GUI======================================================================
 --Init screen
 gpu.setResolution(80, 25)
@@ -728,6 +880,5 @@ end
 while (run) do
     root:draw()
     os.sleep() --sleep to handle events
-    --run=false
 end
 closeApp()
