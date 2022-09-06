@@ -4,6 +4,27 @@ local Input = require("libClass").newClass("Text",require("libGUI/widget/Text"))
 
 Input.private.keyDownEvent = nil
 Input.private.touchEvent = nil
+Input.private.placeHolderChar = nil
+Input.private.value = ""
+function Input.setPlaceholder(self,char)
+    if(char and #char == 1) then
+        self.private.placeHolderChar = char
+    else
+        self.private.placeHolderChar = nil
+    end
+end
+function Input.getPlaceholder(self) return self.private.placeHolderChar end
+function Input.setText(self,text)
+    text = text or ""
+    self.private.value = text
+    if(self:getPlaceholder()) then 
+        self.private.text = string.rep(self:getPlaceholder(),#self:getValue()) 
+    else
+        self.private.text = text 
+    end
+end
+function Input.getValue(self) return self.private.value end
+function Input.setValue(self,text) self:setText(text) end
 function Input.private.onKeyDown(self,eventName,component,char,key,player)
     if(not eventName == "key_down") then return end
     if(char == 8) then --backspace
