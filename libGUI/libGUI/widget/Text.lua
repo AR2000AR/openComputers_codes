@@ -11,7 +11,7 @@ local function wrap(inStr,maxWidth)
 end
 
 local Text = require("libClass").newClass("Text",require("libGUI/widget/Rectangle"))
-Text.private.txt = ""
+Text.private.text = ""
 Text.private.color = {background = -1, foreground = -1 }
 
 function Text.getText(self) return self.private.text end
