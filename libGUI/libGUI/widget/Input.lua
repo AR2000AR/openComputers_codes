@@ -17,7 +17,7 @@ function Input.getPlaceholder(self) return self.private.placeHolderChar end
 function Input.setText(self,text)
     text = text or ""
     self.private.value = text
-    if(self:getPlaceholder()) then 
+    if(self:getPlaceholder()) then
         self.private.text = string.rep(self:getPlaceholder(),#self:getValue()) 
     else
         self.private.text = text 
@@ -50,6 +50,11 @@ function Input.private.callback(self,eventName,uuid,x,y,button,playerName)
             end
         end)
     end
+end
+
+function Input.constructor(self,x,y,width,height,color,text,placeHolderChar)
+    self:setPlaceholder(placeHolderChar)
+    self:setText(text) --need to be called after setting the placeholder char
 end
 
 return Input
