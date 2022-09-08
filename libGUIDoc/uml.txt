@@ -1,16 +1,23 @@
 libGUI
-http://odp.tuxfamily.org/plantuml?nLPDR-8m43ql4l_1ntGX_s0FrRAgw06fAYlHgkh1s6vYrTWeCKlOBlzznrya3ixIbIer1mXldcVUpDXZhckDAxtRYF6825pNQ4agnYHw6uyGF1EaAruKhCgk790Z8ZXvdMD9HOjEq2_5ASAKpaekQBRYj60Q4VCZflJSUPHMU9-EW5vsacYkPE1Rd_NJCt8nngDZK7wxmGMxuO85yJdQLchBAdruUZuXl64Y_9oW9UYH1G97TyQGSQbHCpMVXrWX-96PPs-nBazMmuNbe4QNMH-TCrwK-WnUyj_CW21zYyaho4PxLp6ll9DGW8QZ_IFYoJJjHMwDDhlQkeHrXhOtpfCSxzoGIlkQPDaOmL4n7M1pazmFh75enj5zkQI_vddRpsvDxXdHM1OYgalkD9j4kw2BsaU94ggAmS-hGc3FZ2XBj_9IdVt0ddk32teLbTzL-IThT5nW3O3R_brqm-KgLVaDRbPSqtESotcoAR0WRR3bWDFUZzsMRk4rNEZQ8eI-r3WWHhqhB_LkOP9zXu2GuaK1kFa_0QPROJPfU8z8zMd2MLhImOsgM56fdQIPfv_lmjPFXvtqzXr6slkzTTZnJiHh866Y_PPSHGCoZdYdQZ-vKNTqnwG7HqdQ7hFXTJCin1f4PWHUy1ec3_58wamz94_Qu-3XDD87AdERgc_l_dIMjLB255bmoX9NM6VvMwZgCRfppPEZfd_u3cUdqMVUkvMTqPIhSqfz6ttVllq94_qSFirqPsf7lBMQRMklIl_FH04Mxlvh9YdyT_dowSzV
+http://odp.tuxfamily.org/plantuml?hLR1SjiW4Brd9l_04JTslg27JDrcx4idKtVYP38vO44b9XWy23bsa_nxWGL9I3Xjf_L5rjkto-w-1N5L6w9DinNdPuKWTOrMXMPCefVpCsH_5-4TJ-1zXlQyvXl1q4Of4J4cYOLeWXKL5xH6nbbQJF3YQK4a5KpZbT5SbeZjcJHVoPPDKK2QXjCfujAW0poEyDWqnYZPqdQ279bsdfEOwrvnYcfcRY57xFA92QSao1W8yB-rUupNCSOG_mAruZGUeNJk2iPhJajcNaCNVHDIfas-B6tvbvUNgO5gyjn5XVOzF288U7xs5WLQRad9hhcLeDMeXM9JTyHKhM8xhNPCc-F3Oulm0nFnzI8sr2vpummOMkyxdwPeuyZC4XTU7kjkSpKL7g8BnilAZE0L_-cxQmlRaUB9Le2UVQsnBhAfZIQ5GL3tEZ52AC1mVrOcdNs63Wxh0ySXK10XDdPvzAEHXU5Azerkcdor_JNZaDse-jJ27UaEA5dRFJxjDmzfOPUV6xWsqOGUMdc7S-Zz29q6YqiziTNj12mf7YSqdjdUbYYK49oopDJq8hn4CT-IEN-31mZyZHM6oB8RRF1lOJm-4fxTmC7VoayP_BSfAPqCWYSEjGUNqKGuvnJiTB43Ly6y-OXPxSAyTqbbMNxyOw1o-Xlst2M5SxNbDrzYIJVWQ1hYHXpvmQ8vgRwpms0dEkGl1MfFScDz4xKS48nzUClbEgVZbXpMtD0npkKYAx5ro1jyNlRG7QxT2U7hpEVTtqQUbbNoMcbMQjL8YWDzh6WNfyVEHljaJuG_ZzPZvrHTobqpaDL3_wBh53rqt-k2BPIWJCyheXyJnVT4D2mZ-S3f7M5k7BFopAXFOJsoNRjrgqMMNpgXzRw7wVBu10tYPLlglio3bZfeqDBnDnMu_tzhlt_x2G5SXf-98V6A44g2OZxCPjs50mpXq_pnDPh6S7kAWwaxwxtLRHSm-9C50hdHyzU3S9bI5eoteIicgR-q_W80
 @startuml
 class Screen {
-    + trigger()
-    - clickHandler()
-    + void addChild(Widget child)
-    + void trigger()
+    + Screen()
+    - visible bool
+    - enabled bool
+    - childs table
+    - clickHandler(String eventName, String uuid, int x, int y, int button, String playerName)
+    + void setVisible(bool visible)
+    + void enable(bool enable)
+    + bool isVisible()
+    + bool isEnabled()
+    + void addChild(Widget|Screen child)
+    + void trigger(...)
     + void draw()
-    - clickHandler function
     + childs[] Widget
 }
 class ImageFile {
+    + ImageFile(String path)
     - property[]
     - pixel[]
     + String getPixel(int x,int y)
@@ -20,17 +27,26 @@ class ImageFile {
     + int getSize()
 }
 package widget {
-    class Image {
-        + int getWidth()
-        + int getHeight()
-        + int,int getSize()
-        + void setWidht(int width)
-        + void setHeight(int height)
-        + void setSize(int widtg,int height)
-        + imageData[]
+    abstract class Widget {
+        + Widget(int x, int y)
+        - x int
+        - y int
+        - callback function
+        - id string
+        + void setPos(int x, int y)
+        + void setX(int x)
+        + void setY(int y)
+        + void setCallback(callable callback)
+        + int getX()
+        + int getY()
+        + int,int getPos()
+        + string getId()
+        + void trigger(...)
+        + bool collide(int x,int y)
+        + void {abstract} draw()
     }
-    Image *-- ImageFile
     class Rectangle {
+        + Rectangle(int x, int y, int width, int height, int color)
         - width int
         - height int
         - color int
@@ -44,18 +60,13 @@ package widget {
         + int getColor()
     }
     class Text {
-        - txt String
+        + Text(int x, int y, int width, int height, int color, String text)
+        - text String
         - minWidth int
         - maxWitdh int
         - minHeight int
         - maxHeight int
         - color[] String
-        + void setMinWidth(int width)
-        + void setMinHeight(int height)
-        + void setMinSize(int width,int height)
-        + void setMaxWidth(int width)
-        + void setMaxHeight(int height)
-        + void setMaxSize(int width,int height)
         + void setText(String text)
         + string getText()
         + void setForeground(string color)
@@ -63,26 +74,28 @@ package widget {
         + void setBackground(string color)
         + string getBackground()
     }
-    abstract class Widget {
-        + void setPos(int x, int y)
-        + void setX(int x)
-        + void setY(int y)
-        + void setCallback(callable callback)
-        + int getX()
-        + int getY()
-        + int,int getPos()
-        + string getId()
-        + void trigger()
-        + bool collide(int x,int y)
-        + void {abstract} draw()
-        - x int
-        - y int
-        - callback function
-        - id string
+    class Input {
+        + Input(int x, int y, int width, int height, int color, String text, [String placeHolderChar])
+        - value String
+        - placeHolderChar String
+        + void setPlaceholder(String char)
+        + void setValue(String value)
+        + String getPlaceHolderChar()
+        + String getValue()
     }
+    class Image {
+        + Image(int x, int y, String path)
+        + int getWidth()
+        + int getHeight()
+        + int,int getSize()
+        + void enable(bool enable)
+        + imageData[]
+    }
+    Image *-- ImageFile
     Widget <|-- Image
     Widget <|-- Rectangle
     Rectangle <|-- Text
+    Text <|-- Input
 }
 Screen o-- Widget
 @enduml
