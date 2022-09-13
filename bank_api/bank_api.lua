@@ -9,19 +9,21 @@ local fs = require("filesystem")
 --INIT CONST
 local BANK_PORT = 351
 local CONF_DIR = "/etc/bank/api/"
-local CONF_FILE_NAME = CONF_DIR.."api.conf"
+local CONF_FILE_NAME = CONF_DIR .. "api.conf"
 local MODEM_TIMEDOUT = -1
 --INIT COMPONENT
 local modem = require("component").modem
 local data = require("component").data
 --INIT VAR
 
-if(not fs.exists(CONF_FILE_NAME))then
-  local file=io.open(CONF_FILE_NAME,"w")
-  file:write(serialization.serialize({bank_addr="00000000-0000-0000-0000-000000000000",timeout=5,secret=""}))
+if (not fs.exists(CONF_FILE_NAME)) then
+  local file = io.open(CONF_FILE_NAME, "w")
+  assert(file, string.format("Something went really wrong when openning : %s", CONF_FILE_NAME))
+  file:write(serialization.serialize({bank_addr = "00000000-0000-0000-0000-000000000000", timeout = 5, secret = ""}))
   file:close()
 end
-local confFile = io.open(CONF_FILE_NAME,"r")
+local confFile = io.open(CONF_FILE_NAME, "r")
+assert(confFile, string.format("Something went really wrong when openning : %s", CONF_FILE_NAME))
 local config = serialization.unserialize(confFile:read("*a"))
 confFile:close()
 config.bank_addr = config.bank_addr or "00000000-0000-0000-0000-000000000000" --fetched from conf file
@@ -49,24 +51,24 @@ local PROTOCOLE_ERROR_RECEIVING_ACCOUNT = 5
 local PROTOCOLE_ERROR_UNKNOWN = 999
 --=====================================
 local function reciveMessage() --recive a message from the modem component.
-  local _,_,from,port,_,status,command,message = event.pull(config.timeout,"modem_message")
-  if(not status) then status = MODEM_TIMEDOUT end
+  local _, _, from, port, _, status, command, message = event.pull(config.timeout, "modem_message")
+  if (not status) then status = MODEM_TIMEDOUT end
   --make sure no nil value is returned
-  if(not command) then command = "" end
-  if(not message) then message = "" end
-  return status,command,serialization.unserialize(message)
+  if (not command) then command = "" end
+  if (not message) then message = "" end
+  return status, command, serialization.unserialize(message)
 end
 
 --send a request to the server
 -- @param requestType:string
 -- @param requestData:table
 -- @return status:int,command:string,message:table
-local function sendRequest(requestType,requestData) --format and send a request to the server
+local function sendRequest(requestType, requestData) --format and send a request to the server
   modem.open(BANK_PORT)
-  modem.send(config.bank_addr,BANK_PORT,requestType,serialization.serialize(requestData))
-  local status,command,message = reciveMessage()
+  modem.send(config.bank_addr, BANK_PORT, requestType, serialization.serialize(requestData))
+  local status, command, message = reciveMessage()
   modem.close(BANK_PORT)
-  return status,command,message
+  return status, command, message
 end
 
 --get the account solde
@@ -82,14 +84,14 @@ end
 --  3 : cb error
 -- @return solde
 function bank.getCredit(cbData)
-  local status,command,message = sendRequest(PROTOCOLE_GET_CREDIT,{cbData=cbData})
-  if(status == MODEM_TIMEDOUT) then
+  local status, command, message = sendRequest(PROTOCOLE_GET_CREDIT, {cbData = cbData})
+  if (status == MODEM_TIMEDOUT) then
     return MODEM_TIMEDOUT
   else
-    if(command ~= PROTOCOLE_GET_CREDIT) then
+    if (command ~= PROTOCOLE_GET_CREDIT) then
       return -2 --wrong message
     else
-      if(status==PROTOCOLE_OK) then
+      if (status == PROTOCOLE_OK) then
         return 0, message.solde
       else
         return status, nil
@@ -110,12 +112,12 @@ end
 --  2 : account error
 --  3 : cb error
 --  4 : amount error
-function bank.makeTransaction(uuid_cible,cbData,amount)
-  local status,command,msg = sendRequest(PROTOCOLE_MAKE_TRANSACTION,{dst=uuid_cible,cbData=cbData,amount=amount})
-  if(status == MODEM_TIMEDOUT) then
+function bank.makeTransaction(uuid_cible, cbData, amount)
+  local status, command, msg = sendRequest(PROTOCOLE_MAKE_TRANSACTION, {dst = uuid_cible, cbData = cbData, amount = amount})
+  if (status == MODEM_TIMEDOUT) then
     return MODEM_TIMEDOUT
   else
-    if(command ~= PROTOCOLE_MAKE_TRANSACTION) then
+    if (command ~= PROTOCOLE_MAKE_TRANSACTION) then
       return -2 --wrong message
     else
       return status
@@ -124,15 +126,15 @@ function bank.makeTransaction(uuid_cible,cbData,amount)
 end
 
 function bank.createAccount()
-  local status,command,msg = sendRequest(PROTOCOLE_NEW_ACCOUNT,{secret=config.secret})
-  if(status == MODEM_TIMEDOUT) then
+  local status, command, msg = sendRequest(PROTOCOLE_NEW_ACCOUNT, {secret = config.secret})
+  if (status == MODEM_TIMEDOUT) then
     return MODEM_TIMEDOUT
   else
-    if(command ~= PROTOCOLE_NEW_ACCOUNT) then
+    if (command ~= PROTOCOLE_NEW_ACCOUNT) then
       return -2 --wrong message
     else
-      if(status == PROTOCOLE_OK) then
-        return status,msg.uuid
+      if (status == PROTOCOLE_OK) then
+        return status, msg.uuid
       else
         return status
       end
@@ -140,15 +142,15 @@ function bank.createAccount()
   end
 end
 
-function bank.requestNewCBdata(accountUUID,cbUUID)
-  local status,command,msg = sendRequest(PROTOCOLE_NEW_CB,{secret=config.secret,uuid=accountUUID,cbUUID=cbUUID})
-  if(status == MODEM_TIMEDOUT) then
+function bank.requestNewCBdata(accountUUID, cbUUID)
+  local status, command, msg = sendRequest(PROTOCOLE_NEW_CB, {secret = config.secret, uuid = accountUUID, cbUUID = cbUUID})
+  if (status == MODEM_TIMEDOUT) then
     return MODEM_TIMEDOUT
   else
-    if(command ~= PROTOCOLE_NEW_CB) then
+    if (command ~= PROTOCOLE_NEW_CB) then
       return -2 --wrong message
     else
-      if(status == PROTOCOLE_OK) then
+      if (status == PROTOCOLE_OK) then
         return status, msg.pin, msg.rawCBdata
       else
         return status
@@ -157,12 +159,12 @@ function bank.requestNewCBdata(accountUUID,cbUUID)
   end
 end
 
-function bank.editAccount(cbData,amount)
-  local status,command = sendRequest(PROTOCOLE_EDIT,{secret=config.secret,cbData=cbData,amount=amount})
-  if(status == MODEM_TIMEDOUT) then
+function bank.editAccount(cbData, amount)
+  local status, command = sendRequest(PROTOCOLE_EDIT, {secret = config.secret, cbData = cbData, amount = amount})
+  if (status == MODEM_TIMEDOUT) then
     return MODEM_TIMEDOUT
   else
-    if(command ~= PROTOCOLE_EDIT) then
+    if (command ~= PROTOCOLE_EDIT) then
       return -2 --wrong message
     else
       return status
@@ -173,7 +175,7 @@ end
 --set the modem timeout (in s)
 -- @param t:int
 function bank.setModemTimeout(t)
-  timeout = t
+  config.timeout = t
 end
 
 return bank
