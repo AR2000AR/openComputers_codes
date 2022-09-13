@@ -575,7 +575,7 @@ config = {
 --create the config dir if it doesn't exists already
 if (not filesystem.isDirectory(CONFIG_PATH)) then filesystem.makeDirectory(CONFIG_PATH) end
 --load the config
-if (filesystem.exists(CONFIG_FILE) and not filesystem.isDirectory(GATE_LIST)) then
+if (filesystem.exists(CONFIG_FILE) and not filesystem.isDirectory(CONFIG_FILE)) then
     local cFile = io.open(CONFIG_FILE, "r")
     if (cFile) then
         local tconf = serialization.unserialize(cFile:read("*a")) or {}
