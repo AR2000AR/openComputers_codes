@@ -205,7 +205,7 @@ local function saveGatesAdd()
 end
 
 local function saveConfig()
-    --sasve the config table to a file
+    --save the config table to a file
     local cFile = io.open(CONFIG_FILE, "w")
     if (not cFile) then return end
     local tconf = {}
