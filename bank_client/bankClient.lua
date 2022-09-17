@@ -3,6 +3,7 @@ local event = require("event")
 local bank_api = require("bank_api")
 local libCB = require("libCB")
 local os = require("os")
+local component = require("component")
 local gpu = require("component").gpu
 local proxy = require("component").proxy
 
@@ -45,43 +46,56 @@ end
 
 local function creerCompte(drive)
   statusBar:setText("demmande du compte")
-  --screen:draw()
-  local status, acUUID = bank_api.createAccount() --TODO add secret
+  local status, acUUID = bank_api.createAccount()
   statusBar:setText("creation de compte : " .. status)
-  --screen:draw()
   if (status == 0) then
-    local status, pin, rawCBdata = bank_api.requestNewCBdata(acUUID, drive.address) --TODO add secret
+    local pin, rawCBdata
+    status, pin, rawCBdata = bank_api.requestNewCBdata(acUUID, drive.address)
     libCB.writeCB(rawCBdata, drive)
     diskWaitPopup:setVisible(false)
     diskWaitPopup:enable(false)
     acUUIDText:setText("uuid : " .. acUUID)
     pinText:setText("pin : " .. pin)
     newAccountScreen:setVisible(true)
-    --screen:draw()
   end
 end
 
-local function voirCompte(cbData)
-  statusBar:setText("demmande des info")
-  --screen:draw()
-  local status, solde = bank_api.getCredit(cbData)
-  statusBar:setText("demmande des info : " .. status)
-  --screen:draw()
-  if (status == 0) then
-    acUUIDText:setText("uuid : " .. cbData.uuid)
-    soldeText:setText("Solde : " .. solde)
-    viewAccountScreen:setVisible(true)
-    --screen:draw()
+local function voirCompte(pin)
+  diskWaitPopup:setVisible(false)
+  diskWaitPopup:enable(false)
+  if (not pin) then
+    keypad:clearInput()
+    keypad:enable(true)
+    keypad:setVisible(true)
+    keypad:setValidateCallback(function(kp)
+      if (#keypad:getInput() == 4) then
+        voirCompte(keypad:getInput())
+        keypad:clearInput()
+      end
+    end)
+  else
+    local cbData = libCB.getCB(component.drive, keypad:getInput())
+    if (cbData) then
+      keypad:clearInput()
+      keypad:enable(false)
+      keypad:setVisible(false)
+      statusBar:setText("demmande des info")
+      local status, solde = bank_api.getCredit(cbData)
+      statusBar:setText("demmande des info : " .. status)
+      if (status == 0) then
+        acUUIDText:setText("uuid : " .. cbData.uuid)
+        soldeText:setText("Solde : " .. solde)
+        viewAccountScreen:setVisible(true)
+      end
+    else voirCompte() end
   end
 end
 
 local function buttonEventHandler(buttonName)
-  --statusBar:setText("event")
   if (buttonName == B_NAME_POPUP_CLOSE) then
     diskWaitPopup:setVisible(false)
     diskWaitPopup:enable(false)
     statusBar:setText("cancel")
-    --screen:draw()
     mode = MODE_IDLE
   end
   if (mode == MODE_IDLE) then
@@ -90,52 +104,33 @@ local function buttonEventHandler(buttonName)
       statusBar:setText("entering view account mode")
       diskWaitPopup:setVisible(true)
       diskWaitPopup:enable(true)
-      --screen:draw()
+      if (component.isAvailable("drive")) then voirCompte() end
     elseif (buttonName == B_NAME_CREATE_ACCOUNT) then
       mode = MODE_CREATE_ACCOUNT
       statusBar:setText("mode création de compte")
       diskWaitPopup:setVisible(true)
       diskWaitPopup:enable(true)
-      --screen:draw()
     end
   else
     if (buttonName == B_NAME_C) then
       newAccountScreen:setVisible(false)
       viewAccountScreen:setVisible(false)
       statusBar:setText("idle")
-      --screen:draw()
+      keypad:clearInput()
+      keypad:enable(false)
+      keypad:setVisible(false)
       mode = MODE_IDLE
     end
   end
 end
 
-local function diskEventHandler(eventName, componentAdd, componentName)
-  if (componentName ~= "drive") then return end --on ne traite que les composent de type drive
-  local drive = proxy(componentAdd)
+local function diskEventHandler(...)
   if     (mode == MODE_VIEW_ACCOUNT) then
-    diskWaitPopup:setVisible(false)
-    diskWaitPopup:enable(false)
-    keypad:clearInput()
-    keypad:enable(true)
-    keypad:setVisible(true)
-    keypad:setValidateCallback(function(kp)
-      if (#kp:getInput() == 4) then
-        local cbData = libCB.getCB(drive, kp:getInput())
-        kp:clearInput()
-        if (cbData ~= false) then
-          kp:enable(false)
-          kp:setVisible(false)
-          --screen:draw()
-          voirCompte(cbData)
-        end
-      end
-    end)
-    --screen:draw()
+    voirCompte()
   elseif (mode == MODE_CREATE_ACCOUNT) then
     diskWaitPopup:setVisible(false)
     diskWaitPopup:enable(false)
-    --screen:draw()
-    creerCompte(drive)
+    creerCompte(component.drive)
   end
 end
 
@@ -194,14 +189,14 @@ local function init()
   backgroundScreen:addChild(boardShape4)
   backgroundScreen:addChild(bottomLine)
 
-  acUUIDText = gui.widget.Text(52, 3, 25, 1, 0xffffff, "uuid : ")
-  pinText    = gui.widget.Text(52, 8, 6, 1, 0xffffff, "pin : ")
+  acUUIDText = gui.widget.Text(52, 3, 25, 2, 0xffffff, "uuid : ")
+  pinText    = gui.widget.Text(52, 6, 6, 1, 0xffffff, "pin : ")
   acUUIDText:setBackground(0)
   pinText:setBackground(0)
   newAccountScreen:addChild(acUUIDText)
   newAccountScreen:addChild(pinText)
 
-  soldeText = gui.widget.Text(52, 5, 10, 1, 0xffffff, "pin : ")
+  soldeText = gui.widget.Text(52, 6, 25, 1, 0xffffff, "pin : ")
   soldeText:setBackground(0)
   viewAccountScreen:addChild(acUUIDText)
   viewAccountScreen:addChild(soldeText)
@@ -250,7 +245,7 @@ local function init()
 
   intListenerId = event.listen("interrupted", closeClient)
   touchListenerId = event.listen("touch", function(...) screen:trigger(...) end)
-  driveListenerId = event.listen("component_added", diskEventHandler)
+  driveListenerId = event.listen("component_added", diskEventHandler, nil, "drive")
 
   --screen:draw()
 end
