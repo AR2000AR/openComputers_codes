@@ -13,6 +13,7 @@ if (fs.exists(args[1]) and not fs.isDirectory(args[1])) then
   gpu.setBackground(tonumber(args[2] or "") or bk)
   term.clear()
   libgui.widget.Image(1, 1, args[1], drawMethod):draw()
+  ---@diagnostic disable-next-line: undefined-field
   os.sleep(1)
   require("event").pull("key_down")
   gpu.setBackground(bk)
