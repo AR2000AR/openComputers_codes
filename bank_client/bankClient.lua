@@ -16,6 +16,7 @@ local B_NAME_VIEW_ACCOUNT = "bva"
 local B_NAME_CREATE_ACCOUNT = "ca"
 local B_NAME_POPUP_CLOSE = "pc"
 local B_NAME_C = "c"
+local IMG_PATH = "/usr/data/bank_client/"
 local mode = MODE_IDLE
 
 local touchListenerId = nil
@@ -146,8 +147,8 @@ local function init()
   statusBar:setBackground(0x000000)
   mainInterfaceScreen:addChild(statusBar)
 
-  local bagImg = gui.widget.Image(28, 4, "/var/bank/img/moneybag20x17.pam")
-  local arcImg = gui.widget.Image(21, 2, "/var/bank/img/goldArc.pam")
+  local bagImg = gui.widget.Image(28, 4, IMG_PATH .. "moneybag20x17.pam")
+  local arcImg = gui.widget.Image(21, 2, IMG_PATH .. "goldArc.pam")
   backgroundScreen:addChild(bagImg)
   backgroundScreen:addChild(arcImg)
 
@@ -216,7 +217,7 @@ local function init()
   mainInterfaceScreen:addChild(b4)
 
   diskWaitPopup:addChild(gui.widget.Rectangle(20, 5, 40, 12, 0x878787))
-  diskWaitPopup:addChild(gui.widget.Image(22, 7, "/var/bank/img/floppy8x8.pam"))
+  diskWaitPopup:addChild(gui.widget.Image(22, 7, IMG_PATH .. "floppy8x8.pam"))
   local txt = gui.widget.Text(32, 9, 16, 1, 0, "Inserer une CB")
   txt:setBackground(0x878787)
   diskWaitPopup:addChild(txt)
