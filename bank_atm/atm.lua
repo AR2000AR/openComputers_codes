@@ -332,4 +332,3 @@ while (mode ~= MODE_CLOSING) do
   os.sleep()
 end
 closeClient()
-print(EXTERIOR, STORAGE)
