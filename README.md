@@ -30,11 +30,18 @@ Note that the exchange rate is 50:1 instead of the default 100:1.
 ---
 ## Other programs
 
-### itemIdCatcher
-Write the item id of every items in the chest on top of the transposer in a file. Item are moved on the chest on the bottom once it's id is saved. The program stop after 3 loop without items in the chest.
+### vending
+A automatic vending machine program. Install it on a normal computer with a transposer.
+Can use coins (libGUI) or a CB (libCB & bank_api). Configurable.
+
+### stargate
+Graphical interface to control and monitor gates from [Stargate Network](https://www.curseforge.com/minecraft/mc-mods/stargate-network). Whitelist, blacklist, gate list, iris management and password. Fully configurable from the GUI
 
 ### doorCtrl
 Control a number of redstone IO blocs with a single touchscreen. Easy to configure with `doorCtrl -c`
+
+### itemIdCatcher
+Write the item id of every items in the chest on top of the transposer in a file. Item are moved on the chest on the bottom once it's id is saved. The program stop after 3 loop without items in the chest.
 
 ### autocrafter
 Use a PC, a Robot, linked card and a transposer to craft items
@@ -48,5 +55,5 @@ add object oriented programing to lua.
 ### libGUI
 draw graphical element on screen. Use a widget system based on libClass.
 
-### libGUI
+### libGUI_extra
 Non essential widgets for libGUI.
