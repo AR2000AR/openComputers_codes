@@ -14,12 +14,14 @@ local function readCB(cbDrive)
   --the floppy disk
   local rawData = cbDrive.readSector(1):gsub("\0", "") --clean null byte after the data
   local cbData = serialization.unserialize(rawData)
+  if (not cbData or not cbData.uuid or not cbData.pin_check) then return false end
   cbData.cbUUID = cbDrive.address
   return cbData
 end
 
 function cb.getCB(cbDrive, pin)
   local res = readCB(cbDrive)
+  if (not res) then return false end
   res.uuid = data.decrypt(data.decode64(res.uuid), data.md5(res.cbUUID), data.md5(pin))
   local pin_check = false
   pin_check = data.decrypt(data.decode64(res.pin_check), data.md5(res.cbUUID), data.md5(pin)) == "PIN"
