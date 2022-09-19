@@ -9,6 +9,7 @@ local fileName = args[1] or "/home/id.txt"
 local openMode = "a"
 if (not fs.exists(fileName)) then openMode = "w" end
 local file = io.open(fileName, openMode)
+assert(file, "How did we end here !? (file not opened)")
 
 local from = 1
 local to = -1
