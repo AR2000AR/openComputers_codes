@@ -1,0 +1,16 @@
+NAME
+  lnfsd - Lua Network File System server daemon
+
+SYNOPSIS
+  rc lnfsd enable
+  rc lnfsd start
+
+DESCIPTION
+  Provide the lnfs filesystem to other machines on the Network
+
+CONFIGURATION
+    In /etc/rc.cfg
+    lnfsd = {root="/home",ro=false,name="label",port=21}
+
+AUTHOR
+  AR2000
