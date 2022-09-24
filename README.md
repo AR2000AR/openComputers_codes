@@ -28,6 +28,16 @@ move coins with a transposer. Use coins from the [ordinary coins](https://www.cu
 Note that the exchange rate is 50:1 instead of the default 100:1.
 
 ---
+## Lua Network File System
+
+### lnfsc
+lnfs client. Provide the lib (filesystem proxy) and mount.lnfs command
+example usage : `mount.lnfs address -p=21 -r`
+
+### lnfss
+lnfs server. Configuration handled by /etc/rc.cfg. See `man lnfsd` or [lnfsd](lnfs/lnfsd) for more info
+
+---
 ## Other programs
 
 ### vending
