@@ -2,3 +2,4 @@
 updateFiles.bat
 .vscode/
 libGUI/libGUI/widget/Keypad.lua
+misc/
