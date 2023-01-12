@@ -1,4 +1,4 @@
-local function emptyCallback(self) end
+local function emptyCallback(self, ...) end
 
 local Widget = require("libClass").newClass("Widget")
 Widget.type = "Widget"
