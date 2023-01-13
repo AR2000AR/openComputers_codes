@@ -266,7 +266,7 @@ local function listener(sig, local_add, remote_add, port, dist, command, arg)
   arg = serialization.unserialize(arg)
   -------------------------------------
   if     (command == PROTOCOLE_GET_CREDIT) then
-    log(arg.cbData.uuid .. arg.cbData.cbUUID .. arg.cbData.pin_check)
+    log(arg.cbData.uuid .. arg.cbData.cbUUID)
     if (cb.checkCBdata(arg.cbData, getKey(true))) then
       handlerGetCredit(remote_add, arg.cbData)
     else

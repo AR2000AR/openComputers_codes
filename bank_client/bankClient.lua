@@ -1,122 +1,160 @@
-local gui = require("libGUI")
-local event = require("event")
-local bank_api = require("bank_api")
-local libCB = require("libCB")
-local os = require("os")
+local gui       = require("libGUI")
+local event     = require("event")
+local bank_api  = require("bank_api")
+local libCB     = require("libCB")
+local os        = require("os")
 local component = require("component")
-local gpu = require("component").gpu
-local proxy = require("component").proxy
+local gpu       = require("component").gpu
 
-local MODE_CLOSING = -1
-local MODE_IDLE = 0
-local MODE_VIEW_ACCOUNT = 1
-local MODE_CREATE_ACCOUNT = 2
-local MODE_REQUEST_CB = 3
-local B_NAME_VIEW_ACCOUNT = "bva"
+local MODE_CLOSING          = -1
+local MODE_IDLE             = 0
+local MODE_VIEW_ACCOUNT     = 1
+local MODE_CREATE_ACCOUNT_1 = 2
+local MODE_CREATE_ACCOUNT_2 = 3
+local B_NAME_VIEW_ACCOUNT   = "bva"
 local B_NAME_CREATE_ACCOUNT = "ca"
-local B_NAME_POPUP_CLOSE = "pc"
-local B_NAME_C = "c"
-local IMG_PATH = "/usr/data/bank_client/"
-local mode = MODE_IDLE
+local B_NAME_POPUP_CLOSE    = "pc"
+local B_NAME_C              = "c"
+local B_NAME_FLOPPY         = "fp"
+local B_NAME_MAGCARD        = "mg"
+local IMG_PATH              = "/usr/data/bank_client/"
+local mode                  = MODE_IDLE
 
-local touchListenerId = nil
-local driveListenerId = nil
-local intListenerId = nil
+local touchListenerId   = nil
+local driveListenerId   = nil
+local intListenerId     = nil
+local magDataListenerId = nil
 
 local resX, resY = nil, nil
 
-local screen = gui.Screen()
-local backgroundScreen = gui.Screen()
+local screen              = gui.Screen()
+local backgroundScreen    = gui.Screen()
 local mainInterfaceScreen = gui.Screen()
-local newAccountScreen = gui.Screen()
-local viewAccountScreen = gui.Screen()
-local diskWaitPopup = gui.Screen()
-local keypad = nil
-local statusBar = nil
-local acUUIDText = nil
-local soldeText = nil
-local pinText = nil
+local newAccountScreen    = gui.Screen()
+local viewAccountScreen   = gui.Screen()
+local diskWaitPopup       = gui.Screen()
+local cardSupportPopup    = gui.Screen()
+local keypad              = nil
+local statusBar           = nil
+local acUUIDText          = nil
+local soldeText           = nil
+local pinText             = nil
 
 local function closeClient(...)
   event.cancel(touchListenerId)
   event.cancel(driveListenerId)
   event.cancel(intListenerId)
+  event.cancel(magDataListenerId)
   gpu.setResolution(resX, resY)
   mode = MODE_CLOSING
 end
 
+local function printStatus(msg)
+  statusBar:setText(msg)
+  screen:draw()
+end
+
+local function openPopup(popup)
+  popup:setVisible(true)
+  popup:enable(true)
+  screen:draw()
+end
+
+local function closePopup(popup)
+  popup:setVisible(false)
+  popup:enable(false)
+  screen:draw()
+end
+
 local function creerCompte(drive)
-  statusBar:setText("demmande du compte")
+  printStatus("demmande du compte")
   local status, acUUID = bank_api.createAccount()
-  statusBar:setText("creation de compte : " .. status)
+  printStatus("creation de compte : " .. status)
   if (status == 0) then
     local pin, rawCBdata
-    status, pin, rawCBdata = bank_api.requestNewCBdata(acUUID, drive.address)
-    libCB.writeCB(rawCBdata, drive)
-    diskWaitPopup:setVisible(false)
-    diskWaitPopup:enable(false)
+    if (drive.type == "drive") then
+      status, pin, rawCBdata = bank_api.requestNewCBdata(acUUID, drive.address)
+    else
+      status, pin, rawCBdata = bank_api.requestNewCBdata(acUUID)
+    end
+    if (drive.type == "os_cardwriter") then
+      printStatus("Insert magnetic card in the writer...")
+    end
+    ---@diagnostic disable-next-line: undefined-field
+    while (not libCB.writeCB(rawCBdata, drive)) do os.sleep(0.1) end
+    closePopup(diskWaitPopup)
     acUUIDText:setText("uuid : " .. acUUID)
     pinText:setText("pin : " .. pin)
     newAccountScreen:setVisible(true)
+    printStatus("Card created.")
   end
 end
 
-local function voirCompte(pin)
-  diskWaitPopup:setVisible(false)
-  diskWaitPopup:enable(false)
+local function voirCompte(pin, rawData)
+  closePopup(diskWaitPopup)
   if (not pin) then
+    printStatus("Asking for pin")
     keypad:clearInput()
     keypad:enable(true)
     keypad:setVisible(true)
     keypad:setValidateCallback(function(kp)
       if (#keypad:getInput() == 4) then
-        voirCompte(keypad:getInput())
+        voirCompte(keypad:getInput(), rawData)
         keypad:clearInput()
       end
     end)
   else
-    local cbData = libCB.getCB(component.drive, keypad:getInput())
+    printStatus("Reading card")
+    local cbData = libCB.getCB(rawData, pin)
     if (cbData) then
       keypad:clearInput()
       keypad:enable(false)
       keypad:setVisible(false)
-      statusBar:setText("demmande des info")
+      printStatus("demmande des info")
       local status, solde = bank_api.getCredit(cbData)
-      statusBar:setText("demmande des info : " .. status)
+      printStatus("demmande des info : " .. status)
       if (status == 0) then
         acUUIDText:setText("uuid : " .. cbData.uuid)
         soldeText:setText("Solde : " .. solde)
         viewAccountScreen:setVisible(true)
       end
-    else voirCompte() end
+    else voirCompte(nil, rawData) end
   end
 end
 
 local function buttonEventHandler(buttonName)
   if (buttonName == B_NAME_POPUP_CLOSE) then
-    diskWaitPopup:setVisible(false)
-    diskWaitPopup:enable(false)
-    statusBar:setText("cancel")
+    closePopup(diskWaitPopup)
+    closePopup(cardSupportPopup)
+    printStatus("cancel")
     mode = MODE_IDLE
   end
-  if (mode == MODE_IDLE) then
+  if  (mode == MODE_IDLE) then
     if     (buttonName == B_NAME_VIEW_ACCOUNT) then
       mode = MODE_VIEW_ACCOUNT
-      statusBar:setText("entering view account mode")
-      diskWaitPopup:setVisible(true)
-      diskWaitPopup:enable(true)
-      if (component.isAvailable("drive")) then voirCompte() end
+      printStatus("entering view account mode")
+      openPopup(diskWaitPopup)
+      if (component.isAvailable("drive")) then voirCompte(nil, libCB.loadCB(component.drive)) end
     elseif (buttonName == B_NAME_CREATE_ACCOUNT) then
-      mode = MODE_CREATE_ACCOUNT
-      statusBar:setText("mode création de compte")
-      diskWaitPopup:setVisible(true)
-      diskWaitPopup:enable(true)
+      mode = MODE_CREATE_ACCOUNT_1
+      printStatus("mode création de compte")
+      openPopup(cardSupportPopup)
+    end
+  elseif (mode == MODE_CREATE_ACCOUNT_1) then
+    if  (buttonName == B_NAME_FLOPPY) then
+      mode = MODE_CREATE_ACCOUNT_2
+      closePopup(cardSupportPopup)
+      screen:draw()
+    elseif (buttonName == B_NAME_MAGCARD) then
+      closePopup(cardSupportPopup)
+      screen:draw()
+      creerCompte(component.os_cardwriter)
     end
   else
     if (buttonName == B_NAME_C) then
       newAccountScreen:setVisible(false)
       viewAccountScreen:setVisible(false)
-      statusBar:setText("idle")
+      printStatus("idle")
       keypad:clearInput()
       keypad:enable(false)
       keypad:setVisible(false)
@@ -125,13 +163,20 @@ local function buttonEventHandler(buttonName)
   end
 end
 
-local function diskEventHandler(...)
+local function diskEventHandler(eName, eAddr, ...)
   if     (mode == MODE_VIEW_ACCOUNT) then
-    voirCompte()
-  elseif (mode == MODE_CREATE_ACCOUNT) then
-    diskWaitPopup:setVisible(false)
-    diskWaitPopup:enable(false)
+    printStatus("Card inserted")
+    voirCompte(nil, component.proxy(eAddr))
+  elseif (mode == MODE_CREATE_ACCOUNT_2) then
+    closePopup(diskWaitPopup)
     creerCompte(component.drive)
+  end
+end
+
+local function magDataEventHandler(eName, eAddr)
+  if (mode == MODE_VIEW_ACCOUNT) then
+    printStatus("Card read")
+    voirCompte(nil, libCB.loadCB(component.proxy(eAddr)))
   end
 end
 
@@ -160,15 +205,6 @@ local function init()
   mainInterfaceScreen:addChild(buttonCreateAccountShape0)
   mainInterfaceScreen:addChild(buttonCreateAccountShape1)
   mainInterfaceScreen:addChild(buttonCreateAccountLabel)
-
-  -- local buttonCreateCBShape0 = gui.widget.Rectangle(3,11,17,3,0x878787)
-  -- local buttonCreateCBShape1 = gui.widget.Rectangle(3,12,17,1,0xd2d2d2)
-  -- local buttonCreateCBLabel = gui.widget.Text(5,12,13,1,0x000000,"creer une CB")
-  -- buttonCreateCBLabel:setBackground(0xd2d2d2)
-  -- buttonCreateCBShape0:setCallback(function() buttonEventHandler("nil") end)
-  -- mainInterfaceScreen:addChild(buttonCreateCBShape0)
-  -- mainInterfaceScreen:addChild(buttonCreateCBShape1)
-  -- mainInterfaceScreen:addChild(buttonCreateCBLabel)
 
   local buttonViewAccountShape0 = gui.widget.Rectangle(3, 19, 17, 3, 0x878787)
   local buttonViewAccountShape1 = gui.widget.Rectangle(3, 20, 17, 1, 0xd2d2d2)
@@ -226,15 +262,28 @@ local function init()
   closeBtn:setCallback(function() buttonEventHandler(B_NAME_POPUP_CLOSE) end)
   diskWaitPopup:addChild(closeBtn)
 
+  cardSupportPopup:addChild(gui.widget.Rectangle(20, 5, 40, 12, 0x878787))
+  local bFloppy = gui.widget.Text(25, 9, 9, 1, 0x000000, "Floppy")
+  bFloppy:setBackground(0x878787)
+  local bMagCard = gui.widget.Text(35, 9, 9, 1, 0x000000, "magCard")
+  bMagCard:setBackground(0x878787)
+  bFloppy:setCallback(function() buttonEventHandler(B_NAME_FLOPPY) end)
+  bMagCard:setCallback(function() buttonEventHandler(B_NAME_MAGCARD) end)
+  cardSupportPopup:addChild(bFloppy)
+  cardSupportPopup:addChild(bMagCard)
+  cardSupportPopup:addChild(closeBtn)
+
   keypad = gui.widget.Keypad(35, 10, 0xc3c3c3, true, 4)
 
   viewAccountScreen:setVisible(false)
   newAccountScreen:setVisible(false)
   diskWaitPopup:setVisible(false)
+  cardSupportPopup:setVisible(false)
   keypad:setVisible(false)
   viewAccountScreen:enable(false)
   newAccountScreen:enable(false)
   diskWaitPopup:enable(false)
+  cardSupportPopup:enable(false)
   keypad:enable(false)
 
   screen:addChild(backgroundScreen)
@@ -242,13 +291,13 @@ local function init()
   screen:addChild(newAccountScreen)
   screen:addChild(viewAccountScreen)
   screen:addChild(diskWaitPopup)
+  screen:addChild(cardSupportPopup)
   screen:addChild(keypad)
 
   intListenerId = event.listen("interrupted", closeClient)
   touchListenerId = event.listen("touch", function(...) screen:trigger(...) end)
   driveListenerId = event.listen("component_added", diskEventHandler, nil, "drive")
-
-  --screen:draw()
+  magDataListenerId = event.listen("magData", magDataEventHandler)
 end
 
 init()

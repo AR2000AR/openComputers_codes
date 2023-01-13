@@ -11,27 +11,32 @@ DESCIPTION
     cbData:table
       uudi,	--account uuid
       cbUUID,	--card uuid
-      sig		--card signature made form uuid & card's drive component's uuid
-
-      rawCBdata:table
-        uudi,	--account uuid
-        sig		--card signature made form uuid & card's drive component's uuid
-        pin_check
+      type, -- card's component type ("signed" or "unsigned")
+      [sig]		--card signature made form uuid & card's drive component's uuid. Absent on magData
 
   Method list
-    getCB(cbDrive,pin):cbData
-      cbDrive:uuid > the drive component proxy for the credit card
-      pin:string > user pin code
-    checkCBdata(cbData,publicKey):boolean
-      cbDrive:uuid > the drive component proxy for the credit card
-      publicKey > data card compatible publicKey
-    createNew(uuid,cbUUID,privateKey):rawCBdata
-      uuid > account uuid
-      cbUUID > the future credit card uuid
-      privateKey > data card compatible publicKey
-    writeCB(rawCBdata,cbDrive)
-      rawCBdata > data to be writen to the new credit card
-      cbDrive:uuid > the drive component proxy for the credit card
+    Common methods
+      loadCB(cbDrive):table
+        cbDrive:proxy > the component to read the card from
+      getCB(rawCBdata,pin):cbData
+        rawCBdata:table > the raw card data to decrypt. Obtained with loadCB
+        pin:string > user pin code
+      getCB(cbDrive,pin):cbData
+        cbDrive:proxy > the drive or os_magreader component proxy for the credit card
+        pin:string > user pin code
+      checkCBdata(cbData,publicKey):boolean
+        cbDrive:proxy > the drive or os_magreader component proxy for the credit card
+        publicKey:userdata > data card compatible publicKey
+      writeCB(rawCBdata,cbDrive)
+        rawCBdata:string|table > data to be writen to the new credit card
+        cbDrive:proxy > the drive or os_cardwriter component proxy for the credit card
+    
+    Server only methods :
+      createNew(uuid,cbUUID,privateKey):rawCBdata
+        uuid:string > account uuid
+        cbUUID:string|nil > the future credit card uuid
+        privateKey:userdata > data card compatible publicKey
+        If cbUUID is ommited, the function will return unsigned and smaller data. Useful for things like 
 
   Returned values
     cbData

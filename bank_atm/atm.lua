@@ -1,53 +1,67 @@
 ---@diagnostic disable: cast-local-type
-local libCB = require("libCB")
-local bank = require("bank_api")
-local shell = require("shell")
-local sides = require("sides")
-local coin = require("libCoin")
-local gui = require("libGUI")
-local event = require("event")
-local os = require("os")
-local gpu = require("component").gpu
+local libCB      = require("libCB")
+local bank       = require("bank_api")
+local shell      = require("shell")
+local sides      = require("sides")
+local coin       = require("libCoin")
+local gui        = require("libGUI")
+local event      = require("event")
+local os         = require("os")
+local gpu        = require("component").gpu
 local transposer = require("component").transposer
 local disk_drive = require("component").disk_drive
-local proxy = require("component").proxy
-local beep = require("component").computer.beep
+local proxy      = require("component").proxy
+local beep       = require("component").computer.beep
 
-local STORAGE = 0
+local STORAGE  = 0
 local EXTERIOR = 0
 
-local MODE_IDLE = 0
-local MODE_PIN = 1
-local MODE_MENU = 2
+local MODE_IDLE     = 0
+local MODE_PIN      = 1
+local MODE_MENU     = 2
 local MODE_WITHDRAW = 3
-local MODE_DEPOSIT = 4
-local MODE_STATS = 5
-local MODE_CLOSING = -1
-local mode = MODE_IDLE
+local MODE_DEPOSIT  = 4
+local MODE_STATS    = 5
+local MODE_CLOSING  = -1
+local mode          = MODE_IDLE
 
 local BUTTON_NAME_WITHDRAW = "bw"
-local BUTTON_NAME_DEPOSIT = "bd"
-local BUTTON_NAME_EJECT = "be"
+local BUTTON_NAME_DEPOSIT  = "bd"
+local BUTTON_NAME_EJECT    = "be"
 
-local main_screen = nil
-local card_wait = nil
-local keypad = nil
-local error_popup = nil
+local main_screen   = nil
+local card_wait     = nil
+local keypad        = nil
+local error_popup   = nil
 local success_popup = nil
-local main_menu = nil
-local sold_text = nil
-local bin_text = nil
+local main_menu     = nil
+local sold_text     = nil
+local bin_text      = nil
 
-local event_touch, event_drive, event_eject = 0, 0, 0
+local event_touch, event_drive, event_eject, event_magData = nil, nil, nil, nil
 
 local old_res_x, old_res_y = nil, nil
 
-local drive = nil
-local cbData = false
-local solde = 0
+local drive         = nil
+local cbData        = false
+local encryptedData = nil
+local solde         = 0
 -- =============================================================================
-local function eject()
-  disk_drive.eject()
+local eject         = disk_drive.eject
+
+local function endSession()
+  mode = MODE_IDLE
+  card_wait:setVisible(true)
+  error_popup:setVisible(false)
+  success_popup:setVisible(false)
+  main_menu:enable(false)
+  keypad:enable(false)
+  keypad:setVisible(false)
+  cbData = nil
+  encryptedData = nil
+  solde = 0
+  sold_text:setText("Solde : 0")
+  eject()
 end
 
 local function showMenu()
@@ -67,7 +81,7 @@ local function showMenu()
   if (status == 0) then
     sold_text:setText("Solde : " .. solde)
   else
-    eject()
+    endSession()
   end
 end
 
@@ -75,6 +89,7 @@ local function closeClient(...)
   if (event_touch) then event.cancel(event_touch) end
   if (event_eject) then event.cancel(event_eject) end
   if (event_drive) then event.cancel(event_drive) end
+  if (event_magData) then event.cancel(event_magData) end
   gpu.setResolution(old_res_x, old_res_y)
   main_screen:setVisible(false)
   main_screen:enable(false)
@@ -89,7 +104,7 @@ local function makeTransaction(amount)
   status, solde = bank.getCredit(cbData)
   if (status ~= 0) then
     error_popup:show("Serveur non disponible", true)
-    eject()
+    endSession()
   else
     local coinGiven, b, s, g, p = 0, 0, 0, 0, 0
     if     (mode == MODE_WITHDRAW) then
@@ -121,7 +136,7 @@ end
 -- =============================================================================
 local function keypadPinCallback(kp)
   if (#kp:getInput() == 4) then
-    cbData = libCB.getCB(drive, kp:getInput())
+    cbData = libCB.getCB(encryptedData, kp:getInput())
     kp:clearInput()
     if (cbData ~= false) then
       kp:enable(false)
@@ -131,7 +146,7 @@ local function keypadPinCallback(kp)
         showMenu()
         status = bank.editAccount(cbData, 0) --check that the atm can do it's job
         if (status ~= 0) then
-          eject()
+          endSession()
           closeClient()
         end
       end
@@ -139,7 +154,7 @@ local function keypadPinCallback(kp)
   end
 end
 
-local function keypadAmountCallback(kp)
+local function keypadNumericalCallback(kp)
   if (#kp:getInput() ~= 0) then
     local amount = tonumber(kp:getInput())
     kp:clearInput()
@@ -165,14 +180,14 @@ local function showNumericalKeypad()
   keypad:setVisible(true)
   keypad:enable(true)
   keypad:hideInput(false)
-  keypad:setValidateCallback(keypadAmountCallback)
+  keypad:setValidateCallback(keypadNumericalCallback)
 end
 
 -- =============================================================================
 local function buttonEventHandler(buttonName)
   if (mode == MODE_MENU) then
     if     (buttonName == BUTTON_NAME_EJECT) then
-      eject()
+      endSession()
     elseif (buttonName == BUTTON_NAME_DEPOSIT) then
       mode = MODE_DEPOSIT
       showNumericalKeypad()
@@ -186,22 +201,19 @@ end
 local function componentAddedHandler(eventName, address, component_type)
   if (component_type == "drive") then
     drive = proxy(address)
+    encryptedData = libCB.loadCB(drive)
     showPinKeypad()
   end
 end
 
+local function magDataHandler(eventName, address, ...)
+  encryptedData = libCB.loadCB(proxy(address))
+  showPinKeypad()
+end
+
 local function driveEjectedHandler(eventName, component_type)
   if (component_type == "drive") then
-    mode = MODE_IDLE
-    card_wait:setVisible(true)
-    error_popup:setVisible(false)
-    success_popup:setVisible(false)
-    main_menu:enable(false)
-    keypad:enable(false)
-    keypad:setVisible(false)
-    cbData = nil
-    solde = 0
-    sold_text:setText("Solde : 0")
+    endSession()
   end
 end
 
@@ -321,6 +333,7 @@ local function init()
 
   event_drive = event.listen("component_added", componentAddedHandler)
   event_eject = event.listen("component_unavailable", driveEjectedHandler)
+  event_magData = event.listen("magData", magDataHandler)
   event.listen("interrupted", closeClient)
 end
 
