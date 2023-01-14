@@ -20,6 +20,27 @@ local componentSwitch = {
   end
 }
 
+local function getRecentMagRead(os_magreader)
+  checkArg(1, os_magreader, "table")
+  if (not lastMagRead[os_magreader.address]) then return nil end
+  if (computer.uptime() - 10 <= lastMagRead[os_magreader.address][1]) then
+    lastMagRead[os_magreader.address][1] = 0 --prevent using it again
+    return lastMagRead[os_magreader.address][2]
+  end
+  return nil
+end
+
+--wait for any compatible card format.
+--@return proxy
+function cb.waitForCB(timeout)
+  local eventDetails = table.pack(event.pullFiltered(timeout, function(a, b, c, d, e, f)
+                                    if (a == "component_added" and c == "drive") then return true end
+                                    if (a == "magData") then return true end
+                                  end))
+  if (eventDetails[1]) then return proxy(eventDetails[2])
+  else return false end
+end
+
 cb.loadCB = {}
 setmetatable(cb.loadCB, componentSwitch)
 
@@ -32,22 +53,12 @@ function cb.loadCB.drive(cbDrive)
   return {data = cbData, uuid = cbDrive.address, type = "driveData"}
 end
 
-local function getRecentMagRead(os_magreader)
-  checkArg(1, os_magreader, "table")
-  if (not lastMagRead[os_magreader.address]) then return nil end
-  if (computer.uptime() - 10 <= lastMagRead[os_magreader.address][1]) then
-    lastMagRead[os_magreader.address][1] = 0 --prevent using it again
-    return lastMagRead[os_magreader.address][2]
-  end
-  return nil
-end
-
-function cb.loadCB.os_magreader(os_magreader)
+function cb.loadCB.os_magreader(os_magreader, timeout)
   checkArg(1, os_magreader, "table")
   local recent = getRecentMagRead(os_magreader)
   if (recent) then return recent end
   --read the card
-  local _, _, _, rawData, cardUUID, _, _ = event.pull("magData", os_magreader.address)
+  local _, _, _, rawData, cardUUID, _, _ = event.pull(timeout, "magData", os_magreader.address)
   return {data = rawData, uuid = cardUUID, type = "magDataData"}
 end
 
