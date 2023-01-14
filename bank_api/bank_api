@@ -15,6 +15,7 @@ DESCIPTION
       getCredit(cbData) -> status:int,sold:int
         Return the sold of the account
       makeTransaction(uuid_cible,cbData,amount) -> status:int
+        cbData will pay uuid_cible amount
 
     Trusted client methods :
       This methods required a secret delivred by the server to be provided in the config
@@ -34,6 +35,7 @@ DESCIPTION
     2 = ERROR_ACCOUNT
     3 = ERROR_CB
     4 = ERROR_AMOUNT
+    5 = ERROR_RECEIVING_ACCOUNT
     -1 = timeout
     -2 = wrong message
 
