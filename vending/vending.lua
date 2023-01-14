@@ -23,6 +23,12 @@ local CONFIG_FILE = CONFIG_PATH .. "config.cfg"
 local PRODUCT_LIST_FILE = CONFIG_PATH .. "products.csv"
 local SALE_STATS = CONFIG_PATH .. "sales.csv"
 
+local COLUMN_SOLD_ITEM = 1
+local COLUMN_SOLD_QTE  = 2
+local COLUMN_COST_ITEM = 3
+local COLUMN_COST_QTE  = 4
+local COLUMN_COST_COIN = 5
+
 --global vars
 local config = {}
 local products = {}
@@ -77,23 +83,23 @@ local function payInCoin(amount)
     end
     if (paid) then return paid end
     if (config.acceptCB) then
-        --TODO bankAPI
-        local addr = nil
+        local readerComponent = nil
         if (not config.forceDriveEvent and component.isAvailable("drive")) then
-            addr = component.drive.address
+            readerComponent = component.drive
         else
             print("Insert CB")
-            _, addr, _ = event.pull(config.cbTimeout, "component_added", nil, "drive")
+            readerComponent = libCB.waitForCB(config.cbTimeout)
         end
+        local encryptedCardData = libCB.loadCB(readerComponent, config.cbTimeout)
         local try = 0
         local cb = false
-        if (addr) then
+        if (encryptedCardData) then
             repeat
                 io.write("PIN :")
                 local pin = term.read(nil, false, nil, "*")
                 if (not pin) then print(""); return false end
                 pin = pin:gsub("\n", "") --remove newline cause by term.read
-                cb = libCB.getCB(component.proxy(addr), pin)
+                cb = libCB.getCB(encryptedCardData, pin)
                 try = try + 1
                 print("") --clean new line
             until (cb or try >= 3)
@@ -105,6 +111,7 @@ local function payInCoin(amount)
                           [2] = "ERROR ACCOUNT",
                           [3] = "ERROR CB",
                           [4] = "ERROR AMOUNT",
+                          [COLUMN_COST_COIN] = "ERROR_RECEIVING_ACCOUNT",
                           [-1] = "TIMEOUT",
                           [-2] = "WRONG MESSAGE"
                       })[res])
@@ -276,24 +283,25 @@ end
 local run = true
 while (run) do
     local op = nil
+    --user interface loop (draw/input)
     repeat
+        --draw the products list
         term.clear()
         for i, product in ipairs(products) do
-            local cost = product[5]
-            if (not product[5] or product[5] == 0) then
-                cost = string.format("%qx%s", product[3].label, product[4])
+            local cost = product[COLUMN_COST_COIN]
+            if (not product[COLUMN_COST_COIN] or product[COLUMN_COST_COIN] == 0) then
+                cost = string.format("%qx%s", product[COLUMN_COST_ITEM].label, product[COLUMN_COST_QTE])
             end
-            if (checkItemAvailability(product[1], product[2])) then
-                print(string.format("%i : %qx%s (%s)", i, product[1].label, product[2], cost))
+            if (checkItemAvailability(product[COLUMN_SOLD_ITEM], product[COLUMN_SOLD_QTE])) then --filter out unavailable products
+                print(string.format("%i : %qx%s (%s)", i, product[COLUMN_SOLD_ITEM].label, product[COLUMN_SOLD_QTE], cost))
             end
         end
-
+        --read user input
         io.write(string.format("1-%i[*qte] >", #products))
         op = io.read("l")
     until (op)
 
-    if (op == config.exitString) then break end
-    if (op == "admin") then
+    if (op == "admin") then --admin
         --admin Menu
         local auth = false
         if (config.adminPlayer ~= "") then
@@ -303,79 +311,144 @@ while (run) do
             if (player and player == config.adminPlayer) then auth = true end
         else auth = true end
         while (auth) do
+            --print the interface
             term.clear()
             if (config.logSales) then print(string.format("Coin(s) earned : %i", getSalesCoinTotal())) end
             if (config.acceptCoin) then print(string.format("Coins in back chest : (%i) %i %i %i %i", libCoin.getValue(libCoin.getCoin(config.chestBack)), libCoin.getCoin(config.chestBack))) end
-            print("1 : Unload to front")
-            print("2 : Load from front")
+            print("1 : Payment settings")
+            print("2 : Unload to front")
+            print("3 : Load from front")
             if (config.acceptCoin) then
-                print("3 : Unload coins to front")
-                print("4 : Load coins from front")
+                print("4 : Unload coins to front")
+                print("5 : Load coins from front")
             end
-            print("5 : Clear sale data")
-            print("6 : Return")
-            io.write("[1-6] >")
-            local adminOp = io.read("l")
-            adminOp = tonumber(adminOp)
-            if (adminOp) then
-                if  (adminOp == 1) then
-                    print("Unloading")
-                    while (transposer.transferItem(config.chestBack, config.chestFront) ~= 0) do end
-                elseif (adminOp == 2) then
-                    print("Loading")
-                    while (transposer.transferItem(config.chestFront, config.chestBack) ~= 0) do end
-                elseif (adminOp == 3) then
-                    libCoin.moveCoin(libCoin.getValue(libCoin.getCoin(config.chestBack)), config.chestBack, config.chestFront)
-                elseif (config.acceptCoin and adminOp == 4) then
-                    libCoin.moveCoin(libCoin.getValue(libCoin.getCoin(config.chestFront)), config.chestFront, config.chestBack)
-                elseif (config.acceptCoin and adminOp == 5) then
-                    if (filesystem.exists(SALE_STATS)) then filesystem.remove(SALE_STATS) end
-                elseif (adminOp == 6 or adminOp == nil) then
-                    auth = false
-                end
+            print("6 : Clear sale data")
+            print("7 : Return")
+            print(string.format("%q : Exit the program", config.exitString))
+            --read user input
+            io.write("[1-7] >")
+            op = io.read("l")
+            if  (op == config.exitString) then --exit
+                run = false
+                auth = false
+            elseif (op == nil) then
+                auth = false --exit admin mode
+            end
+            op = tonumber(op)
+
+            --switch
+            if     (op == 1) then --Payment settings
+                local subMenu = true
+                repeat
+                    --interface
+                    term.clear()
+                    print(string.format("1 : Accept coin (%s)", config.acceptCoin))
+                    print(string.format("2 : Accept card (%s)", config.acceptCB))
+                    if (config.acceptCB) then
+                        print(string.format("3 : Register new owner account (%.9s****-****-****-************)", config.accountUUID))
+                        print(string.format("4 : Set card read timeout (%d)", config.cbTimeout))
+                    end
+                    print("5 : back")
+                    io.write("[1-5] >")
+                    op = io.read("l")
+                    if (op == nil) then subMenu = false end --exit admin mode
+                    op = tonumber(op)
+
+                    --switch
+                    if     (op == 1) then --toggle acceptCoin
+                        config.acceptCoin = not config.acceptCoin
+                        saveConfig()
+                    elseif (op == 2) then --toggle acceptCB
+                        config.acceptCB = not config.acceptCB
+                        saveConfig()
+                    elseif (config.acceptCB and op == 3) then --register owner bank account
+                        term.clear()
+                        print("Insert or swipe card")
+                        local readerComponent = libCB.waitForCB(config.cbTimeout) --read card
+                        if (readerComponent) then --card swipped
+                            local encryptedCardData = libCB.loadCB(readerComponent) --load card data to decrypt later
+                            local cb = nil
+                            local try = 0
+                            repeat --ask for pin (3 erros max)
+                                io.write("PIN :")
+                                local pin = term.read(nil, false, nil, "*")
+                                if (not pin) then print(""); return false end
+                                pin = pin:gsub("\n", "") --remove newline cause by term.read
+                                cb = libCB.getCB(encryptedCardData, pin)
+                                try = try + 1
+                                print("") --clean new line
+                            until (cb or try >= 3)
+                            if (cb) then --cb = false if pin is wrong
+                                config.accountUUID = cb.uuid
+                                saveConfig()
+                            end
+                        end
+                    elseif (config.acceptCB and op == 4) then --card read timout
+                        io.write("timout (s) >")
+                        op = io.read("l")
+                        op = tonumber(op)
+                        if (op) then
+                            config.cbTimeout = op
+                            saveConfig()
+                        end
+                    elseif (op == 5) then subMenu = false end --exit the submenu
+                until (not subMenu)
+            elseif (op == 2) then --Back chest unloading
+                print("Unloading")
+                while (transposer.transferItem(config.chestBack, config.chestFront) ~= 0) do end
+            elseif (op == 3) then --Back chest loading
+                print("Loading")
+                while (transposer.transferItem(config.chestFront, config.chestBack) ~= 0) do end
+            elseif (config.acceptCoin and op == 4) then --Unload coins
+                libCoin.moveCoin(libCoin.getValue(libCoin.getCoin(config.chestBack)), config.chestBack, config.chestFront)
+            elseif (config.acceptCoin and op == 5) then --Load coins
+                libCoin.moveCoin(libCoin.getValue(libCoin.getCoin(config.chestFront)), config.chestFront, config.chestBack)
+            elseif (config.acceptCoin and op == 6) then --Reset sales info
+                if (filesystem.exists(SALE_STATS)) then filesystem.remove(SALE_STATS) end
+            elseif (op == 7) then --exit admin mode
+                auth = false
             end
         end
-    end
-
-    --sale
-    local qte = 1
-    op, qte = op:match("([0-9]+)[x\\*]?([0-9]*)")
-    op = tonumber(op)
-    qte = tonumber(qte) or 1
-    if (op and op >= 1 and op <= #products) then
-        if (checkItemAvailability(products[op][1], products[op][2] * qte)) then
-            --check if there is enough space to give the bought item
-            if (getFreeSpace(config.chestFront, products[op][1]) >= products[op][2] * qte) then
-                if (products[op][5]) then
-                    if (payInCoin(products[op][5] * qte)) then
-                        moveItem(config.chestBack, config.chestFront, products[op][1], products[op][2] * qte)
-                        logSale(products[op][1], products[op][2], products[op][5], qte)
-                        print(string.format("Sold %i %s for %i coin(s)", products[op][2] * qte, products[op][1].label, products[op][5] * qte))
-                        computer.beep()
-                    else
-                        print("No payment")
-                    end
-                else
-                    if (getFreeSpace(config.chestBack, products[op][3]) >= products[op][4] * qte) then
-                        if (payInItem(products[op][3], products[op][4] * qte)) then
-                            moveItem(config.chestBack, config.chestFront, products[op][1], products[op][2] * qte)
-                            logSale(products[op][1], products[op][2], string.format("%s*%i", products[op][3].name, products[op][4]), qte)
-                            print(string.format("Sold %i %s for %i %s", products[op][2] * qte, products[op][1].label, products[op][4] * qte, products[op][3].label))
+    else --sale
+        local qte = 1
+        op, qte = op:match("([0-9]+)[x\\*]?([0-9]*)")
+        op = tonumber(op)
+        qte = tonumber(qte) or 1
+        if (op and op >= 1 and op <= #products) then
+            if (checkItemAvailability(products[op][COLUMN_SOLD_ITEM], products[op][COLUMN_SOLD_QTE] * qte)) then
+                --check if there is enough space to give the bought item
+                if (getFreeSpace(config.chestFront, products[op][COLUMN_SOLD_ITEM]) >= products[op][COLUMN_SOLD_QTE] * qte) then
+                    if (products[op][COLUMN_COST_COIN]) then
+                        if (payInCoin(products[op][COLUMN_COST_COIN] * qte)) then
+                            moveItem(config.chestBack, config.chestFront, products[op][COLUMN_SOLD_ITEM], products[op][COLUMN_SOLD_QTE] * qte)
+                            logSale(products[op][COLUMN_SOLD_ITEM], products[op][COLUMN_SOLD_QTE], products[op][COLUMN_COST_COIN], qte)
+                            print(string.format("Sold %i %s for %i coin(s)", products[op][COLUMN_SOLD_QTE] * qte, products[op][COLUMN_SOLD_ITEM].label, products[op][COLUMN_COST_COIN] * qte))
                             computer.beep()
                         else
-                            print("Not enough to pay")
+                            print("No payment")
                         end
                     else
-                        print("Could not accept payment")
+                        if (getFreeSpace(config.chestBack, products[op][COLUMN_COST_ITEM]) >= products[op][COLUMN_COST_QTE] * qte) then
+                            if (payInItem(products[op][COLUMN_COST_ITEM], products[op][COLUMN_COST_QTE] * qte)) then
+                                moveItem(config.chestBack, config.chestFront, products[op][COLUMN_SOLD_ITEM], products[op][COLUMN_SOLD_QTE] * qte)
+                                logSale(products[op][COLUMN_SOLD_ITEM], products[op][COLUMN_SOLD_QTE], string.format("%s*%i", products[op][COLUMN_COST_ITEM].name, products[op][COLUMN_COST_QTE]), qte)
+                                print(string.format("Sold %i %s for %i %s", products[op][COLUMN_SOLD_QTE] * qte, products[op][COLUMN_SOLD_ITEM].label, products[op][COLUMN_COST_QTE] * qte, products[op][COLUMN_COST_ITEM].label))
+                                computer.beep()
+                            else
+                                print("Not enough to pay")
+                            end
+                        else
+                            print("Could not accept payment")
+                        end
                     end
+                else
+                    print("Not enough free space in the chest")
                 end
             else
-                print("Not enough free space in the chest")
+                print("UNAVAILABLE")
             end
-        else
-            print("UNAVAILABLE")
+            print("Press the Return key to continue")
+            term.read(nil, true, nil, nil)
         end
-        print("Press the Return key to continue")
-        term.read(nil, true, nil, nil)
     end
 end
