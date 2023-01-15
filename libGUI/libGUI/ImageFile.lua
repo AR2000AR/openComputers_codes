@@ -24,7 +24,9 @@ local function openPAM(path)
   local img = {property = {}, pixel = {}}
   local line = ""
   repeat
-    line = file:read("*l")
+    repeat
+      line = file:read("*l")
+    until (line:sub(1, 1) ~= "#") -- ignore comments
     local spacePos = line:find(" ")
     if (spacePos ~= nil) then
       local propertyName = line:sub(0, spacePos - 1)
@@ -38,6 +40,7 @@ local function openPAM(path)
   end
   local i = 0
   repeat
+    if (i % 1000 == 0) then os.sleep() end
     local rgb = {}
     local pixel = ""
     if (img.property.TUPLTYPE == "RGB" or img.property.TUPLTYPE == "RGB_ALPHA") then
@@ -81,7 +84,9 @@ local function openPPM(path)
   local line = ""
 
   -- get image size
-  line = file:read("*l")
+  repeat
+    line = file:read("*l")
+  until (line:sub(1, 1) ~= "#") --ignore comment
   local spacePos = line:find(" ")
   if (spacePos ~= nil) then
     local width = line:sub(0, spacePos - 1)
@@ -102,6 +107,7 @@ local function openPPM(path)
   -- read pixel data
   local i = 0
   repeat
+    if (i % 1000 == 0) then os.sleep() end
     local rgb = {}
     local pixel = ""
     if  (img.property.TYPE == "P6") then
