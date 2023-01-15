@@ -37,7 +37,7 @@ Image.private.draw.new = function(self)
       if (y % 2 == 1) then
         pixelFg = self.imageData:getPixel(x, y)
         if (pixelFg == "nil") then _, _, pixelFg = gpu.get(self:getX() + x - 1, self:getY() + (y - 1) / 2) end
-        if (y + 1 <= self:getHeight()) then
+        if (y + 1 <= self.imageData:getHeight()) then
           pixelBg = self.imageData:getPixel(x, y + 1)
           if (pixelBg == "nil") then _, _, pixelBg = gpu.get(self:getX() + x - 1, self:getY() + (y - 1) / 2) end
         else
@@ -54,7 +54,7 @@ Image.private.draw.new = function(self)
 end
 
 Image.getWidth      = function(self) return self.imageData:getWidth() end
-Image.getHeight     = function(self) return self.imageData:getHeight() end
+Image.getHeight     = function(self) if (self:getDrawMethod()) then return math.ceil(self.imageData:getHeight() / 2) else self.imageData:getHeight() end end
 Image.getSize       = function(self) return self.imageData:getSize() end
 Image.setWidth      = function(self) error("Can change a image size", 2) end
 Image.setHeight     = function(self) error("Can change a image size", 2) end
