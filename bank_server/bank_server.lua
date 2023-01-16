@@ -23,7 +23,7 @@ local AES_IV = dataCard.md5("bank")
 --INIT config default values
 local keyFile = CONF_DIR .. "key" --default value
 local aesKeyFile = CONF_DIR .. "aes" --default value
-local accountDir = "/srv/bank/" --default value
+local accountDir = "/srv/bank/account/" --default value
 local verbose = false --change it in rc.cfg
 --protocole commands constants
 local PROTOCOLE_GET_CREDIT = "GET_CREDIT"
