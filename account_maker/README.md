@@ -16,33 +16,33 @@ A atm like machine. Use to let users create their own account without needing to
 ## Configuration
 
 ### masterAccountCBdata
-Mandatory : no
-Type : string
-Default : nil
+Mandatory : no  
+Type : string  
+Default : nil  
 Clear master debit card data. Avoid editing this one by hand. Set to "" to get asked for a card next time the program is started
 
 ### masterAccountCreditPerAccount
-Mandatory : no
-Type : number
-Default : 0
+Mandatory : no  
+Type : number  
+Default : 0  
 Money to add to the master account for each new accounts
 
 ### newAccountCredit
-Mandatory : no
-Type : number
-Default : 0
+Mandatory : no  
+Type : number  
+Default : 0  
 Money to give to the newly created account
 
 ### sideChest
-Mandatory : yes
-Type : number
-Default : 1
+Mandatory : yes  
+Type : number  
+Default : 1  
 Internal Chest side. Number correspond to the [sides api](https://ocdoc.cil.li/api:sides)
 
 ### sideDrive
-Mandatory : yes
-Type : number
-Default : 5
+Mandatory : yes  
+Type : number  
+Default : 5  
 External disk drive. Number correspond to the [sides api](https://ocdoc.cil.li/api:sides)
 
 ## Files

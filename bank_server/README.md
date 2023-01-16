@@ -22,19 +22,19 @@ If set, the server will log all it's operation with clear unencrypted data in `/
 ## Configuration
 
 ### key_file
-Mandatory : yes
-Type : string
-Default : "/etc/bank/server/key"
+Mandatory : yes  
+Type : string  
+Default : "/etc/bank/server/key"  
 The path to the public and private keys (without extensions)
 
 ### account_dir
-Mandatory : yes
-Type : string
-Default : "/srv/bank/account/"
+Mandatory : yes  
+Type : string  
+Default : "/srv/bank/account/"  
 The path where the server save the accounts files
 
 ## aes_key_file
-Mandatory : yes
-Type : string
-Default : "/etc/bank/server/aes"
+Mandatory : yes  
+Type : string  
+Default : "/etc/bank/server/aes"  
 The file containing the aes key used to encrypt the accounts files
