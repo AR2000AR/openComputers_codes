@@ -15,8 +15,9 @@ local data       = component.data
 
 local CONFIG_PATH  = "/etc/bank/accountMaker/"
 local CONFIG_FILE  = CONFIG_PATH .. "config.cfg"
-local ACCOUNT_FILE = CONFIG_PATH .. "accounts.csv"
-local ERROR_FILE   = CONFIG_PATH .. "operr.csv"
+local OUT_PATH     = "/var/bank/accountMaker/"
+local ACCOUNT_FILE = OUT_PATH .. "accounts.csv"
+local ERROR_FILE   = OUT_PATH .. "operr.csv"
 
 local config        = {}
 local knownAccounts = {}
@@ -173,10 +174,12 @@ local function makeCard(playerName)
     end
 end
 
---MAIN=========================================================================
-if (not filesystem.isDirectory(CONFIG_PATH)) then
-    filesystem.makeDirectory(CONFIG_PATH)
-end
+--INIT=========================================================================
+--make directory if missing
+if (not filesystem.isDirectory(CONFIG_PATH)) then filesystem.makeDirectory(CONFIG_PATH) end
+if (not filesystem.isDirectory(OUT_PATH)) then filesystem.makeDirectory(OUT_PATH) end
+
+--default config
 config = {
     masterAccountCBdata = "",
     masterAccountCreditPerAccount = 0,
@@ -184,47 +187,61 @@ config = {
     sideChest = 1,
     sideDrive = 5
 }
+
+--load the config if present
 if (filesystem.exists(CONFIG_FILE) and not filesystem.isDirectory(CONFIG_FILE)) then
     local cFile = io.open(CONFIG_FILE, "r")
     assert(cFile, "Something went wrong when reading the config file")
     local tconf = serialization.unserialize(cFile:read("*a")) or {}
     cFile:close()
     for key, val in pairs(tconf) do
-        config[key] = val
+        config[key] = val --override default configurations
     end
     cFile:close()
 end
+
+--load masterAccountCBdata if present
 if (config.masterAccountCBdata and config.masterAccountCBdata ~= "") then
-    config.masterAccountCBdata = serialization.unserialize(
-        data.decode64(config.masterAccountCBdata))
+    config.masterAccountCBdata = serialization.unserialize(data.decode64(config.masterAccountCBdata))
 end
+
 --register master cb on first boot
 if (config.masterAccountCBdata == "") then
     print("Insert master cb to register it")
-    event.pull("component_available", "drive")
-    local try = 0
-    local pin
-    repeat
-        try = try + 1
-        io.write("Enter pin : ")
-        pin = term.read(nil, nil, "*")
-        pin = pin:gsub("\n", "")
-    until (pin or try >= 3)
-    local cb = libCB.getCB(component.drive, pin)
-    if (cb) then
-        config.masterAccountCBdata = cb
-        computer.beep()
+    local reader = libCB.waitForCB(5)
+    if (reader) then
+        local encryptedData = libCB.loadCB(reader)
+        local try = 0
+        local pin
+        repeat
+            try = try + 1
+            io.write("Enter pin : ")
+            pin = term.read(nil, nil, "*")
+            pin = pin:gsub("\n", "")
+        until (pin or try >= 3)
+        local cb = libCB.getCB(encryptedData, pin)
+        if (cb) then
+            config.masterAccountCBdata = cb
+            computer.beep()
+        else
+            ---@diagnostic disable-next-line: assign-type-mismatch
+            config.masterAccountCBdata = nil
+            computer.beep()
+            computer.beep()
+        end
     else
-        ---@diagnostic disable-next-line: assign-type-mismatch
-        config.masterAccountCBdata = false
+        config.masterAccountCBdata = nil
         computer.beep()
         computer.beep()
     end
 end
+
 saveConfig()
+
+-- load already created account list
 if (filesystem.exists(ACCOUNT_FILE)) then
     local aFile = io.open(ACCOUNT_FILE, 'r')
-    assert(aFile, "No account file found. HOW !!!!")
+    assert(aFile, "No account file found. HOW !?")
     for line in aFile:lines() do
         line = string.gsub(line, " ", "")
         line = parseCSVLine(line, ",")
@@ -232,16 +249,21 @@ if (filesystem.exists(ACCOUNT_FILE)) then
     end
 end
 
+-- init screen
 local old_res_x, old_res_y = gpu.getResolution()
 gpu.setResolution(26, 13)
+
+--listen for ctrl+c (interrupted)
+event.listen("interrupted", function() run = false; return false end)
+--MAIN LOOP====================================================================
 while (run) do
     term.clear()
     print("Touch the screen")
     print("to get a card")
-    event.listen("interrupted", function() run = false; return false end)
     local e, _, _, _, _, playerName = event.pull(1, "touch")
     if (e) then
         makeCard(playerName)
     end
 end
+--restore old screen resolution
 gpu.setResolution(old_res_x, old_res_y)
