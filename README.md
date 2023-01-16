@@ -1,8 +1,10 @@
 # OpenComputers codes
 My lua programs for openComputers.
-
 ---
-
+## Installation
+- install oppm
+- run `oppm register AR2000AR/openComputers_codes`
+- run `oppm install <package>`
 ---
 ## Banking system
 The bank is made of 2 main part : the server and a client. The client can be an ATM or a app to manage accounts.
@@ -15,13 +17,23 @@ The opp package provide tools to help setting up clients who need the secret
 ### bank_dev_tools
 Add a simple command line program to edit the encrypted accounts info. Don't install it if you don't need it.
 
-### Librairy and API
+### bank_atm
+Let account holders withdraw or deposit coins. Coins used are defined by libCoin
+
+### bank_account_maker
+Let users create a bank account and create a new debit card.
+
+### vending
+A automatic vending machine. Install it on a normal computer with a transposer. Accept coins (libCoin) items and debit card (libCB/bank_api).
+
+### Library and API
 
 #### bank_api
 Enable the programs to make requests to the server.
 
 #### libCB
-Read and write credit card on an unmanaged floppy.
+Read and write debit card on an unmanaged floppy.
+**new** Debit card can be a magnetic card from [open security](https://www.curseforge.com/minecraft/mc-mods/opensecurity)
 
 #### libCoin
 move coins with a transposer. Use coins from the [ordinary coins](https://www.curseforge.com/minecraft/mc-mods/ordinary-coins) mod.  
@@ -40,10 +52,6 @@ lnfs server. Configuration handled by /etc/rc.cfg. See `man lnfsd` or [lnfsd](ln
 ---
 ## Other programs
 
-### vending
-A automatic vending machine program. Install it on a normal computer with a transposer.
-Can use coins (libGUI) or a CB (libCB & bank_api). Configurable.
-
 ### stargate
 Graphical interface to control and monitor gates from [Stargate Network](https://www.curseforge.com/minecraft/mc-mods/stargate-network). Whitelist, blacklist, gate list, iris management and password. Fully configurable from the GUI
 
@@ -54,10 +62,10 @@ Control a number of redstone IO blocs with a single touchscreen. Easy to configu
 Write the item id of every items in the chest on top of the transposer in a file. Item are moved on the chest on the bottom once it's id is saved. The program stop after 3 loop without items in the chest.
 
 ### autocrafter
-Use a PC, a Robot, linked card and a transposer to craft items
+Experimental. Use a PC, a Robot, linked card and a transposer to craft items.
 
 ---
-## Additional librarys
+## Additional library
 
 ### libClass
 add object oriented programing to lua.
