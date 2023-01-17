@@ -5,7 +5,7 @@ SYNOPSIS
   rc lnfsd enable
   rc lnfsd start
 
-DESCIPTION
+DESCRIPTION
   Provide the lnfs filesystem to other machines on the Network
 
 CONFIGURATION
