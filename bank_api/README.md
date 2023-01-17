@@ -5,6 +5,8 @@ API to talk with `bank_server`
 - run `oppm install bank_api`
 
 ## Configuration
+The configuration file for the API is `/etc/bank/api/conf.conf`
+
 ### secret
 Mandatory : yes  
 Type : string  
