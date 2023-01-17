@@ -21,7 +21,8 @@ assert(transposer, "No transposer found")
 local CONFIG_PATH = "/etc/vending/"
 local CONFIG_FILE = CONFIG_PATH .. "config.cfg"
 local PRODUCT_LIST_FILE = CONFIG_PATH .. "products.csv"
-local SALE_STATS = CONFIG_PATH .. "sales.csv"
+local OUT_PATH = "/var/vending/"
+local SALE_STATS = OUT_PATH .. "sales.csv"
 
 local COLUMN_SOLD_ITEM = 1
 local COLUMN_SOLD_QTE  = 2
@@ -277,6 +278,9 @@ for item in transposer.getAllStacks(config.chestBack) do
             end
         end
     end
+end
+if (not filesystem.isDirectory(OUT_PATH)) then
+    filesystem.makeDirectory(OUT_PATH)
 end
 
 --main
