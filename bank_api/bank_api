@@ -12,16 +12,16 @@ DESCRIPTION
 
   Method list
     Publicly available methods :
-      getCredit(cbData) -> status:int,sold:int
-        Return the sold of the account
-      makeTransaction(uuid_cible,cbData,amount) -> status:int
-        cbData will pay uuid_cible amount
+      getCredit(cbData) -> status:int,balance:int
+        Return the balance of the account
+      makeTransaction(targetAccount,cbData,amount) -> status:int
+        cbData's account will pay targetAccount amount
 
     Trusted client methods :
       This methods required a secret delivered by the server to be provided in the config
-      createAccount() -> status:int, uuid:sting
+      createAccount() -> status:int, accountUUID:sting
         Return the newly create account's uuid
-      requestNewCBdata(accountUUID [,cbUUID]):int:string:rawCBdata
+      requestNewCBdata(accountUUID [,cbUUID])-> status:int,string:rawCBdata
         Without cbUUID, the srv will assume it is a magcard from open security and need less data.
       editAccount(cbData,amount):int
         Add amount to the account. If amount is < 0 It will be removed form the account
