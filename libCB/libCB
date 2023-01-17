@@ -4,18 +4,21 @@ NAME
 SYNOPSIS
   local libCB = require("libCB")
 
-DESCIPTION
+DESCRIPTION
   Use this lib to access a credit card. A credit card is a special unmanaged floppy disk
 
   Data structure
     cbData:table
-      uudi,	--account uuid
-      cbUUID,	--card uuid
-      type, -- card's component type ("signed" or "unsigned")
+      uuid	--account uuid
+      cbUUID	--card uuid
+      type -- card's component type ("signed" or "unsigned")
       [sig]		--card signature made form uuid & card's drive component's uuid. Absent on magData
 
   Method list
     Common methods
+      waitForCB():proxy
+        wait for any compatible debit card format to be read or available.
+        Return the reader's component proxy for later use with loadCB() or getCB().
       loadCB(cbDrive):table
         cbDrive:proxy > the component to read the card from
       getCB(rawCBdata,pin):cbData
@@ -28,7 +31,7 @@ DESCIPTION
         cbDrive:proxy > the drive or os_magreader component proxy for the credit card
         publicKey:userdata > data card compatible publicKey
       writeCB(rawCBdata,cbDrive)
-        rawCBdata:string|table > data to be writen to the new credit card
+        rawCBdata:string|table > data to be written to the new credit card
         cbDrive:proxy > the drive or os_cardwriter component proxy for the credit card
     
     Server only methods :
@@ -36,7 +39,7 @@ DESCIPTION
         uuid:string > account uuid
         cbUUID:string|nil > the future credit card uuid
         privateKey:userdata > data card compatible publicKey
-        If cbUUID is ommited, the function will return unsigned and smaller data. Useful for things like 
+        If cbUUID is omitted, the function will return unsigned and smaller data. Useful for things like 
 
   Returned values
     cbData
