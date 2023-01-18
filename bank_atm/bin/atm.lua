@@ -281,7 +281,7 @@ local function init()
 
   card_wait = gui.Screen()
   card_wait:addChild(gui.widget.Rectangle(1, 1, 26, 13, 0xffffff))
-  card_wait:addChild(gui.widget.Image(9, 4, "/usr/data/bank_atm/floppy8x8.pam"))
+  card_wait:addChild(gui.widget.Image(9, 4, "/usr/share/bank_atm/floppy8x8.pam"))
   main_screen:addChild(card_wait)
 
   keypad = gui.widget.Keypad(10, 2, 0xc3c3c3, true, 4)

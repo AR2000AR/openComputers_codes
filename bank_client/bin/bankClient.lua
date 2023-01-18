@@ -17,7 +17,7 @@ local B_NAME_POPUP_CLOSE    = "pc"
 local B_NAME_C              = "c"
 local B_NAME_FLOPPY         = "fp"
 local B_NAME_MAGCARD        = "mg"
-local IMG_PATH              = "/usr/data/bank_client/"
+local IMG_PATH              = "/usr/share/bank_client/"
 local mode                  = MODE_IDLE
 
 local touchListenerId   = nil

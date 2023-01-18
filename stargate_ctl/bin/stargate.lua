@@ -13,7 +13,7 @@ local WHITELIST_FILE = CONFIG_PATH .. "whitelist.csv"
 local BLACKLIST_FILE = CONFIG_PATH .. "blacklist.csv"
 local CONFIG_FILE    = CONFIG_PATH .. "stargate.cfg"
 local GATE_LIST      = CONFIG_PATH .. "gates.csv"
-local IMG_ROOT       = "/usr/data/stargate/"
+local IMG_ROOT       = "/usr/share/stargate/"
 local IRIS_STATE     = {IMG_ROOT .. "iris1.pam", IMG_ROOT .. "iris2.pam", IMG_ROOT .. "iris3.pam"}
 local GATE_STATE     = {[0] = IMG_ROOT .. "sg00.pam", IMG_ROOT .. "sg01.pam", IMG_ROOT .. "sg02.pam", IMG_ROOT .. "sg03.pam", IMG_ROOT .. "sg04.pam", IMG_ROOT .. "sg05.pam", IMG_ROOT .. "sg06.pam", IMG_ROOT .. "sg07.pam", IMG_ROOT .. "sg08.pam", IMG_ROOT .. "sg09.pam", IMG_ROOT .. "sg10.pam"}
 local VORTEX         = IMG_ROOT .. "vortex.pam"

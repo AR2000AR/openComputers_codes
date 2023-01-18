@@ -61,9 +61,8 @@ Image.setHeight     = function(self) error("Can change a image size", 2) end
 Image.setSize       = function(self) error("Can change a image size", 2) end
 Image.setDrawMethod = function(self, drawMethod) self.private.drawMethod = drawMethod end
 Image.getDrawMethod = function(self) return self.private.drawMethod end
-Image.draw          = function(self, drawMethod)
-  if (drawMethod == nil) then drawMethod = self:getDrawMethod() end
-  if (drawMethod == Image.DRAW_METHOD_NEW) then
+Image.draw          = function(self)
+  if (self:getDrawMethod() == Image.DRAW_METHOD_NEW) then
     self.private.draw.new(self)
   else
     self.private.draw.old(self)

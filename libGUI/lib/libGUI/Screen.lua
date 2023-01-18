@@ -44,7 +44,7 @@ Screen.draw = function(self, useBuffer)
     gpu.setActiveBuffer(drawBuffer)
   end
   for _, widget in ipairs(self.childs) do
-    if (widget:isVisible()) then widget:draw() end
+    if (widget:isVisible()) then widget:draw(false) end --draw(false) so other screens don't create new buffers
   end
   if (useBuffer) then
     gpu.bitblt(0)
