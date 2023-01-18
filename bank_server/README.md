@@ -2,6 +2,12 @@
 The server for the banking system.
 
 ## Installation
+
+### Requirement
+- 1 network card
+- 1 T3 data card
+
+### Installing from oppm
 - run `oppm install bank_server`
 - run `rc bank_server enable`
 - run `rc bank_server start`
