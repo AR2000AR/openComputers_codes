@@ -42,7 +42,6 @@ end
 
 local function loadAccount(accountUUID)
   print("-> loadAccount")
-  local account = {}
   if (fs.exists(accountDir .. accountUUID)) then
     local file = io.open(accountDir .. accountUUID, "r")
     assert(file, "No account " .. accountUUID)
@@ -96,20 +95,21 @@ end
 
 --MAIN=================================
 if (fs.exists(CONF_DIR .. CONF_FILE_NAME)) then --read the config file
+  print("Server configurations file read")
   local file = io.open(CONF_DIR .. CONF_FILE_NAME, "r")
   assert(file, "WHY !!!")
   local confTable = serialization.unserialize(file:read("*a"))
   file:close()
-  if (confTable.accountDir) then accountDir = confTable.accountDir end
-  if (confTable.aesKeyFile) then aesKeyFile = confTable.aesKeyFile end
-  if (confTable.keyFile) then keyFile = confTable.keyFile end
+  if (confTable.account_dir) then accountDir = confTable.account_dir end
+  if (confTable.aes_key_file) then aesKeyFile = confTable.aes_key_file end
+  if (confTable.key_file) then keyFile = confTable.key_file end
 else
   io.stderr:write("NO CONFIG FILE FOUND IN " .. CONF_DIR)
   os.exit()
 end
 
 local args, opts = shell.parse(...)
-if (args[3]) then print("hi"); assert(tonumber(args[3]) ~= nil, "not a number") end
+if (args[3]) then assert(tonumber(args[3]) ~= nil, "not a number") end
 if     (args[1] == "get") then
   local ac = loadAccount(args[2])
   if (type(ac) == "number") then

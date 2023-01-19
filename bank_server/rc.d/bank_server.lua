@@ -314,9 +314,9 @@ function start(msg) --start the service
     assert(file, "No config file " .. CONF_DIR .. CONF_FILE_NAME)
     local confTable = serialization.unserialize(file:read("*a"))
     file:close()
-    if (confTable.accountDir) then accountDir = confTable.accountDir end
-    if (confTable.aesKeyFile) then aesKeyFile = confTable.aesKeyFile end
-    if (confTable.keyFile) then keyFile = confTable.keyFile end
+    if (confTable.account_dir) then accountDir = confTable.account_dir end
+    if (confTable.aes_key_file) then aesKeyFile = confTable.aes_key_file end
+    if (confTable.key_file) then keyFile = confTable.key_file end
   else --if the config file doesn't exists create a new one with the defaults values
     local file = io.open(CONF_DIR .. CONF_FILE_NAME, "w")
     assert(file, "No config file " .. CONF_DIR .. CONF_FILE_NAME)
