@@ -6,7 +6,7 @@ A automatic vending machine
 - Run `oppm install vending`
 - Edit the `/etc/vending/products.csv` file to create your listing
 - Set yourself as the admin player in `/etc/vending/config.cfg`
-- Configure `bank_api` in `/etc/bank/api/conf.conf` if you want to accept payment via debit card.
+- Configure [bank_api](../bank_api) if you want to accept payment via debit card.
 
 ### Hardware
 You will need :
@@ -75,13 +75,13 @@ Do not use already inserted debit card and wait for it to be inserted. Only work
 Mandatory : yes  
 Type : boolean  
 Default : true  
-Accept payment in coins. See `libCoin`.
+Accept payment in coins. See [libCoin](libCoin).
 
 #### acceptCB
 Mandatory : yes  
 Type : boolean  
 Default : false  
-Accept payment with a debit card.
+Accept payment with a debit card. See [bank_api](../bank_api/).
 
 #### accountUUID
 Mandatory : yes  

@@ -18,13 +18,13 @@ The opp package provide tools to help setting up clients who need the secret
 Add a simple command line program to edit the encrypted accounts info. Don't install it if you don't need it.
 
 ### bank_atm
-Let account holders withdraw or deposit coins. Coins used are defined by libCoin
+Let account holders withdraw or deposit coins. Coins used are defined by [libCoin](libCoin)
 
 ### bank_account_maker
 Let users create a bank account and create a new debit card.
 
 ### vending
-A automatic vending machine. Install it on a normal computer with a transposer. Accept coins (libCoin) items and debit card (libCB/bank_api).
+A automatic vending machine. Install it on a normal computer with a transposer. Accept coins ([libCoin](libCoin)) items and debit card ([libCB](libCB)/[bank_api](bank_api)).
 
 ### Library and API
 

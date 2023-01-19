@@ -14,7 +14,7 @@ The server for the banking system.
 On first startup the server will generate it's default configuration file and encryption keys. If the keys are missing they will be regenerated but all account data and all signed credit cards will be lost.
 
 ## bank_api client config
-The connect to the server, clients use the `bank_api` lib. This api need to know the server address.  
+The connect to the server, clients use the [bank_api](../bank_api) lib. This api need to know the server address.  
 Some clients (`bank_atm`, `bank_client`, `bank_amount_maker`) need a extra configuration value. This secret provided by the server authenticate the client for sensitive operation that could break the economy.  
 To generate the client configuration take out it's network card and use `generateClientAPIconfig <clientName>`. It will prompt you to swap the server's network card with the client's one to get it's address. This will create a file called `clientName.conf`. Copy this file as `/etc/bank/api/conf.conf` on the client machine.  
 You can generate a generic configuration file for unauthenticated client (`vending`) with `generateClientAPIconfig -n <clientName>`.

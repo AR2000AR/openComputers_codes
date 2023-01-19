@@ -1,5 +1,5 @@
 # bank_atm
-A simple ATM machine. It let users see their balance, deposit or withdraw coins (using libCoin)
+A simple ATM machine. It let users see their balance, deposit or withdraw coins (using [libCoin](../libCoin/))
 
 ## Installation
 ### Requirement
@@ -11,7 +11,7 @@ A simple ATM machine. It let users see their balance, deposit or withdraw coins 
 
 ### Software
 - Run `oppm install bank_atm`
-- Configure bank_api
+- Configure [bank_api](../bank_api)
 
 ### Hardware
 - Place a chest on top of the transposer.

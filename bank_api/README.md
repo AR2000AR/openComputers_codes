@@ -34,6 +34,7 @@ local bank = require("bank_api")
 
 ### Methods
 The first return value of all methods is a status code.  
+`cbData` is obtained with [libCB](../libCB/).
 
 #### Public methods
 Those methods can be called from any client.

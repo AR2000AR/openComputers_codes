@@ -3,7 +3,7 @@ A atm like machine. Use to let users create their own account without needing to
 
 ## Installation
 - run `oppm install bank_account_maker`
-- Configure `bank_api`. The secret configuration value is mandatory
+- Configure [bank_api](../bank_api). The secret configuration value is mandatory
 - run once to generate the default config
 - edit the configuration file `/etc/bank/accountMaker/config.cfg` as needed
 
