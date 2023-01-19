@@ -14,7 +14,7 @@ Image.constructor = function(self, x, y, img, drawMethod)
   elseif (type("table") and img.class == "Image") then
     self.imageData = img
   end
-  if (drawMethod) then self:setDrawMethod(drawMethod) end
+  if (drawMethod ~= nil) then self:setDrawMethod(drawMethod) end
 end
 Image.private.draw = {}
 Image.private.draw.old = function(self)
@@ -54,7 +54,7 @@ Image.private.draw.new = function(self)
 end
 
 Image.getWidth      = function(self) return self.imageData:getWidth() end
-Image.getHeight     = function(self) if (self:getDrawMethod()) then return math.ceil(self.imageData:getHeight() / 2) else self.imageData:getHeight() end end
+Image.getHeight     = function(self) if (self:getDrawMethod()) then return math.ceil(self.imageData:getHeight() / 2) else return self.imageData:getHeight() end end
 Image.getSize       = function(self) return self.imageData:getSize() end
 Image.setWidth      = function(self) error("Can change a image size", 2) end
 Image.setHeight     = function(self) error("Can change a image size", 2) end
