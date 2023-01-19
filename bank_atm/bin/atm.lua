@@ -16,14 +16,15 @@ local beep       = require("component").computer.beep
 local STORAGE  = 0
 local EXTERIOR = 0
 
-local MODE_IDLE     = 0
-local MODE_PIN      = 1
-local MODE_MENU     = 2
-local MODE_WITHDRAW = 3
-local MODE_DEPOSIT  = 4
-local MODE_STATS    = 5
-local MODE_CLOSING  = -1
-local mode          = MODE_IDLE
+local MODE_IDLE      = 0
+local MODE_PIN       = 1
+local MODE_MENU      = 2
+local MODE_WITHDRAW  = 3
+local MODE_DEPOSIT   = 4
+local MODE_STATS     = 5
+local MODE_CLOSING   = -1
+local mode           = MODE_IDLE
+local CARD_IN_READER = false
 
 local BUTTON_NAME_WITHDRAW = "bw"
 local BUTTON_NAME_DEPOSIT  = "bd"
@@ -125,10 +126,10 @@ local function makeTransaction(amount)
       if (amount ~= coinGiven) then
         error_popup:show("Coffre de sortie plein\nPrévenez un admin", true)
       end
-      showMenu()
+      if (not CARD_IN_READER) then endSession() else showMenu() end
     else
       error_popup:show("Imposible de distibuer les pièces", true)
-      showMenu()
+      if (not CARD_IN_READER) then endSession() else showMenu() end
     end
   end
 end
@@ -200,6 +201,7 @@ end
 
 local function componentAddedHandler(eventName, address, component_type)
   if (component_type == "drive") then
+    CARD_IN_READER = true
     drive = proxy(address)
     encryptedData = libCB.loadCB(drive)
     showPinKeypad()
@@ -213,6 +215,7 @@ end
 
 local function driveEjectedHandler(eventName, component_type)
   if (component_type == "drive") then
+    CARD_IN_READER = false
     endSession()
   end
 end
