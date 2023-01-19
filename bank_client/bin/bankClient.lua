@@ -123,10 +123,20 @@ local function voirCompte(pin, rawData)
 end
 
 local function buttonEventHandler(buttonName)
-  if (buttonName == B_NAME_POPUP_CLOSE) then
+  if  (buttonName == B_NAME_POPUP_CLOSE) then
     closePopup(diskWaitPopup)
     closePopup(cardSupportPopup)
     printStatus("cancel")
+    mode = MODE_IDLE
+  elseif (buttonName == B_NAME_C) then
+    newAccountScreen:setVisible(false)
+    viewAccountScreen:setVisible(false)
+    printStatus("idle")
+    keypad:clearInput()
+    keypad:enable(false)
+    keypad:setVisible(false)
+    closePopup(diskWaitPopup)
+    closePopup(cardSupportPopup)
     mode = MODE_IDLE
   end
   if  (mode == MODE_IDLE) then
@@ -150,16 +160,6 @@ local function buttonEventHandler(buttonName)
       closePopup(cardSupportPopup)
       screen:draw()
       creerCompte(component.os_cardwriter)
-    end
-  else
-    if (buttonName == B_NAME_C) then
-      newAccountScreen:setVisible(false)
-      viewAccountScreen:setVisible(false)
-      printStatus("idle")
-      keypad:clearInput()
-      keypad:enable(false)
-      keypad:setVisible(false)
-      mode = MODE_IDLE
     end
   end
 end
