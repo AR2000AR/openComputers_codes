@@ -11,10 +11,16 @@ There must be a *master/* folder, containing a *programs.cfg* file on the disk, 
 A script to download an oppm repository to create an installer (including install script).  
 **Note :** Only github is supported for the `:` prefix in a package's file list.
 
-Installation : 
+### Installation
+#### From oppm
 `oppm install instgen`
-
-Usage:
+#### Manually
+```
+mkdir /usr/bin/ /usr/misc/repo-installer/
+wget https://raw.githubusercontent.com/AR2000AR/openComputers_codes/master/repo-installer/bin/instgen.lua /usr/bin/instgen.lua
+wget https://raw.githubusercontent.com/AR2000AR/openComputers_codes/master/repo-installer/misc/repo-installer/repoinstaller.lua /usr/misc/repo-installer/repoinstaller.lua
+```
+### Usage
 
 ```
 instgen AR2000AR/openComputers_codes /mnt/04d/
