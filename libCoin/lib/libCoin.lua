@@ -1,6 +1,6 @@
 local transposer = require("component").transposer
 
-local CONVERTION_RATE  = 50
+local CONVERTION_RATE  = 100
 local COIN_BRONZE      = 1
 local ID_COIN_BRONZE   = "ordinarycoins:coinbronze"
 local COIN_SILVER      = COIN_BRONZE * CONVERTION_RATE

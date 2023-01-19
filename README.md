@@ -36,8 +36,7 @@ Read and write debit card on an unmanaged floppy.
 **new** Debit card can be a magnetic card from [open security](https://www.curseforge.com/minecraft/mc-mods/opensecurity)
 
 #### libCoin
-move coins with a transposer. Use coins from the [ordinary coins](https://www.curseforge.com/minecraft/mc-mods/ordinary-coins) mod.  
-Note that the exchange rate is 50:1 instead of the default 100:1.
+Move coins with a transposer. Use coins from the [ordinary coins](https://www.curseforge.com/minecraft/mc-mods/ordinary-coins) mod.  
 
 ---
 ## Lua Network File System
