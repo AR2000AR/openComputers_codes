@@ -143,6 +143,7 @@ local function buttonEventHandler(buttonName)
   elseif (mode == MODE_CREATE_ACCOUNT_1) then
     if  (buttonName == B_NAME_FLOPPY) then
       mode = MODE_CREATE_ACCOUNT_2
+      openPopup(diskWaitPopup)
       closePopup(cardSupportPopup)
       screen:draw()
     elseif (buttonName == B_NAME_MAGCARD) then
