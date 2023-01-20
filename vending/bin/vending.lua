@@ -51,6 +51,17 @@ local function parseCSVLine(line, sep)
     return (res)
 end
 
+local function reloadLibs()
+    if (config.acceptCoin) then libCoin = require("libCoin") else libCoin = nil end
+    if (config.acceptCB) then
+        bank = require("bank_api");
+        libCB = require("libCB")
+    else
+        bank = nil
+        libCB = nil
+    end
+end
+
 local function saveConfig()
     --save the config table to a file
     local cFile = io.open(CONFIG_FILE, "w")
@@ -234,11 +245,7 @@ if (filesystem.exists(CONFIG_FILE) and not filesystem.isDirectory(CONFIG_FILE)) 
     cFile:close()
 end
 saveConfig()
-if (config.acceptCoin) then libCoin = require("libCoin") end
-if (config.acceptCB) then
-    bank = require("bank_api");
-    libCB = require("libCB")
-end
+reloadLibs()
 --load product list
 if (filesystem.exists(PRODUCT_LIST_FILE) and not filesystem.isDirectory(PRODUCT_LIST_FILE)) then
     local pFile = io.open(PRODUCT_LIST_FILE, "r")
@@ -361,9 +368,11 @@ while (run) do
                     --switch
                     if     (op == 1) then --toggle acceptCoin
                         config.acceptCoin = not config.acceptCoin
+                        reloadLibs()
                         saveConfig()
                     elseif (op == 2) then --toggle acceptCB
                         config.acceptCB = not config.acceptCB
+                        reloadLibs()
                         saveConfig()
                     elseif (config.acceptCB and op == 3) then --register owner bank account
                         term.clear()
