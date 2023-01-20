@@ -112,7 +112,7 @@ local function payInCoin(amount)
                           [2] = "ERROR ACCOUNT",
                           [3] = "ERROR CB",
                           [4] = "ERROR AMOUNT",
-                          [COLUMN_COST_COIN] = "ERROR_RECEIVING_ACCOUNT",
+                          [5] = "ERROR_RECEIVING_ACCOUNT",
                           [-1] = "TIMEOUT",
                           [-2] = "WRONG MESSAGE"
                       })[res])
