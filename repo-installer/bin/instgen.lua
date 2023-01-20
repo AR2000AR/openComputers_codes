@@ -1,5 +1,5 @@
 local serial = require "serialization"
-local internet = require "internet"
+local internet = require("component").internet
 local fs = require "filesystem"
 local os = require "os"
 
@@ -49,19 +49,54 @@ local function parseFolders(pack, repo, info)
     local function getContent(url)
         -- https://github.com/MightyPirates/OpenComputers/blob/1c0dc67182292895495cb0d421ec0f529d243d74/src/main/resources/assets/opencomputers/loot/oppm/usr/bin/oppm.lua#L48-L58
         local sContent = ""
-        local result, response = pcall(internet.request, url, nil, header)
-        if not result then
-            return nil
+        local result, reason = internet.request(url, nil, header)
+        --wait for the connexion to exists
+        if (not result) then
+            error(reason, 2)
         end
-        for chunk in response do
-            sContent = sContent .. chunk
-        end
-        return sContent
+        repeat
+            os.sleep(0)
+            local s, c, reason = pcall(result.finishConnect)
+            if  (not s) then
+                error(c, 2)
+            elseif (c == nil) then
+                error(reason, 2)
+            end
+        until s and c
+        -- get the status code and headers
+        local status, _, headers = result.response()
+        -- read the response
+        repeat
+            local data, reason = result.read()
+            if  not data then
+                result.close()
+                if reason then
+                    error(reason, 2)
+                end
+            elseif (#data > 0) then
+                sContent = sContent .. data
+            end
+            os.sleep(0)
+        until data == nil --eof
+        return sContent, status, headers
     end
 
     --https://github.com/MightyPirates/OpenComputers/blob/1c0dc67182292895495cb0d421ec0f529d243d74/src/main/resources/assets/opencomputers/loot/oppm/usr/bin/oppm.lua#L243-L302
+    --modified to handle rate limit
     local function getFolderTable(repo, namePath, branch)
-        local success, filestring = pcall(getContent, "https://api.github.com/repos/" .. repo .. "/contents/" .. namePath .. "?ref=" .. branch)
+        --check rate limit
+        repeat
+            local sucess, reason, _, headers = pcall(getContent, "https://api.github.com/rate_limit")
+            if (not sucess) then error("Failed to request guihub rate limit info :\n" .. tostring(reason), 2) end
+            if (tonumber(headers["X-RateLimit-Remaining"][1]) == 0) then
+                print(string.format("No more API request available. More call will be possible at %s", os.date("%H:%M:%S", headers["X-RateLimit-Reset"])))
+                print("Waiting 1 minute")
+                os.sleep(60)
+            end
+        until tonumber(headers["X-RateLimit-Remaining"][1]) > 0
+
+        --call the api
+        local success, filestring, _, headers = pcall(getContent, "https://api.github.com/repos/" .. repo .. "/contents/" .. namePath .. "?ref=" .. branch)
         ---@diagnostic disable-next-line: need-check-nil
         if not success or filestring:find('"message": "Not Found"') then
             if (not success) then print(filestring) end
