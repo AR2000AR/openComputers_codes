@@ -104,13 +104,13 @@ local function makeTransaction(amount)
   local status = nil
   status, solde = bank.getCredit(cbData)
   if (status ~= 0) then
-    error_popup:show("Serveur non disponible", true)
+    error_popup:show("Serveur unavailable.", true)
     endSession()
   else
     local coinGiven, b, s, g, p = 0, 0, 0, 0, 0
     if     (mode == MODE_WITHDRAW) then
       if (solde < amount) then
-        error_popup:show("Solde insufisant", true)
+        error_popup:show("Insufisant balance.", true)
         amount = 0
       else
         amount = amount * -1
@@ -124,11 +124,11 @@ local function makeTransaction(amount)
       if (mode == MODE_WITHDRAW) then coinGiven = coinGiven * -1 end
       bank.editAccount(cbData, coinGiven)
       if (amount ~= coinGiven) then
-        error_popup:show("Coffre de sortie plein\nPrévenez un admin", true)
+        error_popup:show("Output chest full\nCall the owner.", true)
       end
       if (not CARD_IN_READER) then endSession() else showMenu() end
     else
-      error_popup:show("Imposible de distibuer les pièces", true)
+      error_popup:show("Can't output coins.", true)
       if (not CARD_IN_READER) then endSession() else showMenu() end
     end
   end
