@@ -290,12 +290,14 @@ if (not filesystem.isDirectory(OUT_PATH)) then
     filesystem.makeDirectory(OUT_PATH)
 end
 
---main
 local run = true
+local event_interrupted = event.listen("interrupted", function() end)
+
+--main
 while (run) do
     local op = nil
     --user interface loop (draw/input)
-    repeat
+    repeat -- sales menu
         --draw the products list
         term.clear()
         for i, product in ipairs(products) do
@@ -465,3 +467,5 @@ while (run) do
         end
     end
 end
+
+event.cancel(event_interrupted)
