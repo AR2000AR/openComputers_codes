@@ -13,7 +13,7 @@ class Screen {
     + bool isEnabled()
     + void addChild(Widget|Screen child)
     + void trigger(...)
-    + void draw()
+    + void draw(bool useBuffer)
     + childs[] Widget
 }
 class ImageFile {
