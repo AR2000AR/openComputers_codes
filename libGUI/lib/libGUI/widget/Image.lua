@@ -11,7 +11,7 @@ Image.private.drawMethod = Image.DRAW_METHOD_OLD
 Image.constructor = function(self, x, y, img, drawMethod)
   if     (type(img) == "string") then
     self.imageData = ImageFile(img)
-  elseif (type("table") and img.class == "Image") then
+  elseif (type("table") and img.class == "ImageFile") then
     self.imageData = img
   end
   if (drawMethod ~= nil) then self:setDrawMethod(drawMethod) end
