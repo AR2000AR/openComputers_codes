@@ -1,7 +1,7 @@
 # libGUI
 ## Classes
 - [Screen](Screen.md)
-- [ImageFile](ImageFile.md)
+- ImageFile
 - *[widget.Widget](widget/Widget.md)*
 - [widget.Rectangle](widget/Rectangle.md)
 - [widget.Text](widget/Text.md)
