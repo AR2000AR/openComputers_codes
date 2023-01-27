@@ -2,6 +2,8 @@ local component = require("component")
 local os = require("os")
 local fs = require("filesystem")
 local io = require("io")
+local event = require("event")
+
 -- check for datacard
 assert(component.isAvailable("data"), "No data card available.")
 assert(component.data.encrypt, "Need a T2 or higher data card.")
@@ -127,6 +129,8 @@ function crypttool.Proxy.new(filesystemComponent, aesKey)
         fs.remove(self.handles[handle].tmpFilePath)
         self.handles[handle] = nil
     end
+
+    event.listen("component_removed", function(e, a, t) if (a == self.rawFS.address) then fs.umount(self); return false end end)
 
     return self
 end
