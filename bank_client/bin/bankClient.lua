@@ -164,13 +164,15 @@ local function buttonEventHandler(buttonName)
   end
 end
 
-local function diskEventHandler(eName, eAddr, ...)
-  if     (mode == MODE_VIEW_ACCOUNT) then
-    printStatus("Card inserted")
-    voirCompte(nil, component.proxy(eAddr))
-  elseif (mode == MODE_CREATE_ACCOUNT_2) then
-    closePopup(diskWaitPopup)
-    creerCompte(component.drive)
+local function diskEventHandler(eName, cAddr, cType)
+  if (cType == "drive") then
+    if     (mode == MODE_VIEW_ACCOUNT) then
+      printStatus("Card inserted")
+      voirCompte(nil, component.proxy(cAddr))
+    elseif (mode == MODE_CREATE_ACCOUNT_2) then
+      closePopup(diskWaitPopup)
+      creerCompte(component.proxy(cAddr))
+    end
   end
 end
 
@@ -297,7 +299,7 @@ local function init()
 
   intListenerId = event.listen("interrupted", closeClient)
   touchListenerId = event.listen("touch", function(...) screen:trigger(...) end)
-  driveListenerId = event.listen("component_added", diskEventHandler, nil, "drive")
+  driveListenerId = event.listen("component_added", diskEventHandler)
   magDataListenerId = event.listen("magData", magDataEventHandler)
 end
 
