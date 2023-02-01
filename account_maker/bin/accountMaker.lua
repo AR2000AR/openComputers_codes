@@ -41,12 +41,18 @@ end
 
 local function saveConfig()
     --save the config table to a file
-    if (config.masterAccountCBdata) then config.masterAccountCBdata = data.encode64(serialization.serialize(config.masterAccountCBdata)) end
+    if (config.masterAccountCBdata) then
+        ---@type string
+        config.masterAccountCBdata = data.encode64(serialization.serialize(config.masterAccountCBdata))
+    end
     local cFile = io.open(CONFIG_FILE, "w")
     assert(cFile, string.format("Could not open : %s", CONFIG_FILE))
     cFile:write(serialization.serialize(config))
     cFile:close()
-    if (config.masterAccountCBdata) then config.masterAccountCBdata = serialization.unserialize(data.decode64(config.masterAccountCBdata)) end
+    if (config.masterAccountCBdata) then
+        ---@type cardData
+        config.masterAccountCBdata = serialization.unserialize(data.decode64(config.masterAccountCBdata--[[@as string]] ))
+    end
 end
 
 local function addToKnonwPlayer(playerName, accountUUID)
@@ -58,6 +64,9 @@ local function addToKnonwPlayer(playerName, accountUUID)
     table.insert(knownAccounts, {playerName, accountUUID})
 end
 
+---Get the player's account uuid if exists
+---@param playerName string
+---@return string|boolean
 local function getAccountUUID(playerName)
     for _, v in ipairs(knownAccounts) do
         if (v[1] == playerName) then return v[2] end
@@ -100,19 +109,25 @@ local function moveItem(source, sink, item, amount)
     return request - amount
 end
 
+---Create a new card for the player
+---@param playerName string
 local function makeCard(playerName)
     term.clear()
-    local acUUID = getAccountUUID(playerName)
     local status
     local newAccount = false
+
+    --#region getaccount
+
+    local acUUID = getAccountUUID(playerName)
     if (not acUUID) then
         print("Making a new account")
         newAccount = true
+        ---@diagnostic disable-next-line: cast-local-type
         status, acUUID = bank.createAccount()
         if (status == 0) then --ok
             addToKnonwPlayer(playerName, acUUID)
             if (config.masterAccountCreditPerAccount ~= 0) then
-                status = bank.editAccount(config.masterAccountCBdata, config.masterAccountCreditPerAccount)
+                status = bank.editAccount(config.masterAccountCBdata--[[@as cardData]] , config.masterAccountCreditPerAccount)
                 if (status ~= 0) then
                     local file = io.open(ERROR_FILE, "a")
                     assert(file, "Can't fail here")
@@ -120,8 +135,17 @@ local function makeCard(playerName)
                     file:close()
                 end
             end
+        else
+            print("Server did not respond")
+            print("Status : " .. status)
+            event.pull("touch")
+            return
         end
     end
+
+    --#endregion
+    --#region writeCard
+
     if (component.isAvailable("drive")) then
         if (component.drive.getLabel()) then
             disk_drive.eject()
@@ -138,10 +162,12 @@ local function makeCard(playerName)
     repeat
         if (not component.isAvailable("drive")) then event.pull("component_available", "drive") end
         print("Requesting CB")
+        ---@cast acUUID string
         status, pin, rawCBdata = bank.requestNewCBdata(acUUID, component.drive.address)
         if (status ~= 0) then
             print("ERROR : Could not get rawCBdata\nStatus : " .. status)
         else
+            assert(rawCBdata, "Status 0 but no rawCBdata")
             print(string.format("PIN : %q", pin))
             print("Writing CB")
             libCB.writeCB(rawCBdata, component.drive)
@@ -149,6 +175,10 @@ local function makeCard(playerName)
         end
         try = try + 1
     until (goodCB or try >= 3)
+
+    --#endregion
+    --#region initialCredit
+
     if (try < 3) then
         if (newAccount) then
             if (config.newAccountCredit ~= 0) then
@@ -172,6 +202,8 @@ local function makeCard(playerName)
         print("Touch to continue")
         event.pull("touch")
     end
+
+    --#endregion
 end
 
 --INIT=========================================================================
@@ -202,6 +234,7 @@ end
 
 --load masterAccountCBdata if present
 if (config.masterAccountCBdata and config.masterAccountCBdata ~= "") then
+    ---@type cardData
     config.masterAccountCBdata = serialization.unserialize(data.decode64(config.masterAccountCBdata))
 end
 

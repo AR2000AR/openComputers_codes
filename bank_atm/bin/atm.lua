@@ -7,11 +7,12 @@ local coin       = require("libCoin")
 local gui        = require("libGUI")
 local event      = require("event")
 local os         = require("os")
-local gpu        = require("component").gpu
-local transposer = require("component").transposer
-local disk_drive = require("component").disk_drive
-local proxy      = require("component").proxy
-local beep       = require("component").computer.beep
+local component  = require("component")
+local gpu        = component.gpu
+local transposer = component.transposer
+local disk_drive = component.disk_drive
+local proxy      = component.proxy
+local beep       = component.computer.beep
 
 local STORAGE  = 0
 local EXTERIOR = 0
@@ -43,8 +44,11 @@ local event_touch, event_drive, event_eject, event_magData = nil, nil, nil, nil
 
 local old_res_x, old_res_y = nil, nil
 
+---@type Component
 local drive         = nil
-local cbData        = false
+---@type cardData
+local cbData        = nil
+---@type encryptedCardData
 local encryptedData = nil
 local solde         = 0
 -- =============================================================================
@@ -119,7 +123,11 @@ local function makeTransaction(amount)
     elseif (mode == MODE_DEPOSIT) then
       b, s, g, p = coin.moveCoin(amount, EXTERIOR, STORAGE)
     end
-    if (b ~= false) then
+    if (b) then
+      ---@cast b number
+      ---@cast s number
+      ---@cast g number
+      ---@cast p number
       coinGiven = coin.getValue(b, s, g, p)
       if (mode == MODE_WITHDRAW) then coinGiven = coinGiven * -1 end
       bank.editAccount(cbData, coinGiven)
@@ -299,7 +307,6 @@ local function init()
     if (blocking) then
       while (self:isVisible()) do
         main_screen:draw()
-        ---@diagnostic disable-next-line: undefined-field
         os.sleep()
       end
     end
@@ -344,7 +351,8 @@ end
 init()
 while (mode ~= MODE_CLOSING) do
   main_screen:draw()
-  ---@diagnostic disable-next-line: undefined-field
   os.sleep()
 end
 closeClient()
+
+--TODO handle keypad X

@@ -815,7 +815,6 @@ else stargate.openIris() end
 --main loop
 while (run) do
     root:draw()
-    ---@diagnostic disable-next-line: undefined-field
     os.sleep() --sleep to handle events
 end
 closeApp()

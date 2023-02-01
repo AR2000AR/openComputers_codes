@@ -21,7 +21,6 @@ if (fs.exists(args[1]) and not fs.isDirectory(args[1])) then
   gpu.setResolution(img:getWidth(), img:getHeight())
   screen:addChild(img)
   screen:draw()
-  ---@diagnostic disable-next-line: undefined-field
   os.sleep(1)
   require("event").pull("key_down")
   gpu.setBackground(bk)

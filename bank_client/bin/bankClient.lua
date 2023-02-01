@@ -4,7 +4,8 @@ local bank_api  = require("bank_api")
 local libCB     = require("libCB")
 local os        = require("os")
 local component = require("component")
-local gpu       = require("component").gpu
+
+local gpu = component.gpu
 
 local MODE_CLOSING          = -1
 local MODE_IDLE             = 0
@@ -71,22 +72,27 @@ local function creerCompte(drive)
   local status, acUUID = bank_api.createAccount()
   printStatus("creation de compte : " .. status)
   if (status == 0) then
+    ---@cast acUUID string
     local pin, rawCBdata
     if (drive.type == "drive") then
       status, pin, rawCBdata = bank_api.requestNewCBdata(acUUID, drive.address)
     else
       status, pin, rawCBdata = bank_api.requestNewCBdata(acUUID)
     end
-    if (drive.type == "os_cardwriter") then
-      printStatus("Insert magnetic card in the writer...")
+    if (status == bank_api.STATUS.OK) then
+      assert(rawCBdata, "Status ok but no rawCBdata")
+      if (drive.type == "os_cardwriter") then
+        printStatus("Insert magnetic card in the writer...")
+      end
+      while (not libCB.writeCB(rawCBdata, drive)) do os.sleep(0.1) end
+      closePopup(diskWaitPopup)
+      acUUIDText:setText("uuid : " .. acUUID)
+      pinText:setText("pin : " .. pin)
+      newAccountScreen:setVisible(true)
+      printStatus("Card created.")
+    else
+      printStatus(string.format("Error : %d", status))
     end
-    ---@diagnostic disable-next-line: undefined-field
-    while (not libCB.writeCB(rawCBdata, drive)) do os.sleep(0.1) end
-    closePopup(diskWaitPopup)
-    acUUIDText:setText("uuid : " .. acUUID)
-    pinText:setText("pin : " .. pin)
-    newAccountScreen:setVisible(true)
-    printStatus("Card created.")
   end
 end
 
@@ -305,7 +311,6 @@ end
 
 init()
 while (mode ~= MODE_CLOSING) do
-  ---@diagnostic disable-next-line: undefined-field
   os.sleep()
   screen:draw()
 end

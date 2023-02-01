@@ -16,6 +16,11 @@ local accountDir = "/srv/bank/" --default value
 local PROTOCOLE_NO_ACCOUNT = 1
 local PROTOCOLE_ERROR_ACCOUNT = 2
 
+---load the keys form a file.
+---@param public
+--- | true # public
+--- | false # private
+---@return EcKey
 local function getKey(public)
   print("-> getKey")
   local ext = ".priv"
@@ -70,7 +75,7 @@ end
 local function writeAccount(accountUUID, solde)
   print("-> writeAccount")
   local account = {solde = solde, uuid = accountUUID}
-  account.sig = dataCard.encode64(dataCard.ecdsa(solde .. accountUUID, getKey(false))) --encode sig to make saving it easier
+  account.sig = dataCard.encode64(dataCard.ecdsa(solde .. accountUUID, getKey(false))--[[@as string]] ) --encode sig to make saving it easier
   local fileContent = serialization.serialize(account) --convert the table into a string
   fileContent = dataCard.encrypt(fileContent, getAES(), AES_IV) --encrypt the data
   fileContent = dataCard.encode64(fileContent) --encode the encrypted data to make saving and reading it easier
@@ -132,9 +137,9 @@ elseif (args[1] == "remove") then
 elseif (args[1] == 'test') then
   local _, clearData = loadAccount(args[2])
   assert(clearData, "Error when loading the account data")
-  local b, c = 0, 0
+  local b, c
   b = dataCard.ecdsa(clearData.solde .. args[2], getKey(true), dataCard.decode64(clearData.sig))
-  c = dataCard.encode64(dataCard.ecdsa(clearData.solde .. args[2], getKey(false)))
+  c = dataCard.encode64(dataCard.ecdsa(clearData.solde .. args[2], getKey(false))--[[@as string]] )
   print(b)
   print("saved: " .. clearData.sig)
   print("calc : " .. c)

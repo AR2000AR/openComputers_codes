@@ -139,7 +139,9 @@ end
 
 ---@diagnostic disable-next-line: lowercase-global
 function start(msg)
+    ---@diagnostic disable-next-line: lowercase-global
     if (not args) then args = {root = ROOT, ro = false, port = 21} end
+    ---@diagnostic disable-next-line: lowercase-global
     if (type(args) == "string") then args = {root = args, ro = false, port = 21} end
     ROOT = args.root or "/"
     RO = false or args.ro

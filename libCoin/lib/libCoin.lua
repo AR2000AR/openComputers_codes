@@ -1,4 +1,5 @@
 local transposer = require("component").transposer
+assert(transposer, "This library require a transposer")
 
 local CONVERTION_RATE  = 100
 local COIN_BRONZE      = 1
@@ -12,6 +13,12 @@ local ID_COIN_PLATINUM = "ordinarycoins:coinplatinum"
 
 local coin = {}
 
+---count the coins
+---@param side side
+---@return number
+---@return number
+---@return number
+---@return number
 function coin.getCoin(side)
   local bronze, silver, gold, platinum = 0, 0, 0, 0
   local stack = nil
@@ -26,6 +33,12 @@ function coin.getCoin(side)
   return math.floor(bronze), math.floor(silver), math.floor(gold), math.floor(platinum)
 end
 
+---get the total value of coins
+---@param bronze number
+---@param silver number
+---@param gold number
+---@param platinum number
+---@return number
 function coin.getValue(bronze, silver, gold, platinum)
   bronze = bronze or 0
   silver = silver or 0
@@ -34,6 +47,13 @@ function coin.getValue(bronze, silver, gold, platinum)
   return (bronze * COIN_BRONZE) + (silver * COIN_SILVER) + (gold * COIN_GOLD) + (platinum * COIN_PLATINUM)
 end
 
+---find how much space is left for each kind of coins
+---@param side side
+---@return number
+---@return number
+---@return number
+---@return number
+---@return number
 function coin.getEmptySpace(side)
   local bronze, silver, gold, platinum, air = 0, 0, 0, 0, 0
   local stack = nil
@@ -53,6 +73,10 @@ function coin.getEmptySpace(side)
   return math.floor(bronze), math.floor(silver), math.floor(gold), math.floor(platinum), air
 end
 
+---find the first stack containing the item
+---@param side side
+---@param name string
+---@return number|boolean
 function coin.findFirstStack(side, name)
   local i = 1
   for stack in transposer.getAllStacks(side) do
@@ -62,6 +86,14 @@ function coin.findFirstStack(side, name)
   return false
 end
 
+---move a certain value of coins
+---@param amount number
+---@param from side
+---@param to side
+---@return number|boolean
+---@return number|nil
+---@return number|nil
+---@return number|nil
 function coin.moveCoin(amount, from, to)
   if (coin.getValue(coin.getCoin(from)) >= amount) then
     local bronze, silver, gold, platinum = coin.getCoin(from)
@@ -92,7 +124,7 @@ function coin.moveCoin(amount, from, to)
 
     local moved_bronze, moved_silver, moved_gold, moved_platinum = 0, 0, 0, 0
     while (moved_bronze < need_bronze) do
-      local moved_coin = transposer.transferItem(from, to, need_bronze, coin.findFirstStack(from, ID_COIN_BRONZE))
+      local moved_coin = transposer.transferItem(from, to, need_bronze, coin.findFirstStack(from, ID_COIN_BRONZE)--[[@as number]] )
       if (moved_coin == 0) then
         break
       else
@@ -100,7 +132,7 @@ function coin.moveCoin(amount, from, to)
       end
     end
     while (moved_silver < need_silver) do
-      local moved_coin = transposer.transferItem(from, to, need_silver, coin.findFirstStack(from, ID_COIN_SILVER))
+      local moved_coin = transposer.transferItem(from, to, need_silver, coin.findFirstStack(from, ID_COIN_SILVER)--[[@as number]] )
       if (moved_coin == 0) then
         break
       else
@@ -108,7 +140,7 @@ function coin.moveCoin(amount, from, to)
       end
     end
     while (moved_gold < need_gold) do
-      local moved_coin = transposer.transferItem(from, to, need_gold, coin.findFirstStack(from, ID_COIN_GOLD))
+      local moved_coin = transposer.transferItem(from, to, need_gold, coin.findFirstStack(from, ID_COIN_GOLD)--[[@as number]] )
       if (moved_coin == 0) then
         break
       else
@@ -116,7 +148,7 @@ function coin.moveCoin(amount, from, to)
       end
     end
     while (moved_platinum < need_platinum) do
-      local moved_coin = transposer.transferItem(from, to, need_platinum, coin.findFirstStack(from, ID_COIN_PLATINUM))
+      local moved_coin = transposer.transferItem(from, to, need_platinum, coin.findFirstStack(from, ID_COIN_PLATINUM)--[[@as number]] )
       if (moved_coin == 0) then
         break
       else

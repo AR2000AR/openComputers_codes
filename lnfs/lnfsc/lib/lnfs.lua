@@ -14,12 +14,19 @@ local lnfs = {}
 local TIMEOUT = 5
 local MTU = math.floor(tonumber(require("computer").getDeviceInfo()[modem.address].capacity) * 0.9)
 
+---return the path of the directory the file is in
+---@param path string file path
+---@return string path directory path
 local function dirName(path)
     local dir = filesystem.segments(path)
     table.remove(dir, #dir)
     return filesystem.concat(table.unpack(dir))
 end
 
+---split a string into smaller chunks
+---@param text string
+---@param chunkSize number
+---@return table chunkedText
 local function splitByChunk(text, chunkSize)
     local s = {}
     for i = 1, #text, chunkSize do
@@ -28,7 +35,15 @@ local function splitByChunk(text, chunkSize)
     return s
 end
 
+---@class LnfsFilesystemProxy : ComponentFilesystem
+
 lnfs.LnfsProxy = {}
+
+---Create a new lnfs filesystem proxy
+---@param remoteAddr string
+---@param remotePort? number
+---@param readOnly? boolean
+---@return LnfsFilesystemProxy|nil proxy, string|nil reason Explaination of the proxy creation failure
 function lnfs.LnfsProxy.new(remoteAddr, remotePort, readOnly)
     checkArg(1, remoteAddr, "string")
     checkArg(2, remotePort, "number", "nil")

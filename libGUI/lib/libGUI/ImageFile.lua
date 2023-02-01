@@ -40,7 +40,6 @@ local function openPAM(path)
   end
   local i = 0
   repeat
-    ---@diagnostic disable-next-line: undefined-field
     if (i % 1000 == 0) then os.sleep() end
     local rgb = {}
     local pixel = ""
@@ -108,7 +107,6 @@ local function openPPM(path)
   -- read pixel data
   local i = 0
   repeat
-    ---@diagnostic disable-next-line: undefined-field
     if (i % 1000 == 0) then os.sleep() end
     local rgb = {}
     local pixel = ""

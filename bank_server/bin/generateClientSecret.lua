@@ -35,7 +35,7 @@ if (fs.exists(CONF_DIR .. CONF_FILE_NAME)) then --read the config file
   if (confTable.keyFile) then keyFile = confTable.keyFile end
 end
 if (args[1]) then
-  local secret = data.ecdsa(args[1], getKey(false))
+  local secret = data.ecdsa(args[1], getKey(false)) --[[@as string]]
   local secretFile = io.open(args[2] or "/home/secret", "w")
   assert(secretFile, string.format("Could not open file : %s", args[2] or "/home/secret"))
   secretFile:write(data.encode64(secret))

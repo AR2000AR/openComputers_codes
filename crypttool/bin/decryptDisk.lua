@@ -1,8 +1,8 @@
-local fs = require "filesystem"
-local shell = require "shell"
-local crypttool = require "crypttool"
-local data = require("component").data
-local os = require("os")
+local fs        = require("filesystem")
+local shell     = require("shell")
+local crypttool = require("crypttool")
+local data      = require("component").data
+local os        = require("os")
 
 local args, opt = shell.parse(...)
 

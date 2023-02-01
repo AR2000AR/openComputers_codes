@@ -11,9 +11,15 @@ local data = component.data
 
 local DATA_DIR = "/.crypttools/"
 
+---@class CryptToolFilesystemProxy : ComponentFilesystem
+
 local crypttool = {}
 
 crypttool.Proxy = {}
+---Return a new filesytem proxy
+---@param filesystemComponent ComponentFilesystem|string
+---@param aesKey string
+---@return CryptToolFilesystemProxy
 function crypttool.Proxy.new(filesystemComponent, aesKey)
     checkArg(1, filesystemComponent, "string", "table")
     checkArg(2, aesKey, "string")
@@ -30,7 +36,7 @@ function crypttool.Proxy.new(filesystemComponent, aesKey)
 
     local function getSecurePath(path)
         if (not path:match("^" .. DATA_DIR)) then
-            return string.format("%s%s", "^" .. DATA_DIR, path)
+            return string.format("%s%s", DATA_DIR, path)
         end
         return path
     end

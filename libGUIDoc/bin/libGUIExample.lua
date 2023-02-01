@@ -34,7 +34,6 @@ while (run) do
     --the widgets are drawn in the same order they were added to the screen
     screen:draw()
     --sleep so the events can be processed
-    ---@diagnostic disable-next-line: undefined-field
     os.sleep()
 end
 --stop processing touch events

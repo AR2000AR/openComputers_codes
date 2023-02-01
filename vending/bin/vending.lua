@@ -5,7 +5,6 @@ local serialization = require("serialization")
 local text = require("text")
 local event = require("event")
 local term = require("term")
----@diagnostic disable-next-line: undefined-field
 local sleep = require("os").sleep
 local component = require("component")
 local transposer = component.transposer

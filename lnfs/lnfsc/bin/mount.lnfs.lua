@@ -35,6 +35,7 @@ local function do_mount()
         os.exit(1)
     end
 
+    assert(proxy)
     local result, mount_failure = filesystem.mount(proxy, shell.resolve(args[2]))
     if not result then
         io.stderr:write(mount_failure, "\n")
@@ -53,7 +54,3 @@ else
     io.stderr:write("wrong number of arguments: ", #args, "\n")
     usage()
 end
-
-local proxy = lnfs.LnfsProxy.new("7b51804b-ca59-4103-9a24-dc19d449bd09", 21, false)
-
-filesystem.mount(proxy, "/mnt/7b5")

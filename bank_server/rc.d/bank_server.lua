@@ -114,7 +114,7 @@ end
 local function writeAccount(accountUUID, solde)
   log("-> writeAccount")
   local account = {solde = solde, uuid = accountUUID}
-  account.sig = dataCard.encode64(dataCard.ecdsa(solde .. accountUUID, getKey(false))) --encode sig to make saving it easier
+  account.sig = dataCard.encode64(dataCard.ecdsa(solde .. accountUUID, getKey(false))--[[@as string]] ) --encode sig to make saving it easier
   local fileContent = serialization.serialize(account) --convert the table into a string
   fileContent = dataCard.encrypt(fileContent, getAES(), AES_IV) --encrypt the data
   fileContent = dataCard.encode64(fileContent) --encode the encrypted data to make saving and reading it easier

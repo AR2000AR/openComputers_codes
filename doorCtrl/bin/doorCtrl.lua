@@ -83,7 +83,6 @@ local function readPassword()
     end)
     lastKey = nil
     while lastKey ~= 13 do
-        ---@diagnostic disable-next-line: undefined-field
         os.sleep()
     end
     event.cancel(event_keyboard)
@@ -189,7 +188,6 @@ if (#config.doors > 0) then
 end
 
 print("Found " .. #doors .. " for " .. #redstoneIO .. " redstone I/O")
----@diagnostic disable-next-line: undefined-field
 os.sleep(2)
 
 if (ops.config or ops.c) then
@@ -438,7 +436,6 @@ else
 
     mainScreen:draw()
     while run do
-        ---@diagnostic disable-next-line: undefined-field
         os.sleep()
     end
     closeGUI()

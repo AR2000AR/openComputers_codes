@@ -55,7 +55,6 @@ local function parseFolders(pack, repo, info)
             error(reason, 2)
         end
         repeat
-            ---@diagnostic disable-next-line: undefined-field
             os.sleep(0)
             local s, c, reason = pcall(result.finishConnect)
             if  (not s) then
@@ -77,7 +76,6 @@ local function parseFolders(pack, repo, info)
             elseif (#data > 0) then
                 sContent = sContent .. data
             end
-            ---@diagnostic disable-next-line: undefined-field
             os.sleep(0)
         until data == nil --eof
         return sContent, status, headers
@@ -93,7 +91,6 @@ local function parseFolders(pack, repo, info)
             if (tonumber(headers["X-RateLimit-Remaining"][1]) == 0) then
                 print(string.format("No more API request available. More call will be possible at %s", os.date("%H:%M:%S", headers["X-RateLimit-Reset"])))
                 print("Waiting 1 minute")
-                ---@diagnostic disable-next-line: undefined-field
                 os.sleep(60)
             end
         until tonumber(headers["X-RateLimit-Remaining"][1]) > 0
