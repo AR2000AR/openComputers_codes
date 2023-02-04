@@ -23,16 +23,19 @@ function event.listen(event, callback) end
 ---@return boolean
 function event.ignore(event, callback) end
 
+---Cancels a timer previously created with event.timer.
+---timerId - a timer ID as returned by event.timer.
+---Returns: true if the timer was stopped, false if there was no timer with the specified ID.
+---@param timerId number
+---@return boolean
+function event.cancel(timerId) end
+
 ---Starts a new timer that will be called after the time specified in interval.
 ---interval - time in seconds between each invocation of the callback function. Can be a fraction like 0.05.
 ---callback - the function to call.
 ---times - how many times the function will be called. If omitted the function will be called once. Pass math.huge for infinite repeat.
 ---Returns: a timer ID that can be used to cancel the timer at any time.
 ---Note: the timer resolution can vary. If the computer is idle and enters sleep mode, it will only be woken in a game tick, so the time the callback is called may be up to 0.05 seconds off.
----- event.cancel(timerId: number): boolean
----Cancels a timer previously created with event.timer.
----timerId - a timer ID as returned by event.timer.
----Returns: true if the timer was stopped, false if there was no timer with the specified ID.
 ---@param interval number
 ---@param callback function
 ---@param times? number
