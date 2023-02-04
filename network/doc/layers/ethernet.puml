@@ -1,0 +1,34 @@
+@startuml ethernet.lua
+!include ../definitions.puml
+hide OSINetworkLayer
+
+package layers.ethernet {
+    class EthernetInterface extends OSIDataLayer {
+        +void send(payload:EthernetFrame)
+    }
+    class EthernetFrame extends Payload {
+        - _dst string
+        - _src string
+        - _802_1Q number
+        - _etype ethernetType
+        - _payload string
+        + EthernetFrame(src:string, dst:string, tag802_1Q:number, etype:ethernetType, payload:string)
+        + string getDst()
+        + setDst(dst:string)
+        + string Src()
+        + setSrc(src:string)
+        + number 802_1Q()
+        + set802_1Q(tag:number)
+        + number getEthernetType()
+        + setEthernetType(type:number)
+    }
+    enum ethernetType {
+        IPv4 : 0x0800
+        ARP  : 0x8006
+        RARP : 0x8035
+        WOL  : 0x0842
+        IPv6 : 0x86DD
+        LLDP : 0x88CC
+    }
+}
+@enduml

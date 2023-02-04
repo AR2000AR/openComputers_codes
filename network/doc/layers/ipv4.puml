@@ -1,0 +1,71 @@
+@startuml ipv4.lua
+!include ../definitions.puml
+remove OSIDataLayer
+package layers.ipv4 {
+    class IPv4Layer extends OSINetworkLayer {
+        +int getMac()
+        +int getAddr()
+    }
+    class IPv4Packet extends Payload {
+        - _header IPv4Header
+        - _payload IPv4Payload
+    }
+    enum ipv4Protocol {
+        ICMP : 1 
+        TCP  : 6 
+        UDP  : 17 
+        OSPF : 89 
+    }
+    class IPv4Header {
+        + dscp number 
+        + ecn number 
+        + len number 
+        + id number 
+        + flags number 
+        + fragmentOffset number 
+        + ttl number 
+        + protocol ipv4Protocol 
+        + src number 
+        + dst number 
+    }
+    note left of IPv4Header::dscp
+        Differentiated Services Code Point
+    end note
+    note right of IPv4Header::ecn
+        Explicit Congestion Notification
+    end note
+    note left of IPv4Header::len
+        Total Length. In this implementation,
+        indicate the number of framgments
+    end note
+    note right of IPv4Header::id
+        Identification
+    end note
+    note left of IPv4Header::flags
+        Flags bit 0: Reserved; must be zero.
+        bit 1: Don't Fragment (DF) bit 2: More Fragments (MF)
+    end note
+    note right of IPv4Header::fragmentOffset
+        Fragment offset. In this implementation,
+        correspond to the framgments number/place
+    end note
+    note left of IPv4Header::ttl
+        Time to live
+    end note
+    note right of IPv4Header::protocol
+        Protocol
+    end note
+    note left of IPv4Header::src
+        Source address
+    end note
+    note right of IPv4Header::dst
+        Destination address
+    end note
+
+    class IPv4Payload extends Payload{
+        + {static} protocol ipv4Protocol
+    }
+
+    IPv4Packet::_payload o-- IPv4Payload
+    IPv4Packet::_header *-- IPv4Header
+}

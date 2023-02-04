@@ -1,0 +1,41 @@
+@startuml arp.lua
+!include ../definitions.puml
+remove OSIDataLayer
+
+package layers.arp {
+    class ARPLayer extends OSINetworkLayer{}
+    class ARPPacket extends Payload {
+        - _htype number
+        - _ptype number
+        - _oper arpOperation
+        - _sha number|string
+        - _spa number|string
+        - _tha number|string
+        - _tpa number|string
+        + ARPPacket(htype:number,ptype:number,oper:arpOperation,sha:number|string,spa:number|stringtha:number|string,tpa:number|string)
+        + number getHtype()
+        + vois setHtype(value:number)
+        + number getPtype()
+        + vois setPtype(value:number)
+        + number getOper()
+        + vois setOper(value:number)
+        + number|string getSha()
+        + vois setSha(value:number|string)
+        + number|string getSpa()
+        + vois setSpa(value:number|string)
+        + number|string getTha()
+        + vois setTha(value:number|string)
+        + number|string getTpa()
+        + vois setTpa(value:number|string)
+    }
+    rectangle {
+        enum arpOperation {
+        REQUEST : 1
+        REPLY : 2
+        }
+        enum arpHardwareType {
+            ETHERNET : 1
+        }
+        enum arpProtocoleType
+    }
+}

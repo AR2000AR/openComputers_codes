@@ -1,0 +1,28 @@
+@startuml definitions.lua
+skinparam linetype ortho
+file definition.lua $def{
+    abstract class OSILayer {
+        + {static} layerType number
+        # _layer OSILayer
+        # _layers []<number,OSILayer> 
+        +void payloadHandler(from, to, payload)
+        +void send(to, payload)
+        +void setLayer(layer:OSILayer)
+        +number getMTU()
+        +string|number getAddr()
+        +void send(to,payoad)
+    }
+
+    abstract class OSIDataLayer extends OSILayer {
+        +string getAddr()
+    }
+    abstract class OSINetworkLayer extends OSILayer {}
+
+
+    abstract class Payload {
+        + {static} payloadType number
+        + any getPacket()
+        + any pack()
+        + {static} Payload unpack(...)
+    }
+}
