@@ -81,7 +81,6 @@ icmp.CODE = {
         No_Such_Table_Entry = 3,
         Multiple_Interfaces_Satisfy_Query = 4,
     }
-
 }
 
 --=============================================================================
@@ -96,21 +95,24 @@ icmp.CODE = {
 local ICMPPacket = {}
 ICMPPacket.payloadType = ipv4.PROTOCOLS.ICMP
 
----@param type number
----@param code number
----@param param? number
----@param payload string
----@return ICMPPacket
-setmetatable(ICMPPacket, {__call = function(self, type, code, param, payload)
-    local o = {
-        _type = type,
-        _code = code,
-        _param = param or 0,
-        _payload = payload or ""
-    }
-    setmetatable(o, {__index = self})
-    return o
-end})
+
+setmetatable(ICMPPacket, {
+    ---@param type number
+    ---@param code number
+    ---@param param? number
+    ---@param payload string
+    ---@return ICMPPacket
+    __call = function(self, type, code, param, payload)
+        local o = {
+            _type = type,
+            _code = code,
+            _param = param or 0,
+            _payload = payload or ""
+        }
+        setmetatable(o, { __index = self })
+        return o
+    end
+})
 
 --#region getter/setter
 
@@ -179,21 +181,22 @@ end
 local ICMPLayer = {}
 ICMPLayer.layerType = ipv4.PROTOCOLS.ICMP
 
----@param layer IPv4Layer
----@return ICMPLayer
-setmetatable(ICMPLayer, {__call = function(self, layer)
-    local o = {
-        _layer = layer
-    }
-    setmetatable(o, {__index = self})
-    layer:setLayer(o)
-    return o
-end,})
+
+setmetatable(ICMPLayer, {
+    ---@param layer IPv4Layer
+    ---@return ICMPLayer
+    __call = function(self, layer)
+        local o = {
+            _layer = layer
+        }
+        setmetatable(o, { __index = self })
+        layer:setLayer(o)
+        return o
+    end,
+})
 
 ---@param payload ICMPPacket
 function ICMPLayer:send(dst, payload)
-    --DEBUG
-    print("OUT", "ICMP", payload:pack())
     local ipDatagram = ipv4.IPv4Packet(self._layer:getAddr(), dst, payload.payloadType, payload:pack())
     self._layer:send(ipDatagram)
 end
@@ -201,13 +204,16 @@ end
 ---@param payload string
 function ICMPLayer:payloadHandler(from, to, payload)
     local icmpPacket = ICMPPacket.unpack(payload)
-    print("IN", "ICMP", icmpPacket:getType())
-    if  (icmpPacket:getType() == icmp.TYPE.ECHO_REQUEST) then
-        local reply = ICMPPacket(icmp.TYPE.ECHO_REPLY, icmp.CODE.ECHO_REPLY.ECHO_REPLY, 0, icmpPacket:getPayload())
+    if (icmpPacket:getType() == icmp.TYPE.ECHO_REQUEST) then
+        local reply = ICMPPacket(icmp.TYPE.ECHO_REPLY, icmp.CODE.ECHO_REPLY.ECHO_REPLY, icmpPacket:getParam(), icmpPacket:getPayload())
         self:send(from, reply)
     elseif (icmpPacket:getType() == icmp.TYPE.ECHO_REPLY) then
-        event.push("ICMP", icmpPacket:getType(), icmpPacket:getCode(), icmpPacket:getParam(), icmpPacket:getPayload())
+        event.push("ICMP", from, to, icmpPacket:getType(), icmpPacket:getCode(), icmpPacket:getParam(), icmpPacket:getPayload())
     end
+end
+
+function ICMPLayer:getAddr()
+    return self._layer:getAddr()
 end
 
 --#endregion

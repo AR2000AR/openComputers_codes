@@ -1,8 +1,8 @@
-local computer  = require("computer")
-local event     = require("event")
-local component = require("component")
+local computer               = require("computer")
+local event                  = require("event")
+local component              = require("component")
 
-local UUID_PATERN = "%x%x%x%x%x%x%x%x%-%x%x%x%x%-%x%x%x%x%-%x%x%x%x%-%x%x%x%x%x%x%x%x%x%x%x%x"
+local UUID_PATERN            = "%x%x%x%x%x%x%x%x%-%x%x%x%x%-%x%x%x%x%-%x%x%x%x%-%x%x%x%x%x%x%x%x%x%x%x%x"
 
 ---@class ethernetlib
 ---@field private internal table
@@ -39,32 +39,33 @@ end
 ---@field private _payload string
 local EthernetFrame = {}
 
----Constructor
----@param self EthernetFrame
----@param src string
----@param dst string
----@param tag802_1Q number|nil
----@param etype ethernetType
----@param payload string
----@return EthernetFrame
-setmetatable(EthernetFrame, {__call = function(self, src, dst, tag802_1Q, etype, payload)
-    checkArg(1, src, "string")
-    checkArg(2, dst, "string")
-    checkArg(3, tag802_1Q, "string", "nil")
-    checkArg(4, etype, "number")
-    checkArg(5, payload, "string")
-    if (not checkUUIDformat(src)) then error("#1 : src. Not a valid uuid") end
-    if (not checkUUIDformat(dst)) then error("#2 : dst. Not a valid uuid") end
-    local o = {
-        _dst = dst,
-        _src = src,
-        _802_1Q = tag802_1Q or nil,
-        _etype = etype,
-        _payload = payload,
-    }
-    setmetatable(o, {__index = self})
-    return o
-end,
+setmetatable(EthernetFrame, {
+    ---Constructor
+    ---@param self EthernetFrame
+    ---@param src string
+    ---@param dst string
+    ---@param tag802_1Q number|nil
+    ---@param etype ethernetType
+    ---@param payload string
+    ---@return EthernetFrame
+    __call = function(self, src, dst, tag802_1Q, etype, payload)
+        checkArg(1, src, "string")
+        checkArg(2, dst, "string")
+        checkArg(3, tag802_1Q, "string", "nil")
+        checkArg(4, etype, "number")
+        checkArg(5, payload, "string")
+        if (not checkUUIDformat(src)) then error("#1 : src. Not a valid uuid") end
+        if (not checkUUIDformat(dst)) then error("#2 : dst. Not a valid uuid") end
+        local o = {
+            _dst = dst,
+            _src = src,
+            _802_1Q = tag802_1Q or nil,
+            _etype = etype,
+            _payload = payload,
+        }
+        setmetatable(o, { __index = self })
+        return o
+    end,
 })
 
 ---Get the destination mac
@@ -147,30 +148,32 @@ end
 ---@field private _listener number
 local EthernetInterface = {}
 
----Create a EthernetInterface
----@param modem ComponentModem
----@return EthernetInterface
-setmetatable(EthernetInterface, {__call = function(self, modem)
-    checkArg(1, modem, "table")
-    if (type(modem) == "table") then
-        if (not modem.type == "modem") then error("#1 is not a modem component", 2) end
+
+setmetatable(EthernetInterface, {
+    ---Create a EthernetInterface
+    ---@param modem ComponentModem
+    ---@return EthernetInterface
+    __call = function(self, modem)
+        checkArg(1, modem, "table")
+        if (type(modem) == "table") then
+            if (not modem.type == "modem") then error("#1 is not a modem component", 2) end
+        end
+
+        local o = {
+            _modem = modem,
+            _port = ethernet.RAW_PORT,
+            _layers = {},
+            _listener = 0
+        }
+
+        o._modem.open(o._port)
+
+        setmetatable(o, { __index = self })
+
+        o._listener = event.listen("modem_message", function(...) o:modemMessageHandler(...) end)
+
+        return o
     end
-
-    local o = {
-        _modem = modem,
-        _port = ethernet.RAW_PORT,
-        _layers = {},
-        _listener = 0
-    }
-
-    o._modem.open(o._port)
-
-    setmetatable(o, {__index = self})
-
-    o._listener = event.listen("modem_message", function(...) o:modemMessageHandler(...) end)
-
-    return o
-end
 })
 
 function EthernetInterface:close()
@@ -188,7 +191,6 @@ end
 ---@param etype ethernetType
 ---@param payload string
 function EthernetInterface:modemMessageHandler(eName, localMac, remoteMac, port, distance, tag802_1Q, etype, payload)
-    print("IN", "ETHR", payload)
     if (localMac ~= self:getAddr()) then return end
     if (port ~= self._port) then return false end
     local handler = self:getLayer(etype)
@@ -213,8 +215,6 @@ end
 ---@param eFrame EthernetFrame
 function EthernetInterface:send(dst, eFrame)
     checkArg(2, eFrame, "table")
-    --DEBUG
-    print("OUT", "ETHR", eFrame:getPayload())
     if (eFrame:getDst() == ethernet.MAC_BROADCAST) then
         self._modem.broadcast(self._port, eFrame:pack())
     else

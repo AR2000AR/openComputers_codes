@@ -13,9 +13,7 @@ file definition.lua $def{
         +void send(to,payoad)
     }
 
-    abstract class OSIDataLayer extends OSILayer {
-        +string getAddr()
-    }
+    abstract class OSIDataLayer extends OSILayer {}
     abstract class OSINetworkLayer extends OSILayer {}
 
 

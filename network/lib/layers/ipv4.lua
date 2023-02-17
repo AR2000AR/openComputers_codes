@@ -1,11 +1,11 @@
-local bit32    = require("bit32")
-local arp      = require("layers.arp")
-local ethernet = require("layers.ethernet")
+local bit32            = require("bit32")
+local arp              = require("layers.arp")
+local ethernet         = require("layers.ethernet")
 
 ---@class ipv4lib
-local ipv4lib = {}
+local ipv4lib          = {}
 ---@enum ipv4Protocol
-ipv4lib.PROTOCOLS = {
+ipv4lib.PROTOCOLS      = {
     ICMP = 1, --  Internet Control Message Protocol
     TCP  = 6, --  Transmission Control Protocol
     UDP  = 17, -- User Datagram Protocol
@@ -34,41 +34,44 @@ ipv4lib.PROTOCOLS = {
 ---@field private _header IPv4Header
 ---@field private _payload string
 ---@operator call:IPv4Packet
-local IPv4Packet = {}
+local IPv4Packet       = {}
 IPv4Packet.payloadType = ethernet.TYPE.IPv6
 
----@param src number
----@param dst number
----@param protocole ipv4Protocol
----@param payload string
----@return IPv4Packet
-setmetatable(IPv4Packet, {__call = function(self, src, dst, protocole, payload)
-    local o = {
-        ---@type IPv4Header
-        _header = {
-            dscp = 0,
-            ecn = 0,
-            len = 1,
-            id = 0,
-            flags = 0,
-            fragmentOffset = 0,
-            ttl = 0,
-            protocol = 1,
-            src = 0,
-            dst = 0,
-        },
-        _payload = ""
-    }
 
-    setmetatable(o, {__index = self})
-    ---@cast o IPv4Packet
-    o:setSrc(src)
-    o:setDst(dst)
-    o:setProtocol(protocole)
-    o:setPayload(payload)
+setmetatable(IPv4Packet, {
+    ---@param src number
+    ---@param dst number
+    ---@param protocole ipv4Protocol
+    ---@param payload string
+    ---@return IPv4Packet
+    __call = function(self, src, dst, protocole, payload)
+        local o = {
+            ---@type IPv4Header
+            _header = {
+                dscp = 0,
+                ecn = 0,
+                len = 1,
+                id = 0,
+                flags = 0,
+                fragmentOffset = 0,
+                ttl = 0,
+                protocol = 1,
+                src = 0,
+                dst = 0,
+            },
+            _payload = ""
+        }
 
-    return o
-end})
+        setmetatable(o, { __index = self })
+        ---@cast o IPv4Packet
+        o:setSrc(src)
+        o:setDst(dst)
+        o:setProtocol(protocole)
+        o:setPayload(payload)
+
+        return o
+    end
+})
 
 --#region getter/setter
 
@@ -245,7 +248,7 @@ function IPv4Packet.unpack(val)
                                  o, --protocol
                                  o:rep(4), --src
                                  o:rep(4), --dst
-                                 ".*"--payload
+                                 ".*" --payload
     )
     local dscp, ecn, len, id, flags, fragmentOffset, ttl, protocol, src, dst, payload = val:match(patern)
 
@@ -302,30 +305,33 @@ local IPv4Layer = {}
 
 IPv4Layer.layerType = ethernet.TYPE.IPv4
 
----@param dataLayer OSIDataLayer
----@param addr number|string
----@param mask number|string
----@return IPv4Layer
-setmetatable(IPv4Layer, {__call = function(self, dataLayer, addr, mask)
-    checkArg(1, dataLayer, "table")
-    checkArg(2, addr, "number", "string")
-    checkArg(3, mask, "number", "string")
-    local o = {
-        _addr = 0,
-        _mask = 0,
-        _layer = dataLayer,
-        _layers = {},
-        _arp = nil
-    }
-    setmetatable(o, {__index = self})
-    o:setAddr(addr)
-    o:setMask(mask)
-    dataLayer:setLayer(o)
-    --arp
-    o._arp = arp.ARPLayer(dataLayer)
-    arp.setLocalAddress(arp.HARDWARE_TYPE.ETHERNET, arp.PROTOCOLE_TYPE.IPv4, dataLayer:getAddr(), o:getAddr())
-    return o
-end,})
+
+setmetatable(IPv4Layer, {
+    ---@param dataLayer OSIDataLayer
+    ---@param addr number|string
+    ---@param mask number|string
+    ---@return IPv4Layer
+    __call = function(self, dataLayer, addr, mask)
+        checkArg(1, dataLayer, "table")
+        checkArg(2, addr, "number", "string")
+        checkArg(3, mask, "number", "string")
+        local o = {
+            _addr = 0,
+            _mask = 0,
+            _layer = dataLayer,
+            _layers = {},
+            _arp = nil
+        }
+        setmetatable(o, { __index = self })
+        o:setAddr(addr)
+        o:setMask(mask)
+        dataLayer:setLayer(o)
+        --arp
+        o._arp = arp.ARPLayer(dataLayer)
+        arp.setLocalAddress(arp.HARDWARE_TYPE.ETHERNET, arp.PROTOCOLE_TYPE.IPv4, dataLayer:getAddr(), o:getAddr())
+        return o
+    end,
+})
 
 ---Set the interfaces's address
 ---@param val string|number
@@ -366,12 +372,9 @@ end
 ---Send the payload
 ---@param payload IPv4Packet
 function IPv4Layer:send(payload)
-    --DEBUG
     local dst = arp.getAddress(self._arp, arp.HARDWARE_TYPE.ETHERNET, self.layerType, payload:getDst(), self:getAddr())
-    print("OUT", "IPv4", payload:pack())
     if (not dst) then error("Cannot resolve IP", 2) end
     for _, payloadFragment in pairs(payload:getFragments(self:getMTU())) do
-        print("OUT", "IPv4", "frg", _, payloadFragment:getPayload())
         local eFrame = ethernet.EthernetFrame(self._layer:getAddr(), dst, nil, self.layerType, payloadFragment:pack())
         self._layer:send(dst, eFrame)
     end
@@ -379,8 +382,6 @@ end
 
 function IPv4Layer:payloadHandler(from, to, payload)
     local pl = IPv4Packet.unpack(payload)
-    --DEBGUG
-    print("IN", "IPv4", pl:getPayload())
     if (self._layers[pl:getProtocol()]) then
         self._layers[pl:getProtocol()]:payloadHandler(pl:getSrc(), pl:getDst(), pl:getPayload())
     end
