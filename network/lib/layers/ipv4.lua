@@ -413,6 +413,17 @@ function ipv4lib.address.tostring(val)
     return string.format("%d.%d.%d.%d", a, b, c, d)
 end
 
+---Get the address and mask from the CIDR notation
+---@param cidr string
+---@return number address, number mask
+function ipv4lib.address.fromCIDR(cidr)
+    local address, mask = cidr:match("^(%d+%.%d+%.%d+%.%d+)/(%d+)$")
+    mask = tonumber(mask)
+    assert(mask >= 0, "Invalid mask")
+    assert(mask <= 32, "Invalid mask")
+    return ipv4lib.address.fromString(address), bit32.lshift(2 ^ mask - 1, 32 - mask)
+end
+
 --=============================================================================
 
 ipv4lib.IPv4Layer = IPv4Layer

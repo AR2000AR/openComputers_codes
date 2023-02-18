@@ -1,17 +1,16 @@
 --build the network stack
 
-local network   = require("network")
-local event     = require("event")
-local component = require("component")
+local ifconfig = require("ifconfig")
+local event    = require("event")
 
 local function onComponentAdded(eName, address, cType)
     if (cType ~= "modem") then return end
-    network.registerInterface(address)
+    ifconfig.autoIfup(address)
 end
 
 local function onComponentRemoved(eName, address, cType)
     if (cType ~= "modem") then return end
-    network.forgetInterface(address)
+    ifconfig.ifdown(address)
 end
 
 event.listen("component_added", onComponentAdded)

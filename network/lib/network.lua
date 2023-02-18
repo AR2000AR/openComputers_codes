@@ -30,31 +30,4 @@ function networklib.getInterface(filter)
     return networklib.interfaces
 end
 
-function networklib.registerInterface(addr)
-    if (networklib.interfaces[addr]) then return false end
-    addr = component.get(addr, "modem")
-    assert(addr, string.format("%s is not a known interface", addr))
-    networklib.interfaces[addr] = {}
-    --ethernet
-    networklib.interfaces[addr].ethernet = ethernet.EthernetInterface(component.proxy(addr))
-    --ip
-    networklib.interfaces[addr].ip = ipv4.IPv4Layer(networklib.interfaces[addr].ethernet, "192.168.1.1", "255.255.255.0")
-    --icmp
-    networklib.interfaces[addr].icmp = icmp.ICMPLayer(networklib.interfaces[addr].ip)
-    --router
-    networklib.router:setLayer(networklib.interfaces[addr].ip)
-    networklib.router:addRoute({ network = 0, mask = 0, gateway = networklib.interfaces[addr].ip:getAddr(), metric = 100 })
-    networklib.router:addRoute({ network = bit32.band(networklib.interfaces[addr].ip:getAddr(), networklib.interfaces[addr].ip:getMask()), mask = networklib.interfaces[addr].ip:getMask(), gateway = networklib.interfaces[addr].ip:getAddr(), metric = 0 })
-    return true
-end
-
-function networklib.forgetInterface(addr)
-    assert(addr, string.format("%s is not a known interface", addr))
-    if (networklib.interfaces[addr]) then
-        networklib.interfaces[addr].ethernet --[[@as EthernetInterface]]:close()
-    end
-    networklib.interfaces[addr] = nil
-    arp.setLocalAddress(arp.HARDWARE_TYPE.ETHERNET, arp.PROTOCOLE_TYPE.IPv4, addr, nil)
-end
-
 return networklib
