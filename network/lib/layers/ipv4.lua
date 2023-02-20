@@ -299,10 +299,10 @@ end
 ---@class IPv4Layer : OSINetworkLayer
 ---@field private _addr number
 ---@field private _mask number
----@field protected _layer OSIDataLayer
----@field protected _layers table<ipv4Protocol,OSINetworkLayer>
----@field protected _buffer table<number,IPv4Packet>
----@field protected _arp ARPLayer
+---@field private _router IPv4Router
+---@field package _layer OSIDataLayer
+---@field package _layers table<ipv4Protocol,OSINetworkLayer>
+---@field package _arp ARPLayer
 ---@operator call:IPv4Layer
 local IPv4Layer = {}
 
@@ -311,10 +311,11 @@ IPv4Layer.layerType = ethernet.TYPE.IPv4
 
 setmetatable(IPv4Layer, {
     ---@param dataLayer OSIDataLayer
+    ---@param router IPv4Router
     ---@param addr number|string
     ---@param mask number|string
     ---@return IPv4Layer
-    __call = function(self, dataLayer, addr, mask)
+    __call = function(self, dataLayer, router, addr, mask)
         checkArg(1, dataLayer, "table")
         checkArg(2, addr, "number", "string")
         checkArg(3, mask, "number", "string")
@@ -323,7 +324,8 @@ setmetatable(IPv4Layer, {
             _mask = 0,
             _layer = dataLayer,
             _layers = {},
-            _arp = nil
+            _arp = nil,
+            _router = router,
         }
         setmetatable(o, { __index = self })
         o:setAddr(addr)
@@ -332,6 +334,9 @@ setmetatable(IPv4Layer, {
         --arp
         o._arp = arp.ARPLayer(dataLayer)
         arp.setLocalAddress(arp.HARDWARE_TYPE.ETHERNET, arp.PROTOCOLE_TYPE.IPv4, dataLayer:getAddr(), o:getAddr())
+        --route
+        o._router:setLayer(o)
+        o._router:addRoute({ network = bit32.band(o:getAddr(), o:getMask()), mask = o:getMask(), gateway = o:getAddr(), metric = 0 })
         return o
     end,
 })
@@ -392,8 +397,12 @@ end
 
 function IPv4Layer:payloadHandler(from, to, payload)
     local pl = IPv4Packet.unpack(payload)
-    if (self._layers[pl:getProtocol()]) then
-        self._layers[pl:getProtocol()]:payloadHandler(pl:getSrc(), pl:getDst(), pl:getPayload())
+    if (pl:getDst()) == self:getAddr() then
+        if (self._layers[pl:getProtocol()]) then
+            self._layers[pl:getProtocol()]:payloadHandler(pl:getSrc(), pl:getDst(), pl:getPayload())
+        end
+    elseif (self._router) then
+        self._router:send(pl)
     end
 end
 

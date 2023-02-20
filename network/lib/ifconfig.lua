@@ -27,7 +27,9 @@ local ifconfig = {}
 --- | 1 verbose
 --DEBUG set the 0
 ---@type logLevel
-ifconfig.logLevel = 1
+ifconfig.logLevel = 0
+ifconfig.stderr = io.open("/tmp/ifconfig.out", "a")
+ifconfig.stdout = ifconfig.stderr
 --=============================================================================
 
 ---Log a message
@@ -36,11 +38,11 @@ ifconfig.logLevel = 1
 local function log(msg, level)
     if (ifconfig.logLevel < level) then return end
     if (level == -1) then
-        io.error():write(msg .. "\n")
+        ifconfig.stderr:write(msg .. "\n")
     elseif (level == 0) then
-        print(msg)
+        ifconfig.stdout:write(msg .. "\n")
     elseif (level == 1) then
-        print(msg)
+        ifconfig.stdout:write(msg .. "\n")
     end
 end
 ---log formmated text
@@ -147,6 +149,7 @@ function ifconfig.loadInterfaces(file)
 end
 
 --=============================================================================
+
 ---Find a interface in the config
 ---@param iName string
 ---@return iInfo|boolean
@@ -155,11 +158,11 @@ function ifconfig.findInterface(iName)
     if (interfaces[iName]) then return interfaces[iName] end
 
     ---@diagnostic disable-next-line: cast-local-type
-    iName = component.get(iName, "modem")
+    iName = component.get(iName, "modem") or iName
     if (not iName) then return false end
     ---@cast iName - nil
     for k, v in pairs(interfaces) do
-        if (component.get(k, "modem") == iName) then
+        if (iName:match("^" .. k)) then
             return v
         end
     end
@@ -168,6 +171,7 @@ function ifconfig.findInterface(iName)
 end
 
 --=============================================================================
+
 ---@param iName string
 function ifconfig.ifup(iName)
     local interface = ifconfig.findInterface(iName)
@@ -197,15 +201,15 @@ function ifconfig.ifup(iName)
             network.interfaces[iName].ethernet = layers.ethernet.EthernetInterface(component.proxy(iName))
             --ip
             local address, mask = layers.ipv4.address.fromCIDR(interface.address)
-            network.interfaces[iName].ip = layers.ipv4.IPv4Layer(network.interfaces[iName].ethernet, address, mask)
+            network.interfaces[iName].ip = layers.ipv4.IPv4Layer(network.interfaces[iName].ethernet, network.router, address, mask)
             --icmp
             network.interfaces[iName].icmp = layers.icmp.ICMPLayer(network.interfaces[iName].ip)
             --udp
             network.interfaces[iName].udp = layers.udp.UDPLayer(network.interfaces[iName].ip)
             --router
-            network.router:setLayer(network.interfaces[iName].ip)
-            network.router:addRoute({ network = 0, mask = 0, gateway = network.interfaces[iName].ip:getAddr(), metric = tonumber(interface.metric) or 100 })
-            network.router:addRoute({ network = bit32.band(network.interfaces[iName].ip:getAddr(), network.interfaces[iName].ip:getMask()), mask = network.interfaces[iName].ip:getMask(), gateway = network.interfaces[iName].ip:getAddr(), metric = 0 })
+            if (interface.gateway) then
+                network.router:addRoute({ network = 0, mask = 0, gateway = layers.ipv4.address.fromString(interface.gateway), metric = tonumber(interface.metric) or 100 })
+            end
 
             return true
         else
@@ -217,6 +221,10 @@ function ifconfig.ifup(iName)
 end
 
 --=============================================================================
+
+---Auto raise interface.
+---@param iName string
+---@return boolean
 function ifconfig.autoIfup(iName)
     local _, auto = ifconfig.loadInterfaces(INTERFACES_FILE)
     local interface = ifconfig.findInterface(iName)
@@ -224,10 +232,13 @@ function ifconfig.autoIfup(iName)
     iName = interface.iName
     if (auto[iName] or auto[component.get(iName, "modem")]) then
         return ifconfig.ifup(iName)
+    else
+        return false
     end
 end
 
 --=============================================================================
+
 ---@param iName string
 function ifconfig.ifdown(iName)
     local interface = ifconfig.findInterface(iName)
@@ -239,11 +250,15 @@ function ifconfig.ifdown(iName)
 
     local name = iName
     ---@diagnostic disable-next-line: cast-local-type
-    iName = component.get(iName, "modem")
+    iName = component.get(iName, "modem") or name
 
     if (network.interfaces[iName]) then
-        error("NOT YET IMPLEMENTED", 2)
-        --TODO remove routes
+        ---@cast iName - nil
+        network.router:removeLayer(network.interfaces[iName].ip:getAddr())
+        if (interface.gateway) then
+            network.router:removeGateway(layers.ipv4.address.fromString(interface.gateway))
+        end
+        network.interfaces[iName] = nil
     else
         flog("Interface %q is not up", 0, name)
     end

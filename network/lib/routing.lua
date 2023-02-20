@@ -99,6 +99,33 @@ function IPv4Router:removeLayer(address)
             break
         end
     end
+    local rmRoutes = {}
+    --find the routes to remove
+    for i, route in ipairs(self._routes) do
+        if (route.gateway == address) then
+            table.insert(rmRoutes, i)
+        end
+    end
+    --remove the routes
+    for v in pairs(rmRoutes) do
+        table.remove(self._routes, v)
+    end
+end
+
+---Remove a gateway from the routing table. Useful to remove default route for a interface.
+---@param gateway number
+function IPv4Router:removeGateway(gateway)
+    local rmRoutes = {}
+    --find the routes to remove
+    for i, route in ipairs(self._routes) do
+        if (route.gateway == gateway) then
+            table.insert(rmRoutes, i)
+        end
+    end
+    --remove the routes
+    for v in pairs(rmRoutes) do
+        table.remove(self._routes, v)
+    end
 end
 
 ---send the IPv4 packet
