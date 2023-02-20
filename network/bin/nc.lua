@@ -18,7 +18,9 @@ opts.p = tonumber(opts.p)
 local function listenSocket(listenedSocket)
     repeat
         local msg = listenedSocket:reciveString()
-        if (msg) then print(msg) end
+        if (msg) then
+            term.write(msg)
+        end
         os.sleep()
     until not listenedSocket:isOpen()
 end
@@ -68,7 +70,7 @@ elseif (opts.u) then --connect UDP
     listenerThread = thread.create(listenSocket, socket)
     repeat
         local msg = term.read()
-        if (msg) then socket:send(msg) end
+        if (msg) then socket:send(msg .. "\n") end
     until not msg or not socket:isOpen()
     socket:close()
 else
