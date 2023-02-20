@@ -1,15 +1,11 @@
 local component       = require("component")
-local ethernet        = require("layers.ethernet")
-local arp             = require("layers.arp")
-local ipv4            = require("layers.ipv4")
-local icmp            = require("layers.icmp")
 local routing         = require("routing")
-local bit32           = require("bit32")
 
 ---@class InterfaceTypes
 ---@field ethernet EthernetInterface
 ---@field ip IPv4Layer
 ---@field icmp ICMPLayer
+---@field udp UDPLayer
 
 ---@class networklib
 local networklib      = {}

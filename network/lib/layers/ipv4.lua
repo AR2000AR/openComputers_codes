@@ -29,7 +29,9 @@ ipv4lib.PROTOCOLS      = {
 ---@field protocol ipv4Protocol
 
 --=============================================================================
+
 --#region IPv4Packet
+
 ---@class IPv4Packet : Payload
 ---@field private _header IPv4Header
 ---@field private _payload string
@@ -291,6 +293,7 @@ end
 
 --#endregion
 --=============================================================================
+
 --#region IPv4Layer
 
 ---@class IPv4Layer : OSINetworkLayer
@@ -370,8 +373,15 @@ function IPv4Layer:setLayer(layer)
 end
 
 ---Send the payload
+---@param to number
 ---@param payload IPv4Packet
-function IPv4Layer:send(payload)
+---@overload fun(payload:IPv4Packet)
+function IPv4Layer:send(to, payload)
+    if (not payload) then
+        ---@diagnostic disable-next-line: cast-local-type
+        payload = to
+        to = payload:getDst()
+    end
     local dst = arp.getAddress(self._arp, arp.HARDWARE_TYPE.ETHERNET, self.layerType, payload:getDst(), self:getAddr())
     if (not dst) then error("Cannot resolve IP", 2) end
     for _, payloadFragment in pairs(payload:getFragments(self:getMTU())) do

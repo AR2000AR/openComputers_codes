@@ -200,6 +200,8 @@ function ifconfig.ifup(iName)
             network.interfaces[iName].ip = layers.ipv4.IPv4Layer(network.interfaces[iName].ethernet, address, mask)
             --icmp
             network.interfaces[iName].icmp = layers.icmp.ICMPLayer(network.interfaces[iName].ip)
+            --udp
+            network.interfaces[iName].udp = layers.udp.UDPLayer(network.interfaces[iName].ip)
             --router
             network.router:setLayer(network.interfaces[iName].ip)
             network.router:addRoute({ network = 0, mask = 0, gateway = network.interfaces[iName].ip:getAddr(), metric = tonumber(interface.metric) or 100 })
@@ -241,6 +243,7 @@ function ifconfig.ifdown(iName)
 
     if (network.interfaces[iName]) then
         error("NOT YET IMPLEMENTED", 2)
+        --TODO remove routes
     else
         flog("Interface %q is not up", 0, name)
     end

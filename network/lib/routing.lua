@@ -107,7 +107,7 @@ function IPv4Router:send(packet)
     local route = self:getRoute(packet:getDst())
     local interface = self:getLayer(route.gateway)
     assert(interface, "Cannot send packet to : ", ipv4Address.address.tostring(packet:getDst()))
-    interface:send(packet)
+    interface:send(route.gateway, packet)
 end
 
 --=============================================================================
