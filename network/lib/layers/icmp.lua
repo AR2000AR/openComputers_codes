@@ -1,5 +1,6 @@
 local ipv4 = require("layers.ipv4")
 local event = require("event")
+local network = require("network")
 --=============================================================================
 
 ---@class icmplib
@@ -198,8 +199,8 @@ setmetatable(ICMPLayer, {
 
 ---@param payload ICMPPacket
 function ICMPLayer:send(dst, payload)
-    local ipDatagram = ipv4.IPv4Packet(self._layer:getAddr(), dst, payload.payloadType, payload:pack())
-    self._layer:send(ipDatagram)
+    local ipDatagram = ipv4.IPv4Packet(self._layer:getAddr(), dst, payload)
+    network.router:send(ipDatagram)
 end
 
 ---@param payload string
@@ -215,6 +216,17 @@ end
 
 function ICMPLayer:getAddr()
     return self._layer:getAddr()
+end
+
+---Send a timeout icmp message
+---@param packet IPv4Packet
+---@param code number
+function ICMPLayer:sendTimeout(packet, code)
+    local icmpPacket = icmp.ICMPPacket(icmp.TYPE.TIME_EXCEEDED, icmp.CODE.TIME_EXCEEDED.TTL_expired_in_transit, string.format("%.2x%.2x%.4x%.4x%.2x%.4x%.2x%.2x%.8x%.8x%s",
+                                                                                                                              packet:getDscp(), packet:getEcn(), packet:getLen(), packet:getId(), packet:getFlags(),
+                                                                                                                              packet:getFragmentOffset(), packet:getTtl(), packet:getProtocol(),
+                                                                                                                              packet:getSrc(), packet:getDst(), packet:getPayload():sub(1, 8)))
+    self:send(packet:getSrc(), icmpPacket)
 end
 
 --#endregion

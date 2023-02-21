@@ -43,10 +43,13 @@ IPv4Packet.payloadType = ethernet.TYPE.IPv6
 setmetatable(IPv4Packet, {
     ---@param src number
     ---@param dst number
-    ---@param protocole ipv4Protocol
-    ---@param payload string
+    ---@param payload Payload|string
+    ---@param protocole? ipv4Protocol
     ---@return IPv4Packet
-    __call = function(self, src, dst, protocole, payload)
+    __call = function(self, src, dst, payload, protocole)
+        checkArg(1, src, 'number')
+        checkArg(2, dst, 'number')
+        checkArg(3, payload, 'string', 'table')
         local o = {
             ---@type IPv4Header
             _header = {
@@ -68,8 +71,15 @@ setmetatable(IPv4Packet, {
         ---@cast o IPv4Packet
         o:setSrc(src)
         o:setDst(dst)
-        o:setProtocol(protocole)
-        o:setPayload(payload)
+        if (type(payload) == "string") then
+            checkArg(4, protocole, 'number')
+            ---@cast protocole - nil
+            o:setProtocol(protocole)
+            o:setPayload(payload)
+        else
+            o:setProtocol(payload.payloadType)
+            o:setPayload(payload:pack())
+        end
 
         return o
     end
@@ -174,7 +184,7 @@ end
 function IPv4Packet:getProtocol() return self._header.protocol end
 
 ---Set the header's protocol value
----@param val number
+---@param val ipv4Protocol
 function IPv4Packet:setProtocol(val)
     checkArg(1, val, "number")
     self._header.protocol = val
@@ -216,7 +226,7 @@ function IPv4Packet:getFragments(maxFragmentSize)
     maxFragmentSize = math.max(1, maxFragmentSize - 1)
     local currentFragment = self:getPayload():sub(currentPos, currentPos + maxFragmentSize)
     while currentFragment ~= "" do
-        local framgentPacket = IPv4Packet(self:getSrc(), self:getDst(), self:getProtocol(), currentFragment)
+        local framgentPacket = IPv4Packet(self:getSrc(), self:getDst(), currentFragment, self:getProtocol())
         table.insert(framgments, framgentPacket)
         framgentPacket:setId(self:getId())
         framgentPacket:setFragmentOffset(#framgments)
@@ -276,7 +286,7 @@ function IPv4Packet.unpack(val)
     assert(type(src) == "number");
     assert(type(dst) == "number")
 
-    local packet = IPv4Packet(src, dst, protocol, payload)
+    local packet = IPv4Packet(src, dst, payload, protocol)
     packet:setDscp(dscp)
     packet:setEcn(ecn)
     packet:setLen(len)
@@ -377,7 +387,7 @@ function IPv4Layer:setLayer(layer)
     self._layers[layer.layerType] = layer
 end
 
----Send the payload
+---Send a IPv4Packet
 ---@param to number
 ---@param payload IPv4Packet
 ---@overload fun(payload:IPv4Packet)
@@ -402,7 +412,15 @@ function IPv4Layer:payloadHandler(from, to, payload)
             self._layers[pl:getProtocol()]:payloadHandler(pl:getSrc(), pl:getDst(), pl:getPayload())
         end
     elseif (self._router) then
-        self._router:send(pl)
+        --reduce ttl
+        pl:setTtl(pl:getTtl() - 1)
+        if (pl:getTtl() >= 1) then
+            self._router:send(pl)
+        else
+            if (self._layers[ipv4lib.PROTOCOLS.ICMP]) then
+                self._layers[ipv4lib.PROTOCOLS.ICMP] --[[@as ICMPLayer]]:sendTimeout(pl, 1)
+            end
+        end
     end
 end
 

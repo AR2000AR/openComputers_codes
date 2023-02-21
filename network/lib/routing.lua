@@ -36,7 +36,7 @@ setmetatable(IPv4Router, {
 function IPv4Router:addRoute(route)
     if (not route.network) then return end
     --TODO : sort by metrics
-    if (not (route.network == 0 and route.mask == 0xffffffff)) then
+    if (not (route.network == 0 and route.mask == 0)) then
         table.insert(self._routes, 1, route)
     else
         table.insert(self._routes, route)
@@ -83,9 +83,9 @@ end
 ---@overload fun():table<IPv4Layer>
 function IPv4Router:getLayer(address)
     if (not address) then return self._layers end
-    for v in pairs(self._layers) do
-        if (v:getAddr() == address) then
-            return v
+    for _, layer in ipairs(self._layers) do
+        if (layer:getAddr() == address) then
+            return layer
         end
     end
 end
@@ -133,7 +133,7 @@ end
 function IPv4Router:send(packet)
     local route = self:getRoute(packet:getDst())
     local interface = self:getLayer(route.gateway)
-    assert(interface, "Cannot send packet to : ", ipv4Address.address.tostring(packet:getDst()))
+    assert(interface, "Cannot send packet to : ", ipv4Address.tostring(packet:getDst()))
     interface:send(route.gateway, packet)
 end
 

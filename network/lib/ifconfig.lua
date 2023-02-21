@@ -1,7 +1,7 @@
 local io        = require("io")
 local fs        = require("filesystem")
 local component = require("component")
-local bit32     = require("bit32")
+local computer  = require("computer")
 local network   = require("network")
 local layers    = require("layers")
 
@@ -25,24 +25,25 @@ local ifconfig = {}
 --- | -1 error
 --- | 0 msg
 --- | 1 verbose
---DEBUG set the 0
 ---@type logLevel
 ifconfig.logLevel = 0
-ifconfig.stderr = io.open("/tmp/ifconfig.out", "a")
-ifconfig.stdout = ifconfig.stderr
+--avoid cluttering the sdtout
+ifconfig.err = "/tmp/ifconfig.out"
+ifconfig.out = ifconfig.err
 --=============================================================================
 
 ---Log a message
 ---@param msg string
 ---@param level logLevel
 local function log(msg, level)
+    msg = string.format("[%.2f] %s", computer.uptime(), msg)
     if (ifconfig.logLevel < level) then return end
     if (level == -1) then
-        ifconfig.stderr:write(msg .. "\n")
+        io.open(ifconfig.err, "a"):write(msg .. "\n"):close()
     elseif (level == 0) then
-        ifconfig.stdout:write(msg .. "\n")
+        io.open(ifconfig.out, "a"):write(msg .. "\n"):close()
     elseif (level == 1) then
-        ifconfig.stdout:write(msg .. "\n")
+        io.open(ifconfig.out, "a"):write(msg .. "\n"):close()
     end
 end
 ---log formmated text
@@ -65,8 +66,8 @@ end
 ---@field scope? string
 
 ---Load the interfaces settings
----@param file? string the file to parse
----@return table<string,iInfo>,table<string,boolean>
+---@param file? string the file to parse Default to /etc/network/interfaces
+---@return table<string,iInfo> interfaces,table<string,boolean> autoInterface
 function ifconfig.loadInterfaces(file)
     --#region functions definitions
 
@@ -95,15 +96,33 @@ function ifconfig.loadInterfaces(file)
     local fileHandler = io.open(file, "r")
     assert(fileHandler, "File " .. file .. " does not exists")
 
-
     local line = fileHandler:read("l")
     repeat
         if (line:match("^source")) then --SOURCE
             local extraFileName = line:match("^source (.*)$")
-            --TODO : Handle glob pattern
-            log("Including " .. extraFileName, 1)
-            if (fs.exists(extraFileName) and not fs.isDirectory(extraFileName)) then
-                for k, v in pairs(ifconfig.loadInterfaces(extraFileName)) do readInterfaces[k] = v end
+            flog("Found source %s", 1, extraFileName)
+            extraFileName = extraFileName:gsub("*", ".*")
+            extraFileName = extraFileName:gsub("?", ".")
+            if (extraFileName:match("%*")) then
+                local path = fs.path(extraFileName)
+                local name = fs.name(extraFileName)
+                flog("Listing sources in %s", 1, path)
+                for fileName in fs.list(path) do
+                    flog("Found file %s", 1, fileName)
+                    if (fileName:match(name)) then
+                        if (fs.exists(path .. fileName) and not fs.isDirectory(path .. fileName)) then
+                            log("Including " .. path .. fileName, 1)
+                            local itf, auto = ifconfig.loadInterfaces(path .. fileName)
+                            for k, v in pairs(itf) do readInterfaces[k] = v end
+                            for k, v in pairs(auto) do autoInterface[k] = v end
+                        end
+                    end
+                end
+            else
+                if (fs.exists(extraFileName) and not fs.isDirectory(extraFileName)) then
+                    log("Including " .. extraFileName, 1)
+                    for k, v in pairs(ifconfig.loadInterfaces(extraFileName)) do readInterfaces[k] = v end
+                end
             end
             line = fileHandler:read("l") --read the next line
         elseif (line:match("^auto")) then
@@ -120,15 +139,14 @@ function ifconfig.loadInterfaces(file)
                 if (not line) then break end -- reached eof
                 while line and line:match("^%s+") do --while in the interface paragraph
                     local opt, arg = line:match("^%s+(%w+)%s+([%d%.]+/%d+)$") --get the option name and argument
-                    flog("%s\t%s\t%s", 1, line, opt, arg)
                     if (VALID_PARAM[iType] ~= nil) then --known iType
                         if (VALID_PARAM[iType][iMode] ~= nil) then --known iMode
                             readInterfaces[iName] = readInterfaces[iName] or { iName = iName, iType = iType, iMode = iMode }
                             if (VALID_PARAM[iType][iMode][opt] == true) then
-                                flog("Found option %q with argument %q", 1, opt, arg)
+                                flog("\tFound option %q with argument %q", 1, opt, arg)
                                 readInterfaces[iName][opt] = arg
                             else
-                                flog("Invalid option : %s for %s %s %s", -1, opt, iName, iType, iMode)
+                                flog("\tInvalid option : %s for %s %s %s", -1, opt, iName, iType, iMode)
                             end
                         else
                             flog("Invalid interface mode : %q", -1, iMode)

@@ -254,7 +254,7 @@ end
 ---@param to number
 ---@param payload UDPPacket
 function UDPLayer:send(to, payload)
-    self._layer:send(IPv4Packet(self._layer:getAddr(), to, payload.payloadType, payload:pack()))
+    self._layer:send(IPv4Packet(self._layer:getAddr(), to, payload))
 end
 
 function UDPLayer:getAddr() return self._layer:getAddr() end
