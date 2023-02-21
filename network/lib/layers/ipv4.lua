@@ -36,9 +36,10 @@ ipv4lib.PROTOCOLS      = {
 ---@field private _header IPv4Header
 ---@field private _payload string
 ---@operator call:IPv4Packet
+---@overload fun(src:number,dst:number,paylaod:Payload):IPv4Packet
+---@overload fun(src:number,dst:number,paylaod:string,protocol:ipv4Protocol):IPv4Packet
 local IPv4Packet       = {}
 IPv4Packet.payloadType = ethernet.TYPE.IPv6
-
 
 setmetatable(IPv4Packet, {
     ---@param src number
@@ -314,6 +315,7 @@ end
 ---@field package _layers table<ipv4Protocol,OSINetworkLayer>
 ---@field package _arp ARPLayer
 ---@operator call:IPv4Layer
+---@overload fun(dataLayer:OSIDataLayer,router:IPv4Router,addr:number|string,mask:number|string):IPv4Layer
 local IPv4Layer = {}
 
 IPv4Layer.layerType = ethernet.TYPE.IPv4
@@ -388,9 +390,10 @@ function IPv4Layer:setLayer(layer)
 end
 
 ---Send a IPv4Packet
+---@param self IPv4Layer
 ---@param to number
 ---@param payload IPv4Packet
----@overload fun(payload:IPv4Packet)
+---@overload fun(self:IPv4Layer,payload:IPv4Packet)
 function IPv4Layer:send(to, payload)
     if (not payload) then
         ---@diagnostic disable-next-line: cast-local-type

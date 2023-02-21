@@ -31,12 +31,13 @@ end
 --#region EthernetFrame
 
 ---@class EthernetFrame : Payload
----@operator call:EthernetFrame
 ---@field private _dst string
 ---@field private _src string
 ---@field private _802_1Q number?
 ---@field private _etype ethernetType
 ---@field private _payload string
+---@operator call:EthernetFrame
+---@overload fun(src: string,dst: string,tag802_1Q: number|nil,etype: ethernetType,payload: string):EthernetFrame
 local EthernetFrame = {}
 
 setmetatable(EthernetFrame, {
@@ -146,6 +147,7 @@ end
 ---@field private _port number
 ---@field private _layers table<ethernetType,table>
 ---@field private _listener number
+---@overload fun(modem:ComponentModem):EthernetInterface
 local EthernetInterface = {}
 
 

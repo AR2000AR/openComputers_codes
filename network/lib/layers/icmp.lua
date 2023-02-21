@@ -93,12 +93,12 @@ icmp.CODE = {
 ---@field private _param number
 ---@field private _payload string
 ---@operator call:ICMPPacket
+---@overload fun(type:icmpType,code:number,param?:number,paylaod:string):ICMPPacket
 local ICMPPacket = {}
 ICMPPacket.payloadType = ipv4.PROTOCOLS.ICMP
 
-
 setmetatable(ICMPPacket, {
-    ---@param type number
+    ---@param type icmpType
     ---@param code number
     ---@param param? number
     ---@param payload string
@@ -180,9 +180,9 @@ end
 ---@class ICMPLayer:OSINetworkLayer
 ---@field private _layer IPv4Layer
 ---@operator call:ICMPLayer
+---@overload fun(layer:IPv4Layer):ICMPLayer
 local ICMPLayer = {}
 ICMPLayer.layerType = ipv4.PROTOCOLS.ICMP
-
 
 setmetatable(ICMPLayer, {
     ---@param layer IPv4Layer

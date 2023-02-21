@@ -16,6 +16,7 @@ local routing = {}
 ---@field private _routes table<Route>
 ---@field private _layers table<IPv4Layer>
 ---@operator call:IPv4Router
+---@overload fun():IPv4Router
 local IPv4Router = {}
 IPv4Router.layerType = require("layers.ethernet").TYPE.IPv4
 
@@ -64,7 +65,7 @@ end
 ---List all routes or return the route number id
 ---@param id number
 ---@return Route
----@overload fun():table<Route>
+---@overload fun(self:IPv4Router):table<Route>
 function IPv4Router:listRoutes(id)
     checkArg(1, id, "number", "nil")
     if (id) then return self._routes[id] end
@@ -80,7 +81,7 @@ end
 ---Get the interface with the given address
 ---@param address number
 ---@return IPv4Layer?
----@overload fun():table<IPv4Layer>
+---@overload fun(self:IPv4Router):table<IPv4Layer>
 function IPv4Router:getLayer(address)
     if (not address) then return self._layers end
     for _, layer in ipairs(self._layers) do

@@ -24,14 +24,15 @@ arp.PROTOCOLE_TYPE        = ethernet.TYPE
 --#region ARPFrame
 
 ---@class ARPFrame:Payload
----@ field private _htype number
----@ field private _ptype number
----@ field private _oper arpOperation
----@ field private _sha number|string
----@ field private _spa number|string
----@ field private _tha number|string
----@ field private _tpa number|string
+---@field private _htype number
+---@field private _ptype number
+---@field private _oper arpOperation
+---@field private _sha number|string
+---@field private _spa number|string
+---@field private _tha number|string
+---@field private _tpa number|string
 ---@operator call:ARPFrame
+---@overload fun(htype:number,ptype:number,oper:arpOperation,sha:number|string,spa:number|string,tha:number|string,tpa:number|string):ARPFrame
 local ARPFrame            = {}
 ARPFrame.payloadType      = ethernet.TYPE.ARP
 ARPFrame.OPERATION        = {

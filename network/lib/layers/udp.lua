@@ -11,6 +11,7 @@ local udp = {}
 ---@field private _dstPort number
 ---@field private _payload string
 ---@operator call:UDPPacket
+---@overload fun(srcPort:number,dstPort:number,payload:string):UDPPacket
 local UDPPacket = {}
 UDPPacket.payloadType = require("layers.ipv4").PROTOCOLS.UDP
 
@@ -92,6 +93,8 @@ end
 ---@field private _buffer table<UDPPacket>
 ---@field private _layer UDPLayer
 ---@operator call:UDPSocket
+---@overload fun(layer:UDPLayer,localPort:number):UDPSocket
+---@overload fun(layer:UDPLayer,localPort:number,remoteAddress:number,remotePort:number):UDPSocket
 local UDPSocket = {}
 
 ---@return UDPSocket
@@ -182,6 +185,7 @@ end
 ---@field private _sockets table<number,UDPSocket>
 ---@field private _layer IPv4Layer
 ---@operator call:UDPLayer
+---@overload fun(layer:IPv4Layer):UDPLayer
 local UDPLayer = {}
 UDPLayer.layerType = require("layers.ipv4").PROTOCOLS.UDP
 
