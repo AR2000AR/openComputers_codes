@@ -1,28 +1,28 @@
-local stargate      = require("component").stargate
-local gpu           = require("component").gpu
-local io            = require "io"
-local event         = require "event"
-local os            = require "os"
-local filesystem    = require "filesystem"
-local serialization = require("serialization")
-local gui           = require "libGUI"
+local stargate                      = require("component").stargate
+local gpu                           = require("component").gpu
+local io                            = require "io"
+local event                         = require "event"
+local os                            = require "os"
+local filesystem                    = require "filesystem"
+local serialization                 = require("serialization")
+local gui                           = require "libGUI"
 
 --CONST
-local CONFIG_PATH    = "/etc/stargate/"
-local WHITELIST_FILE = CONFIG_PATH .. "whitelist.csv"
-local BLACKLIST_FILE = CONFIG_PATH .. "blacklist.csv"
-local CONFIG_FILE    = CONFIG_PATH .. "stargate.cfg"
-local GATE_LIST      = CONFIG_PATH .. "gates.csv"
-local IMG_ROOT       = "/usr/share/stargate/"
-local IRIS_STATE     = {IMG_ROOT .. "iris1.pam", IMG_ROOT .. "iris2.pam", IMG_ROOT .. "iris3.pam"}
-local GATE_STATE     = {[0] = IMG_ROOT .. "sg00.pam", IMG_ROOT .. "sg01.pam", IMG_ROOT .. "sg02.pam", IMG_ROOT .. "sg03.pam", IMG_ROOT .. "sg04.pam", IMG_ROOT .. "sg05.pam", IMG_ROOT .. "sg06.pam", IMG_ROOT .. "sg07.pam", IMG_ROOT .. "sg08.pam", IMG_ROOT .. "sg09.pam", IMG_ROOT .. "sg10.pam"}
-local VORTEX         = IMG_ROOT .. "vortex.pam"
+local CONFIG_PATH                   = "/etc/stargate/"
+local WHITELIST_FILE                = CONFIG_PATH .. "whitelist.csv"
+local BLACKLIST_FILE                = CONFIG_PATH .. "blacklist.csv"
+local CONFIG_FILE                   = CONFIG_PATH .. "stargate.cfg"
+local GATE_LIST                     = CONFIG_PATH .. "gates.csv"
+local IMG_ROOT                      = "/usr/share/stargate/"
+local IRIS_STATE                    = {IMG_ROOT .. "iris1.pam", IMG_ROOT .. "iris2.pam", IMG_ROOT .. "iris3.pam"}
+local GATE_STATE                    = {[0] = IMG_ROOT .. "sg00.pam", IMG_ROOT .. "sg01.pam", IMG_ROOT .. "sg02.pam", IMG_ROOT .. "sg03.pam", IMG_ROOT .. "sg04.pam", IMG_ROOT .. "sg05.pam", IMG_ROOT .. "sg06.pam", IMG_ROOT .. "sg07.pam", IMG_ROOT .. "sg08.pam", IMG_ROOT .. "sg09.pam", IMG_ROOT .. "sg10.pam"}
+local VORTEX                        = IMG_ROOT .. "vortex.pam"
 
 --gidget position
-local GATE_IMG_X, GATE_IMG_Y   = 48, -1
-local LIST_TEXT_X, LIST_TEXT_Y = 2, 3 - 1
-local DIALLER_X, DIALLER_Y     = GATE_IMG_X + 6, GATE_IMG_Y + 23
-local PASSWORD_X, PASSWORD_Y   = GATE_IMG_X + 1, DIALLER_Y + 1
+local GATE_IMG_X, GATE_IMG_Y        = 48, -1
+local LIST_TEXT_X, LIST_TEXT_Y      = 2, 3 - 1
+local DIALLER_X, DIALLER_Y          = GATE_IMG_X + 6, GATE_IMG_Y + 23
+local PASSWORD_X, PASSWORD_Y        = GATE_IMG_X + 1, DIALLER_Y + 1
 
 --colors
 local THEME                         = {BACKGROUNDS = {}, FOREGROUNDS = {}}
@@ -78,36 +78,36 @@ local sgMessageRecivedEvent      = nil
 local interruptedEvent           = nil
 
 --global vars
-local oldResX, oldResY       = gpu.getResolution()
-local run                    = true
-local config                 = nil
-local gates                  = {}
-local waitingForConfirmation = false
-local irisManual             = true
-local dialDirection          = ""
-local dialDim                = false
-local instantDialed          = true
-local outgoingBlacklist      = false
-local outgoingAuth           = false
-local receivedPassword       = false
-local incomingBlacklist      = false
-local remoteIris             = "Offline"
+local oldResX, oldResY           = gpu.getResolution()
+local run                        = true
+local config                     = nil
+local gates                      = {}
+local waitingForConfirmation     = false
+local irisManual                 = true
+local dialDirection              = ""
+local dialDim                    = false
+local instantDialed              = true
+local outgoingBlacklist          = false
+local outgoingAuth               = false
+local receivedPassword           = false
+local incomingBlacklist          = false
+local remoteIris                 = "Offline"
 
 --global widgets
-local mainScreen      = nil
-local textRemoteAddr  = nil
-local configScreen    = nil
-local root            = nil
-local buttonIris      = nil
-local vortexLayer     = nil
-local gateLayer       = nil
-local irisLayer       = nil
-local gatesListTexts  = {}
-local nameInput       = nil
-local buttonWhitelist = nil
-local buttonBlacklist = nil
-local inputAddr       = nil
-local passwordField   = nil
+local mainScreen                 = nil
+local textRemoteAddr             = nil
+local configScreen               = nil
+local root                       = nil
+local buttonIris                 = nil
+local vortexLayer                = nil
+local gateLayer                  = nil
+local irisLayer                  = nil
+local gatesListTexts             = {}
+local nameInput                  = nil
+local buttonWhitelist            = nil
+local buttonBlacklist            = nil
+local inputAddr                  = nil
+local passwordField              = nil
 
 local function closeApp(...)
     if (touchEvent) then event.cancel(touchEvent) end
@@ -118,7 +118,10 @@ local function closeApp(...)
     if (sgChevronEngadedEvent) then event.cancel(sgChevronEngadedEvent) end
     if (sgMessageRecivedEvent) then event.cancel(sgMessageRecivedEvent) end
     if (interruptedEvent) then event.cancel(interruptedEvent) end
-    if (stargate) then stargate.disconnect(); stargate.closeIris() end
+    if (stargate) then
+        stargate.disconnect();
+        stargate.closeIris()
+    end
     run = false
     gpu.setResolution(oldResX, oldResY)
     require("term").clear()
@@ -169,11 +172,14 @@ local function setIrisButton()
     local irisState = stargate.irisState()
     buttonIris:enable(irisState == remoteIris or remoteIris == "Offline")
     if (not remoteIris == "Offline") then
-        if  (irisState == "Open" and remoteIris == "Opening") then irisState = remoteIris
-        elseif (irisState == "Closed" and remoteIris == "Closing") then irisState = remoteIris end
+        if (irisState == "Open" and remoteIris == "Opening") then
+            irisState = remoteIris
+        elseif (irisState == "Closed" and remoteIris == "Closing") then
+            irisState = remoteIris
+        end
     end
     buttonIris:setText(irisState)
-    if  (not irisManual) then
+    if (not irisManual) then
         buttonIris:setBackground(THEME.BACKGROUNDS.IRIS_BUTTON.AUTO)
         if (not (irisState == "Open" or irisState == "Opening") and outgoingBlacklist and not outgoingAuth) then
             buttonIris:setText("BLACKLIST")
@@ -190,8 +196,11 @@ local function toogleFromList(list, addr)
     --add the addr in the list if it is not already in it, else remove it
     --used for the blacklist and whitelist
     local inList, i = isGateInList(list, addr)
-    if (inList) then table.remove(list, i)
-    else table.insert(list, addr) end
+    if (inList) then
+        table.remove(list, i)
+    else
+        table.insert(list, addr)
+    end
 end
 
 local function saveGatesAdd()
@@ -387,8 +396,11 @@ local function onStargateStateChange(eventName, componentAddress, toState, fromS
         if (instantDialed) then
             --if the gate was "instant dialled" no sgChevronEngadedEvent where recived
             --in this case, we need to set the chevron img here
-            if (dialDim) then gateLayer.imageData = gui.Image(GATE_STATE[10])
-            else gateLayer.imageData = gui.Image(GATE_STATE[7]) end
+            if (dialDim) then
+                gateLayer.imageData = gui.Image(GATE_STATE[10])
+            else
+                gateLayer.imageData = gui.Image(GATE_STATE[7])
+            end
         end
     end
     if (toState == "Connected") then
@@ -463,8 +475,8 @@ local function onDialIn(eventName, componentAddress, remoteGateAddress)
     textRemoteAddr:setForeground(THEME.FOREGROUNDS.REMOTE_ADRESSE.DIALLLING)
     incomingBlacklist = (
         (config.useBlacklist and isGateInList(config.blacklist, stargate.remoteAddress()))
-            or
-            (config.useWhitelist and not isGateInList(config.whitelist, stargate.remoteAddress()))
+        or
+        (config.useWhitelist and not isGateInList(config.whitelist, stargate.remoteAddress()))
         )
     if (incomingBlacklist) then
         textRemoteAddr:setForeground(THEME.FOREGROUNDS.REMOTE_ADRESSE.BLACLISTED)
@@ -523,7 +535,7 @@ local function onMessageReceived(eventName, componentAddress, ...)
             setIrisButton()
         end
     end
-    if  (arg[1] == "openIris") then
+    if (arg[1] == "openIris") then
         if (not irisManual and receivedPassword) then
             --if iris is in automatic mod and the password is correct (defaut to true when not blacklisted)
             stargate.openIris()
@@ -537,7 +549,7 @@ local function onMessageReceived(eventName, componentAddress, ...)
         stargate.sendMessage("irisState", stargate.irisState())
     elseif (arg[1] == "irisState") then
         remoteIris = arg[2]
-        if  (arg[2] == "Closing" or arg[2] == "Closed") then
+        if (arg[2] == "Closing" or arg[2] == "Closed") then
             stargate.closeIris()
             if (outgoingBlacklist and not outgoingAuth) then irisManual = false end
         elseif (not irisManual and receivedPassword or dialDirection == "O") then
@@ -658,9 +670,11 @@ buttonIris = gui.widget.Text(14, 25, 12, 1, THEME.FOREGROUNDS.IRIS_BUTTON.CLOSED
 setIrisButton()
 buttonIris:setCallback(function(...)
     irisManual = true
-    if  (stargate.irisState() == "Open" or stargate.irisState() == "Opening") then
+    if (stargate.irisState() == "Open" or stargate.irisState() == "Opening") then
         stargate.closeIris()
-    elseif (not outgoingBlacklist or outgoingAuth) then stargate.openIris() end
+    elseif (not outgoingBlacklist or outgoingAuth) then
+        stargate.openIris()
+    end
 end)
 mainScreen:addChild(buttonIris)
 --config
@@ -672,7 +686,7 @@ buttonConfig:setCallback(function(...)
     configScreen:setVisible(true)
     --wait a little so no event get processed in the config screen
     event.timer(
-    0.1,
+        0.1,
         function(...)
             configScreen:enable(true)
         end
@@ -726,55 +740,85 @@ mainScreen:addChild(gateLayer)
 buttonWhitelist = gui.widget.Text(2, 2, 18, 1, THEME.FOREGROUNDS.CONFIG_TOGGLE.ON, "Whitelist")
 buttonWhitelist:setCallback(function(widget, ...)
     config.useWhitelist = not config.useWhitelist
-    if (config.useWhitelist) then widget:setBackground(THEME.BACKGROUNDS.CONFIG_TOGGLE.ON)
-    else widget:setBackground(THEME.BACKGROUNDS.CONFIG_TOGGLE.OFF) end
+    if (config.useWhitelist) then
+        widget:setBackground(THEME.BACKGROUNDS.CONFIG_TOGGLE.ON)
+    else
+        widget:setBackground(THEME.BACKGROUNDS.CONFIG_TOGGLE.OFF)
+    end
     buttonBlacklist:enable(not config.useWhitelist)
 end)
-if (config.useWhitelist) then buttonWhitelist:setBackground(THEME.BACKGROUNDS.CONFIG_TOGGLE.ON)
-else buttonWhitelist:setBackground(THEME.BACKGROUNDS.CONFIG_TOGGLE.OFF) end
+if (config.useWhitelist) then
+    buttonWhitelist:setBackground(THEME.BACKGROUNDS.CONFIG_TOGGLE.ON)
+else
+    buttonWhitelist:setBackground(THEME.BACKGROUNDS.CONFIG_TOGGLE.OFF)
+end
 buttonWhitelist:enable(not config.useBlacklist)
 configScreen:addChild(buttonWhitelist)
 --Blacklist
 buttonBlacklist = gui.widget.Text(2, 4, 18, 1, THEME.FOREGROUNDS.CONFIG_TOGGLE.ON, "Blacklist")
 buttonBlacklist:setCallback(function(widget, ...)
     config.useBlacklist = not config.useBlacklist
-    if (config.useBlacklist) then widget:setBackground(THEME.BACKGROUNDS.CONFIG_TOGGLE.ON)
-    else widget:setBackground(THEME.BACKGROUNDS.CONFIG_TOGGLE.OFF) end
+    if (config.useBlacklist) then
+        widget:setBackground(THEME.BACKGROUNDS.CONFIG_TOGGLE.ON)
+    else
+        widget:setBackground(THEME.BACKGROUNDS.CONFIG_TOGGLE.OFF)
+    end
     buttonWhitelist:enable(not config.useBlacklist)
 end)
-if (config.useBlacklist) then buttonBlacklist:setBackground(THEME.BACKGROUNDS.CONFIG_TOGGLE.ON)
-else buttonBlacklist:setBackground(THEME.BACKGROUNDS.CONFIG_TOGGLE.OFF) end
+if (config.useBlacklist) then
+    buttonBlacklist:setBackground(THEME.BACKGROUNDS.CONFIG_TOGGLE.ON)
+else
+    buttonBlacklist:setBackground(THEME.BACKGROUNDS.CONFIG_TOGGLE.OFF)
+end
 buttonBlacklist:enable(not config.useWhitelist)
 configScreen:addChild(buttonBlacklist)
 --blacklist drop
 local buttonDropBlacklistConnexion = gui.widget.Text(2, 6, 18, 1, THEME.FOREGROUNDS.CONFIG_TOGGLE.ON, "Drop if blacklist")
 buttonDropBlacklistConnexion:setCallback(function(widget, ...)
     config.dropBlacklistedConnexions = not config.dropBlacklistedConnexions
-    if (config.dropBlacklistedConnexions) then widget:setBackground(THEME.BACKGROUNDS.CONFIG_TOGGLE.ON)
-    else widget:setBackground(THEME.BACKGROUNDS.CONFIG_TOGGLE.OFF) end
+    if (config.dropBlacklistedConnexions) then
+        widget:setBackground(THEME.BACKGROUNDS.CONFIG_TOGGLE.ON)
+    else
+        widget:setBackground(THEME.BACKGROUNDS.CONFIG_TOGGLE.OFF)
+    end
 end)
-if (config.dropBlacklistedConnexions) then buttonDropBlacklistConnexion:setBackground(THEME.BACKGROUNDS.CONFIG_TOGGLE.ON)
-else buttonDropBlacklistConnexion:setBackground(THEME.BACKGROUNDS.CONFIG_TOGGLE.OFF) end
+if (config.dropBlacklistedConnexions) then
+    buttonDropBlacklistConnexion:setBackground(THEME.BACKGROUNDS.CONFIG_TOGGLE.ON)
+else
+    buttonDropBlacklistConnexion:setBackground(THEME.BACKGROUNDS.CONFIG_TOGGLE.OFF)
+end
 configScreen:addChild(buttonDropBlacklistConnexion)
 --autoLearn
 local buttonLearnNewGates = gui.widget.Text(2, 8, 18, 1, THEME.FOREGROUNDS.CONFIG_TOGGLE.ON, "Learn new gates")
 buttonLearnNewGates:setCallback(function(widget, ...)
     config.saveNewGate = not config.saveNewGate
-    if (config.saveNewGate) then widget:setBackground(THEME.BACKGROUNDS.CONFIG_TOGGLE.ON)
-    else widget:setBackground(THEME.BACKGROUNDS.CONFIG_TOGGLE.OFF) end
+    if (config.saveNewGate) then
+        widget:setBackground(THEME.BACKGROUNDS.CONFIG_TOGGLE.ON)
+    else
+        widget:setBackground(THEME.BACKGROUNDS.CONFIG_TOGGLE.OFF)
+    end
 end)
-if (config.saveNewGate) then buttonLearnNewGates:setBackground(THEME.BACKGROUNDS.CONFIG_TOGGLE.ON)
-else buttonLearnNewGates:setBackground(THEME.BACKGROUNDS.CONFIG_TOGGLE.OFF) end
+if (config.saveNewGate) then
+    buttonLearnNewGates:setBackground(THEME.BACKGROUNDS.CONFIG_TOGGLE.ON)
+else
+    buttonLearnNewGates:setBackground(THEME.BACKGROUNDS.CONFIG_TOGGLE.OFF)
+end
 configScreen:addChild(buttonLearnNewGates)
 --savePassword
 local buttonSavePassword = gui.widget.Text(2, 10, 18, 1, THEME.FOREGROUNDS.CONFIG_TOGGLE.ON, "Save password")
 buttonSavePassword:setCallback(function(widget, ...)
     config.savePassword = not config.savePassword
-    if (config.savePassword) then widget:setBackground(THEME.BACKGROUNDS.CONFIG_TOGGLE.ON)
-    else widget:setBackground(THEME.BACKGROUNDS.CONFIG_TOGGLE.OFF) end
+    if (config.savePassword) then
+        widget:setBackground(THEME.BACKGROUNDS.CONFIG_TOGGLE.ON)
+    else
+        widget:setBackground(THEME.BACKGROUNDS.CONFIG_TOGGLE.OFF)
+    end
 end)
-if (config.savePassword) then buttonSavePassword:setBackground(THEME.BACKGROUNDS.CONFIG_TOGGLE.ON)
-else buttonSavePassword:setBackground(THEME.BACKGROUNDS.CONFIG_TOGGLE.OFF) end
+if (config.savePassword) then
+    buttonSavePassword:setBackground(THEME.BACKGROUNDS.CONFIG_TOGGLE.ON)
+else
+    buttonSavePassword:setBackground(THEME.BACKGROUNDS.CONFIG_TOGGLE.OFF)
+end
 configScreen:addChild(buttonSavePassword)
 --password
 local passwordLabel = gui.widget.Text(2, 12, 15, 1, THEME.FOREGROUNDS.C_TEXT, "Iris password :")
@@ -810,8 +854,11 @@ configScreen:addChild(buttonCancel)
 --Init screen
 gpu.setResolution(80, 25)
 --disconnect the gate as a safety
-if (stargate.stargateState() ~= "Idle") then stargate.disconnect()
-else stargate.openIris() end
+if (stargate.stargateState() ~= "Idle") then
+    stargate.disconnect()
+else
+    stargate.openIris()
+end
 --main loop
 while (run) do
     root:draw()

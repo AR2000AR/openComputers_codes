@@ -64,7 +64,7 @@ setmetatable(EthernetFrame, {
             _etype = etype,
             _payload = payload,
         }
-        setmetatable(o, { __index = self })
+        setmetatable(o, {__index = self})
         return o
     end,
 })
@@ -170,7 +170,7 @@ setmetatable(EthernetInterface, {
 
         o._modem.open(o._port)
 
-        setmetatable(o, { __index = self })
+        setmetatable(o, {__index = self})
 
         o._listener = event.listen("modem_message", function(...) o:modemMessageHandler(...) end)
 

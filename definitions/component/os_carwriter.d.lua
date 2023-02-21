@@ -9,10 +9,12 @@ local os_cardwriter = {}
 ---@param locked boolean
 ---@param color colors
 ---@return boolean cardWritten
-function os_cardwriter.write(data, displayName, locked, color) end
+function os_cardwriter.write(data, displayName, locked, color)
+end
 
 ---flashes data to an eeprom
 ---@param data string
 ---@param title string
 ---@param writelock boolean
-function os_cardwriter.flash(data, title, writelock) end
+function os_cardwriter.flash(data, title, writelock)
+end

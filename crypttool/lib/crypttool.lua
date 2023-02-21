@@ -91,8 +91,11 @@ function crypttool.Proxy.new(filesystemComponent, aesKey)
             local eFile = self.rawFS.open(path, mode)
             assert(eFile, "Could not open the encrypted file")
             local tFile
-            if (mode:match("b")) then tFile = io.open(self.handles[handle].tmpFilePath, "wb")
-            else tFile = io.open(self.handles[handle].tmpFilePath, "w") end
+            if (mode:match("b")) then
+                tFile = io.open(self.handles[handle].tmpFilePath, "wb")
+            else
+                tFile = io.open(self.handles[handle].tmpFilePath, "w")
+            end
             assert(tFile)
             local eData = ""
             repeat
@@ -136,7 +139,12 @@ function crypttool.Proxy.new(filesystemComponent, aesKey)
         self.handles[handle] = nil
     end
 
-    event.listen("component_removed", function(e, a, t) if (a == self.rawFS.address) then fs.umount(self); return false end end)
+    event.listen("component_removed", function(e, a, t)
+        if (a == self.rawFS.address) then
+            fs.umount(self);
+            return false
+        end
+    end)
 
     return self
 end

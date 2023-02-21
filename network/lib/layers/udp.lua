@@ -1,4 +1,3 @@
-local buffer = require("buffer")
 local IPv4Packet = require("layers.ipv4").IPv4Packet
 
 ---@class udpLib
@@ -31,7 +30,7 @@ setmetatable(UDPPacket, {
             _dstPort = 0,
             _payload = ""
         }
-        setmetatable(o, { __index = self })
+        setmetatable(o, {__index = self})
 
         o:setDstPort(dstPort)
         o:setSrcPort(srcPort)
@@ -111,7 +110,7 @@ setmetatable(UDPSocket, {
             _buffer = {},
             _layer = layer
         }
-        setmetatable(o, { __index = self })
+        setmetatable(o, {__index = self})
         return o
     end
 })
@@ -198,7 +197,7 @@ setmetatable(UDPLayer, {
             _sockets = {},
             _layer = layer
         }
-        setmetatable(o, { __index = self })
+        setmetatable(o, {__index = self})
         layer:setLayer(o) --tell the IPv4Layer that we exists
         return o
     end

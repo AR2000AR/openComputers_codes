@@ -75,7 +75,7 @@ end
 local function writeAccount(accountUUID, solde)
   print("-> writeAccount")
   local account = {solde = solde, uuid = accountUUID}
-  account.sig = dataCard.encode64(dataCard.ecdsa(solde .. accountUUID, getKey(false))--[[@as string]] ) --encode sig to make saving it easier
+  account.sig = dataCard.encode64(dataCard.ecdsa(solde .. accountUUID, getKey(false)) --[[@as string]]) --encode sig to make saving it easier
   local fileContent = serialization.serialize(account) --convert the table into a string
   fileContent = dataCard.encrypt(fileContent, getAES(), AES_IV) --encrypt the data
   fileContent = dataCard.encode64(fileContent) --encode the encrypted data to make saving and reading it easier
@@ -115,7 +115,7 @@ end
 
 local args, opts = shell.parse(...)
 if (args[3]) then assert(tonumber(args[3]) ~= nil, "not a number") end
-if     (args[1] == "get") then
+if (args[1] == "get") then
   local ac = loadAccount(args[2])
   if (type(ac) == "number") then
     print("err:" .. ac)
@@ -139,7 +139,7 @@ elseif (args[1] == 'test') then
   assert(clearData, "Error when loading the account data")
   local b, c
   b = dataCard.ecdsa(clearData.solde .. args[2], getKey(true), dataCard.decode64(clearData.sig))
-  c = dataCard.encode64(dataCard.ecdsa(clearData.solde .. args[2], getKey(false))--[[@as string]] )
+  c = dataCard.encode64(dataCard.ecdsa(clearData.solde .. args[2], getKey(false)) --[[@as string]])
   print(b)
   print("saved: " .. clearData.sig)
   print("calc : " .. c)

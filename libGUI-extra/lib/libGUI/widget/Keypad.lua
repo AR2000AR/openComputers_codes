@@ -39,7 +39,8 @@ function Keypad.getMaxInputLen(self) return self.private.maxInputLen end
 
 function Keypad.setMaxInputLen(self, len) self.private.maxInputLen = len or self.private.maxInputLen end
 
-function Keypad.private.validateCallback(self) end
+function Keypad.private.validateCallback(self)
+end
 
 function Keypad.setValidateCallback(self, fct) if (type(fct) == "function") then self.private.validateCallback = fct end end
 
@@ -69,7 +70,7 @@ function Keypad.collide(self, x, y)
 end
 
 function Keypad.private.keyboardHandler(self, eventName, keyboardUUID, char, key, playerName)
-  if     (48 <= char and char <= 57) then
+  if (48 <= char and char <= 57) then
     self.private.input = self.private.input .. string.char(char)
   elseif (char == 8) then
     self.private.input = self:getInput():sub(1, #self:getInput() - 1)
@@ -97,7 +98,7 @@ function Keypad.private.screenHandler(self, eventName, ScreenUUID, x, y, button,
   y = (y - self:getY() - 1) / 2
 
   if (x >= 1 and x <= 3 and y >= 1 and y <= 4) then --keys[y][x] might be null if the event is not on  a key
-    if     (keys[y][x] == 'X') then --if X got pressed
+    if (keys[y][x] == 'X') then --if X got pressed
       self.private.input = self:getInput():sub(1, #self:getInput() - 1) --remove the last char from the input
     elseif (keys[y][x] == 'V') then --if V got pressed
       self.private.validateCallback(self)
@@ -123,12 +124,12 @@ function Keypad.private.drawInput(self)
   gpu.fill(self:getX() + 1, self:getY() + 1, self:getWidth() - 2, 1, " ")
 
   --fill the text field
-  local displayText = self:getInput():sub(-1 * (self:getWidth() - 2))
+  local displayText = self:getInput():sub( -1 * (self:getWidth() - 2))
   if (self:isInputHidden()) then
     displayText = displayText:gsub('.', '*') --replace each char with '*'
   end
   if (#self:getInput() > self:getWidth() - 2) then --if the input if longer than the text field
-    displayText = "<" .. displayText:sub(-1 * (self:getWidth() - 3)) --replace the first character of the displayed text with "<" to indicate a trucated string
+    displayText = "<" .. displayText:sub( -1 * (self:getWidth() - 3)) --replace the first character of the displayed text with "<" to indicate a trucated string
   end
 
   gpu.set(self:getX() + 1, self:getY() + 1, displayText)

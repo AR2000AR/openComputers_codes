@@ -27,7 +27,7 @@ setmetatable(IPv4Router, {
             _routes = {},
             _layers = {}
         }
-        setmetatable(o, { __index = self })
+        setmetatable(o, {__index = self})
         return o
     end
 })

@@ -12,24 +12,29 @@ local OSILayer = {}
 ---@param from string|number
 ---@param to string|number
 ---@param payload string
-function OSILayer:payloadHandler(from, to, payload) end
+function OSILayer:payloadHandler(from, to, payload)
+end
 
 ---Send the payload
 ---@param to string|number destination.
 ---@param payload Payload
 ---@overload fun(payload)
-function OSILayer:send(to, payload) end
+function OSILayer:send(to, payload)
+end
 
 ---Register higher level OSI layer
 ---@param OSILayer any
-function OSILayer:setLayer(OSILayer) end
+function OSILayer:setLayer(OSILayer)
+end
 
 ---Return the maximum payload size
 ---@return number
-function OSILayer:getMTU() end
+function OSILayer:getMTU()
+end
 
 ---@return string|number
-function OSILayer:getAddr() end
+function OSILayer:getAddr()
+end
 
 --=============================================================================
 
@@ -47,9 +52,11 @@ local Payload = {}
 
 ---Prepare the payload for the next layer
 ---@return any ...
-function Payload:pack() end
+function Payload:pack()
+end
 
 ---Get a payload object from the argument
 ---@param ... any
 ---@return Payload
-function Payload.unpack(...) end
+function Payload.unpack(...)
+end

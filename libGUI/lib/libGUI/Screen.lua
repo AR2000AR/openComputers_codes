@@ -7,7 +7,7 @@ local os = require "os"
 local Screen = libClass.newClass("Screen")
 Screen.childs = {}
 Screen.addChild = function(self, child)
-  if     (not child.class) then
+  if (not child.class) then
     error("arg #2 is not a class", 2)
   elseif (not libClass.instanceOf(child, Widget) and not libClass.instanceOf(child, Screen)) then
     error("arg #2 is not a Widget", 2)

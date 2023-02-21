@@ -32,7 +32,7 @@ function Input.setValue(self, text) self:setText(text) end
 
 function Input.private.onKeyDown(self, eventName, component, char, key, player)
     if (not eventName == "key_down") then return end
-    if     (char == 8) then --backspace
+    if (char == 8) then --backspace
         self:setText(string.sub(self:getValue(), 0, -2))
     elseif (char == 13) then --return
         event.cancel(self.private.keyDownEvent)

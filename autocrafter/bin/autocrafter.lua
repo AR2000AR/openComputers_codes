@@ -57,8 +57,11 @@ local function loadRecipe(recipePatern, sideStorage, sideRobot)
             local itemSlot = findStack(item, sideStorage)
             if (itemSlot == 0) then
                 emptyCrafter(sideStorage, sideRobot)
-                if (itemDamage) then return string.format("%s/%d", itemID, itemDamage)
-                else return itemID end
+                if (itemDamage) then
+                    return string.format("%s/%d", itemID, itemDamage)
+                else
+                    return itemID
+                end
             end --not enough ressources
             transposer.transferItem(sideStorage, sideRobot, 1, itemSlot, craftingGrid[i]) --put
         end
@@ -90,7 +93,7 @@ local function craftItem(recipes, labels, itemName, sideStorage, sideRobot)
             local loadedName = loaded:match("^[^/]+")
             local loadedDamage = tonumber(loaded:match("%d+$"))
             if (recipes[loadedName]) then
-                if     (not loadedDamage) then
+                if (not loadedDamage) then
                     for k, r in pairs(recipes[loadedName]) do
                         ---@diagnostic disable-next-line: cast-local-type
                         craftable = craftItem(recipes, labels, string.format("%s/%d", loadedName, k), sideStorage, sideRobot)
@@ -158,8 +161,11 @@ local sideStorage = 2
 for i = 0, 5 do
     local name = transposer.getInventoryName(i)
     if (name) then
-        if (name == "opencomputers:robot") then sideRobot = i
-        else sideStorage = i end
+        if (name == "opencomputers:robot") then
+            sideRobot = i
+        else
+            sideStorage = i
+        end
     end
 end
 
@@ -202,7 +208,6 @@ local run          = true
 local pageNumber   = 1
 local maxPage      = 1
 while run do
-
     term.clear()
     if (pageNumber > maxPage) then pageNumber = maxPage end
     if (pageNumber < 1) then pageNumber = 1 end
@@ -222,7 +227,8 @@ while run do
 
     io.write("<id>|<new>|<refreshLabels> :")
     local userInput = io.read()
-    if     (userInput == false) then run = false
+    if (userInput == false) then
+        run = false
     elseif (userInput:match("^p%d$")) then
         ---@diagnostic disable-next-line: cast-local-type
         pageNumber = tonumber(userInput:match("%d"))
@@ -234,13 +240,19 @@ while run do
             if (recipes[itemName] and recipes[itemName][itemDamage]) then
                 io.write("[item count] (default 1) :")
                 local count = io.read()
-                if     (count == false) then goto END_CRAFT
-                elseif (not tonumber(count)) then count = 1 end
+                if (count == false) then
+                    goto END_CRAFT
+                elseif (not tonumber(count)) then
+                    count = 1
+                end
                 local crafted = 0
                 for i = 1, count do
                     local craftedItem = craftItem(recipes, labels, recipesNames[userInput], sideStorage, sideRobot)
-                    if (craftedItem == true) then crafted = crafted + 1
-                    else print("Missing " .. (labels[craftedItem] or craftedItem)) end
+                    if (craftedItem == true) then
+                        crafted = crafted + 1
+                    else
+                        print("Missing " .. (labels[craftedItem] or craftedItem))
+                    end
                 end
                 print(string.format("Crafted %d/%d %s", crafted, count, labels[recipesNames[userInput]] or recipesNames[userInput]))
             end
@@ -265,8 +277,11 @@ while run do
                         save = io.read()
                     end
                 until (save == false or save:match("^[yYnN]$"))
-                if     (save == false) then goto END_NEW
-                elseif (save == "y" or save == "Y") then itemInf = string.format("%s/%d", item.name, item.damage) end
+                if (save == false) then
+                    goto END_NEW
+                elseif (save == "y" or save == "Y") then
+                    itemInf = string.format("%s/%d", item.name, item.damage)
+                end
             end
             table.insert(newPatern, itemInf)
         end
@@ -316,7 +331,8 @@ while run do
             end
         end
         lFile:close()
-    elseif (userInput == "exit" or userInput:match("^[eq]$")) then run = false
+    elseif (userInput == "exit" or userInput:match("^[eq]$")) then
+        run = false
     end
 end
 term.clear()

@@ -43,7 +43,7 @@ local function do_mount()
     end
 end
 
-if  #args == 0 then
+if #args == 0 then
     if next(opts) then
         io.stderr:write("Missing argument\n")
         usage()

@@ -69,7 +69,7 @@ setmetatable(ARPFrame, {
             _tpa = tpa,
         }
 
-        setmetatable(o, { __index = self })
+        setmetatable(o, {__index = self})
 
         return o
     end
@@ -183,7 +183,7 @@ setmetatable(ARPLayer, {
         local o = {
             _layer = osiLayer
         }
-        setmetatable(o, { __index = self })
+        setmetatable(o, {__index = self})
         osiLayer:setLayer(o)
         return o
     end
@@ -299,7 +299,7 @@ function arp.list(htype, ptype)
     local l = {}
     if (arp.internal.cache[ptype]) then
         for k, v in pairs(arp.internal.cache[ptype]) do
-            table.insert(l, { k, v[htype] })
+            table.insert(l, {k, v[htype]})
         end
     end
     return l

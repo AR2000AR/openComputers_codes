@@ -1,6 +1,7 @@
-local bit32            = require("bit32")
-local arp              = require("layers.arp")
-local ethernet         = require("layers.ethernet")
+local bit32    = require("bit32")
+local arp      = require("layers.arp")
+local ethernet = require("layers.ethernet")
+
 
 ---@class ipv4lib
 local ipv4lib          = {}
@@ -68,7 +69,7 @@ setmetatable(IPv4Packet, {
             _payload = ""
         }
 
-        setmetatable(o, { __index = self })
+        setmetatable(o, {__index = self})
         ---@cast o IPv4Packet
         o:setSrc(src)
         o:setDst(dst)
@@ -339,7 +340,7 @@ setmetatable(IPv4Layer, {
             _arp = nil,
             _router = router,
         }
-        setmetatable(o, { __index = self })
+        setmetatable(o, {__index = self})
         o:setAddr(addr)
         o:setMask(mask)
         dataLayer:setLayer(o)
@@ -348,7 +349,7 @@ setmetatable(IPv4Layer, {
         arp.setLocalAddress(arp.HARDWARE_TYPE.ETHERNET, arp.PROTOCOLE_TYPE.IPv4, dataLayer:getAddr(), o:getAddr())
         --route
         o._router:setLayer(o)
-        o._router:addRoute({ network = bit32.band(o:getAddr(), o:getMask()), mask = o:getMask(), gateway = o:getAddr(), metric = 0 })
+        o._router:addRoute({network = bit32.band(o:getAddr(), o:getMask()), mask = o:getMask(), gateway = o:getAddr(), metric = 0})
         return o
     end,
 })

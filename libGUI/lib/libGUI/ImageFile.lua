@@ -110,7 +110,7 @@ local function openPPM(path)
     if (i % 1000 == 0) then os.sleep() end
     local rgb = {}
     local pixel = ""
-    if  (img.property.TYPE == "P6") then
+    if (img.property.TYPE == "P6") then
       rgb.R = file:read(1):byte()
       rgb.G = file:read(1):byte()
       rgb.B = file:read(1):byte()
@@ -150,7 +150,7 @@ ImageFile.open = function(self, path)
   if (not (fs.exists(path) and not fs.isDirectory(path))) then
     error("No file with path : " .. path, 2)
   end
-  if     (path:match("%..+$") == ".pam") then
+  if (path:match("%..+$") == ".pam") then
     imgTable = openPAM(path)
   elseif (path:match("%..+$") == ".ppm") then
     imgTable = openPPM(path)

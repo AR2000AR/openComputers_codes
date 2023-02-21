@@ -17,22 +17,22 @@ local libCB = {} --imported later if required by config
 assert(transposer, "No transposer found")
 
 --constants
-local CONFIG_PATH = "/etc/vending/"
-local CONFIG_FILE = CONFIG_PATH .. "config.cfg"
+local CONFIG_PATH       = "/etc/vending/"
+local CONFIG_FILE       = CONFIG_PATH .. "config.cfg"
 local PRODUCT_LIST_FILE = CONFIG_PATH .. "products.csv"
-local OUT_PATH = "/var/vending/"
-local SALE_STATS = OUT_PATH .. "sales.csv"
+local OUT_PATH          = "/var/vending/"
+local SALE_STATS        = OUT_PATH .. "sales.csv"
 
-local COLUMN_SOLD_ITEM = 1
-local COLUMN_SOLD_QTE  = 2
-local COLUMN_COST_ITEM = 3
-local COLUMN_COST_QTE  = 4
-local COLUMN_COST_COIN = 5
+local COLUMN_SOLD_ITEM  = 1
+local COLUMN_SOLD_QTE   = 2
+local COLUMN_COST_ITEM  = 3
+local COLUMN_COST_QTE   = 4
+local COLUMN_COST_COIN  = 5
 
 --global vars
-local config = {}
-local products = {}
-local availableProduct = {}
+local config            = {}
+local products          = {}
+local availableProduct  = {}
 
 --functions definition
 local function parseCSVLine(line, sep)
@@ -108,7 +108,10 @@ local function payInCoin(amount)
             repeat
                 io.write("PIN :")
                 local pin = term.read(nil, false, nil, "*")
-                if (not pin) then print(""); return false end
+                if (not pin) then
+                    print("");
+                    return false
+                end
                 pin = pin:gsub("\n", "") --remove newline cause by term.read
                 cb = libCB.getCB(encryptedCardData, pin)
                 try = try + 1
@@ -118,14 +121,14 @@ local function payInCoin(amount)
             paid = res == 0
             if (not paid) then
                 print(({
-                          [1] = "NO ACCOUNT",
-                          [2] = "ERROR ACCOUNT",
-                          [3] = "ERROR CB",
-                          [4] = "ERROR AMOUNT",
-                          [5] = "ERROR_RECEIVING_ACCOUNT",
-                          [-1] = "TIMEOUT",
-                          [-2] = "WRONG MESSAGE"
-                      })[res])
+                    [1] = "NO ACCOUNT",
+                    [2] = "ERROR ACCOUNT",
+                    [3] = "ERROR CB",
+                    [4] = "ERROR AMOUNT",
+                    [5] = "ERROR_RECEIVING_ACCOUNT",
+                    [ -1] = "TIMEOUT",
+                    [ -2] = "WRONG MESSAGE"
+                })[res])
             end
         else
             print("NO CB")
@@ -156,7 +159,7 @@ local function getFreeSpace(side, item)
     local freeSpace = 0
     if (item and item.maxSize) then stackSize = item.maxSize end
     for chestItem in transposer.getAllStacks(side) do
-        if  (not chestItem.name) then
+        if (not chestItem.name) then
             emptyStack = emptyStack + 1
         elseif (item and itemEquals(chestItem, item)) then
             stackSize = chestItem.maxSize
@@ -290,7 +293,8 @@ if (not filesystem.isDirectory(OUT_PATH)) then
 end
 
 local run = true
-local event_interrupted = event.listen("interrupted", function() end)
+local event_interrupted = event.listen("interrupted", function()
+end)
 
 --main
 while (run) do
@@ -321,7 +325,9 @@ while (run) do
             print("Press any key")
             local _, _, _, _, player = event.pull(10, "key_down")
             if (player and player == config.adminPlayer) then auth = true end
-        else auth = true end
+        else
+            auth = true
+        end
         while (auth) do
             --print the interface
             term.clear()
@@ -340,7 +346,7 @@ while (run) do
             --read user input
             io.write("[1-7] >")
             op = io.read("l")
-            if  (op == config.exitString) then --exit
+            if (op == config.exitString) then --exit
                 run = false
                 auth = false
             elseif (op == nil) then
@@ -349,7 +355,7 @@ while (run) do
             op = tonumber(op)
 
             --switch
-            if     (op == 1) then --Payment settings
+            if (op == 1) then --Payment settings
                 local subMenu = true
                 repeat
                     --interface
@@ -367,7 +373,7 @@ while (run) do
                     op = tonumber(op)
 
                     --switch
-                    if     (op == 1) then --toggle acceptCoin
+                    if (op == 1) then --toggle acceptCoin
                         config.acceptCoin = not config.acceptCoin
                         reloadLibs()
                         saveConfig()
@@ -386,7 +392,10 @@ while (run) do
                             repeat --ask for pin (3 erros max)
                                 io.write("PIN :")
                                 local pin = term.read(nil, false, nil, "*")
-                                if (not pin) then print(""); return false end
+                                if (not pin) then
+                                    print("");
+                                    return false
+                                end
                                 pin = pin:gsub("\n", "") --remove newline cause by term.read
                                 cb = libCB.getCB(encryptedCardData, pin)
                                 try = try + 1
@@ -405,14 +414,18 @@ while (run) do
                             config.cbTimeout = op
                             saveConfig()
                         end
-                    elseif (op == 5) then subMenu = false end --exit the submenu
+                    elseif (op == 5) then
+                        subMenu = false
+                    end --exit the submenu
                 until (not subMenu)
             elseif (op == 2) then --Back chest unloading
                 print("Unloading")
-                while (transposer.transferItem(config.chestBack, config.chestFront) ~= 0) do end
+                while (transposer.transferItem(config.chestBack, config.chestFront) ~= 0) do
+                end
             elseif (op == 3) then --Back chest loading
                 print("Loading")
-                while (transposer.transferItem(config.chestFront, config.chestBack) ~= 0) do end
+                while (transposer.transferItem(config.chestFront, config.chestBack) ~= 0) do
+                end
             elseif (config.acceptCoin and op == 4) then --Unload coins
                 libCoin.moveCoin(libCoin.getValue(libCoin.getCoin(config.chestBack)), config.chestBack, config.chestFront)
             elseif (config.acceptCoin and op == 5) then --Load coins

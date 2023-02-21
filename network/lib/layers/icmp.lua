@@ -1,7 +1,8 @@
-local ipv4 = require("layers.ipv4")
-local event = require("event")
+local ipv4    = require("layers.ipv4")
+local event   = require("event")
 local network = require("network")
 --=============================================================================
+
 
 ---@class icmplib
 local icmp = {}
@@ -110,7 +111,7 @@ setmetatable(ICMPPacket, {
             _param = param or 0,
             _payload = payload or ""
         }
-        setmetatable(o, { __index = self })
+        setmetatable(o, {__index = self})
         return o
     end
 })
@@ -191,7 +192,7 @@ setmetatable(ICMPLayer, {
         local o = {
             _layer = layer
         }
-        setmetatable(o, { __index = self })
+        setmetatable(o, {__index = self})
         layer:setLayer(o)
         return o
     end,

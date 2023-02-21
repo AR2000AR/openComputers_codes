@@ -1,58 +1,58 @@
 ---@diagnostic disable: cast-local-type
-local libCB      = require("libCB")
-local bank       = require("bank_api")
-local shell      = require("shell")
-local sides      = require("sides")
-local coin       = require("libCoin")
-local gui        = require("libGUI")
-local event      = require("event")
-local os         = require("os")
-local component  = require("component")
-local gpu        = component.gpu
-local transposer = component.transposer
-local disk_drive = component.disk_drive
-local proxy      = component.proxy
-local beep       = component.computer.beep
+local libCB                                                = require("libCB")
+local bank                                                 = require("bank_api")
+local shell                                                = require("shell")
+local sides                                                = require("sides")
+local coin                                                 = require("libCoin")
+local gui                                                  = require("libGUI")
+local event                                                = require("event")
+local os                                                   = require("os")
+local component                                            = require("component")
+local gpu                                                  = component.gpu
+local transposer                                           = component.transposer
+local disk_drive                                           = component.disk_drive
+local proxy                                                = component.proxy
+local beep                                                 = component.computer.beep
 
-local STORAGE  = 0
-local EXTERIOR = 0
+local STORAGE                                              = 0
+local EXTERIOR                                             = 0
 
-local MODE_IDLE      = 0
-local MODE_PIN       = 1
-local MODE_MENU      = 2
-local MODE_WITHDRAW  = 3
-local MODE_DEPOSIT   = 4
-local MODE_STATS     = 5
-local MODE_CLOSING   = -1
-local mode           = MODE_IDLE
-local CARD_IN_READER = false
+local MODE_IDLE                                            = 0
+local MODE_PIN                                             = 1
+local MODE_MENU                                            = 2
+local MODE_WITHDRAW                                        = 3
+local MODE_DEPOSIT                                         = 4
+local MODE_STATS                                           = 5
+local MODE_CLOSING                                         = -1
+local mode                                                 = MODE_IDLE
+local CARD_IN_READER                                       = false
 
-local BUTTON_NAME_WITHDRAW = "bw"
-local BUTTON_NAME_DEPOSIT  = "bd"
-local BUTTON_NAME_EJECT    = "be"
+local BUTTON_NAME_WITHDRAW                                 = "bw"
+local BUTTON_NAME_DEPOSIT                                  = "bd"
+local BUTTON_NAME_EJECT                                    = "be"
 
-local main_screen   = nil
-local card_wait     = nil
-local keypad        = nil
-local error_popup   = nil
-local success_popup = nil
-local main_menu     = nil
-local sold_text     = nil
-local bin_text      = nil
+local main_screen                                          = nil
+local card_wait                                            = nil
+local keypad                                               = nil
+local error_popup                                          = nil
+local success_popup                                        = nil
+local main_menu                                            = nil
+local sold_text                                            = nil
+local bin_text                                             = nil
 
 local event_touch, event_drive, event_eject, event_magData = nil, nil, nil, nil
 
-local old_res_x, old_res_y = nil, nil
+local old_res_x, old_res_y                                 = nil, nil
 
 ---@type Component
-local drive         = nil
+local drive                                                = nil
 ---@type cardData
-local cbData        = nil
+local cbData                                               = nil
 ---@type encryptedCardData
-local encryptedData = nil
-local solde         = 0
+local encryptedData                                        = nil
+local solde                                                = 0
 -- =============================================================================
-local eject         = disk_drive.eject
+local eject                                                = disk_drive.eject
 
 local function endSession()
   mode = MODE_IDLE
@@ -112,7 +112,7 @@ local function makeTransaction(amount)
     endSession()
   else
     local coinGiven, b, s, g, p = 0, 0, 0, 0, 0
-    if     (mode == MODE_WITHDRAW) then
+    if (mode == MODE_WITHDRAW) then
       if (solde < amount) then
         error_popup:show("Insufisant balance.", true)
         amount = 0
@@ -185,7 +185,7 @@ end
 
 local function showNumericalKeypad()
   keypad:clearInput()
-  keypad:setMaxInputLen(-1)
+  keypad:setMaxInputLen( -1)
   keypad:setVisible(true)
   keypad:enable(true)
   keypad:hideInput(false)
@@ -195,7 +195,7 @@ end
 -- =============================================================================
 local function buttonEventHandler(buttonName)
   if (mode == MODE_MENU) then
-    if     (buttonName == BUTTON_NAME_EJECT) then
+    if (buttonName == BUTTON_NAME_EJECT) then
       endSession()
     elseif (buttonName == BUTTON_NAME_DEPOSIT) then
       mode = MODE_DEPOSIT

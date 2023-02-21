@@ -11,7 +11,7 @@ local ID_COIN_GOLD     = "ordinarycoins:coingold"
 local COIN_PLATINUM    = COIN_GOLD * CONVERTION_RATE
 local ID_COIN_PLATINUM = "ordinarycoins:coinplatinum"
 
-local coin = {}
+local coin             = {}
 
 ---count the coins
 ---@param side side
@@ -124,7 +124,7 @@ function coin.moveCoin(amount, from, to)
 
     local moved_bronze, moved_silver, moved_gold, moved_platinum = 0, 0, 0, 0
     while (moved_bronze < need_bronze) do
-      local moved_coin = transposer.transferItem(from, to, need_bronze, coin.findFirstStack(from, ID_COIN_BRONZE)--[[@as number]] )
+      local moved_coin = transposer.transferItem(from, to, need_bronze, coin.findFirstStack(from, ID_COIN_BRONZE) --[[@as number]])
       if (moved_coin == 0) then
         break
       else
@@ -132,7 +132,7 @@ function coin.moveCoin(amount, from, to)
       end
     end
     while (moved_silver < need_silver) do
-      local moved_coin = transposer.transferItem(from, to, need_silver, coin.findFirstStack(from, ID_COIN_SILVER)--[[@as number]] )
+      local moved_coin = transposer.transferItem(from, to, need_silver, coin.findFirstStack(from, ID_COIN_SILVER) --[[@as number]])
       if (moved_coin == 0) then
         break
       else
@@ -140,7 +140,7 @@ function coin.moveCoin(amount, from, to)
       end
     end
     while (moved_gold < need_gold) do
-      local moved_coin = transposer.transferItem(from, to, need_gold, coin.findFirstStack(from, ID_COIN_GOLD)--[[@as number]] )
+      local moved_coin = transposer.transferItem(from, to, need_gold, coin.findFirstStack(from, ID_COIN_GOLD) --[[@as number]])
       if (moved_coin == 0) then
         break
       else
@@ -148,7 +148,7 @@ function coin.moveCoin(amount, from, to)
       end
     end
     while (moved_platinum < need_platinum) do
-      local moved_coin = transposer.transferItem(from, to, need_platinum, coin.findFirstStack(from, ID_COIN_PLATINUM)--[[@as number]] )
+      local moved_coin = transposer.transferItem(from, to, need_platinum, coin.findFirstStack(from, ID_COIN_PLATINUM) --[[@as number]])
       if (moved_coin == 0) then
         break
       else

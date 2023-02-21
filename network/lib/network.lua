@@ -22,7 +22,7 @@ networklib.router     = routing.IPv4Router()
 ---@
 function networklib.getInterface(filter)
     checkArg(1, filter, "string", "nil")
-    if (filter) then return { networklib.interfaces.ethernet[component.get(filter, "modem")] or nil } end
+    if (filter) then return {networklib.interfaces.ethernet[component.get(filter, "modem")] or nil} end
     return networklib.interfaces
 end
 

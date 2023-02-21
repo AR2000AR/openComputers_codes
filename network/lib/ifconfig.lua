@@ -141,7 +141,7 @@ function ifconfig.loadInterfaces(file)
                     local opt, arg = line:match("^%s+(%w+)%s+([%d%.]+/%d+)$") --get the option name and argument
                     if (VALID_PARAM[iType] ~= nil) then --known iType
                         if (VALID_PARAM[iType][iMode] ~= nil) then --known iMode
-                            readInterfaces[iName] = readInterfaces[iName] or { iName = iName, iType = iType, iMode = iMode }
+                            readInterfaces[iName] = readInterfaces[iName] or {iName = iName, iType = iType, iMode = iMode}
                             if (VALID_PARAM[iType][iMode][opt] == true) then
                                 flog("\tFound option %q with argument %q", 1, opt, arg)
                                 readInterfaces[iName][opt] = arg
@@ -226,7 +226,7 @@ function ifconfig.ifup(iName)
             network.interfaces[iName].udp = layers.udp.UDPLayer(network.interfaces[iName].ip)
             --router
             if (interface.gateway) then
-                network.router:addRoute({ network = 0, mask = 0, gateway = layers.ipv4.address.fromString(interface.gateway), metric = tonumber(interface.metric) or 100 })
+                network.router:addRoute({network = 0, mask = 0, gateway = layers.ipv4.address.fromString(interface.gateway), metric = tonumber(interface.metric) or 100})
             end
 
             return true

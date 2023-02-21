@@ -41,7 +41,7 @@ end
 
 local pkgmap = {} -- alphabetically sorted list of package names
 for k, v in pairs(packages) do
-    pkgmap[#pkgmap+1] = k
+    pkgmap[#pkgmap + 1] = k
 end
 table.sort(pkgmap)
 
@@ -103,7 +103,7 @@ local function drawmenu() -- draw the menu display - nothing but text and VT100 
         print(install.label .. " installer")
         workingSpace = workingSpace - 1
     end
-    if  selected > start + workingSpace - 3 then
+    if selected > start + workingSpace - 3 then
         start = math.min(start + 3, #pkgmap - workingSpace)
     elseif selected < start + 3 then
         start = math.max(start - 3, 1)
@@ -132,13 +132,14 @@ Key codes:
 105 23 i
 113 16 q
 121 21 y
-]] --
+]]
+--
 
 local run, install = true, true
 while run do -- menu loop
     drawmenu()
     local _, _, ch, co = event.pull("key_down")
-    if  ch == 13 and co == 28 then
+    if ch == 13 and co == 28 then
         run = false
     elseif ch == 113 and co == 16 then
         run = false
@@ -205,7 +206,7 @@ local function install(pkg, where) -- installs a package, pkg, to where
         for l, m in pairs(packages[pkg].files) do
             local lseg = fs.segments(l)
             local op = ""
-            if     (l:sub(1, 1) == ":") then
+            if (l:sub(1, 1) == ":") then
                 l = l:sub(2)
                 op = "-r "
                 m = m .. "/"
@@ -238,7 +239,7 @@ local function install(pkg, where) -- installs a package, pkg, to where
         end
         if packages[pkg].postinstall then
             for k, v in pairs(packages[pkg].postinstall) do
-                postinstall[#postinstall+1] = v
+                postinstall[#postinstall + 1] = v
             end
         end
     else

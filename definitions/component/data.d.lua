@@ -7,41 +7,49 @@ local data = {}
 ---Computes CRC-32 hash of the data. Result is in binary format.
 ---@param data string
 ---@return string
-function data.crc32(data) end
+function data.crc32(data)
+end
 
 ---Applies base64 decoding to the data.
 ---@param data string
 ---@return string
-function data.decode64(data) end
+function data.decode64(data)
+end
 
 ---Applies base64 encoding to the data. Result is in binary format.
 ---@param data string
 ---@return string
-function data.encode64(data) end
+function data.encode64(data)
+end
 
 ---Computes MD5 hash of the data. Result is in binary format
 ---@param data string
 ---@return string
-function data.md5(data) end
+function data.md5(data)
+end
 
 ---Computes SHA2-256 hash of the data. Result is in binary format.
 ---@param data string
 ---@return string
-function data.sha256(data) end
+function data.sha256(data)
+end
 
 ---Applies deflate compression to the data.
 ---@param data string
 ---@return string
-function data.deflate(data) end
+function data.deflate(data)
+end
 
 ---Applies inflate decompression to the data.
 ---@param data string
 ---@return string
-function data.inflate(data) end
+function data.inflate(data)
+end
 
 ---The maximum size of data that can be passed to other functions of the card.
 ---@return number
-function data.getLimit() end
+function data.getLimit()
+end
 
 --endregion
 
@@ -52,19 +60,22 @@ function data.getLimit() end
 ---@param key string
 ---@param iv string
 ---@return string
-function data.encrypt(data, key, iv) end
+function data.encrypt(data, key, iv)
+end
 
 ---Reverses AES encryption on the data using the key and the IV.
 ---@param data string
 ---@param key string
 ---@param iv string
 ---@return string
-function data.decrypt(data, key, iv) end
+function data.decrypt(data, key, iv)
+end
 
 ---Generates a random binary string of len length.
 ---@param len number
 ---@return string
-function data.random(len) end
+function data.random(len)
+end
 
 --#endregion
 
@@ -75,11 +86,13 @@ local ecKey = {}
 
 ---is the key public
 ---@return boolean
-function ecKey.isPublic() end
+function ecKey.isPublic()
+end
 
 ---serialize the key to save it
 ---@return string
-function ecKey.serialize() end
+function ecKey.serialize()
+end
 
 ---@class EcKeyPublic : EcKey
 
@@ -91,7 +104,8 @@ function ecKey.serialize() end
 ---key.serialize():string Keys also contain the function key.isPublic():boolean
 ---@param bitLen? 256 | 384
 ---@return EcKeyPublic publicKey, EcKeyPrivate privateKey
-function data.generateKeyPair(bitLen) end
+function data.generateKeyPair(bitLen)
+end
 
 ---Generates a signiture of data using a private key. If signature is present
 ---verifies the signature using the public key, the previously generated
@@ -100,7 +114,8 @@ function data.generateKeyPair(bitLen) end
 ---@param key EcKey
 ---@param sig? string
 ---@return string|boolean
-function data.ecdsa(data, key, sig) end
+function data.ecdsa(data, key, sig)
+end
 
 --- Generates a Diffie-Hellman shared key using the first user's private key and
 --- the second user's public key. An example of a basic key relation:
@@ -108,12 +123,14 @@ function data.ecdsa(data, key, sig) end
 ---@param privateKey EcKeyPrivate
 ---@param publicKey EcKeyPublic
 ---@return string
-function data.ecdh(privateKey, publicKey) end
+function data.ecdh(privateKey, publicKey)
+end
 
 ---Transforms a key from string to it's arbitrary type.
 ---@param data string
 ---@param type "ec-public" | "ec-private"
 ---@return table
-function data.deserializeKey(data, type) end
+function data.deserializeKey(data, type)
+end
 
 --#endregion

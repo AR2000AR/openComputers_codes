@@ -1,11 +1,11 @@
-local gui       = require("libGUI")
-local event     = require("event")
-local bank_api  = require("bank_api")
-local libCB     = require("libCB")
-local os        = require("os")
-local component = require("component")
+local gui                   = require("libGUI")
+local event                 = require("event")
+local bank_api              = require("bank_api")
+local libCB                 = require("libCB")
+local os                    = require("os")
+local component             = require("component")
 
-local gpu = component.gpu
+local gpu                   = component.gpu
 
 local MODE_CLOSING          = -1
 local MODE_IDLE             = 0
@@ -21,25 +21,25 @@ local B_NAME_MAGCARD        = "mg"
 local IMG_PATH              = "/usr/share/bank_client/"
 local mode                  = MODE_IDLE
 
-local touchListenerId   = nil
-local driveListenerId   = nil
-local intListenerId     = nil
-local magDataListenerId = nil
+local touchListenerId       = nil
+local driveListenerId       = nil
+local intListenerId         = nil
+local magDataListenerId     = nil
 
-local resX, resY = nil, nil
+local resX, resY            = nil, nil
 
-local screen              = gui.Screen()
-local backgroundScreen    = gui.Screen()
-local mainInterfaceScreen = gui.Screen()
-local newAccountScreen    = gui.Screen()
-local viewAccountScreen   = gui.Screen()
-local diskWaitPopup       = gui.Screen()
-local cardSupportPopup    = gui.Screen()
-local keypad              = nil
-local statusBar           = nil
-local acUUIDText          = nil
-local soldeText           = nil
-local pinText             = nil
+local screen                = gui.Screen()
+local backgroundScreen      = gui.Screen()
+local mainInterfaceScreen   = gui.Screen()
+local newAccountScreen      = gui.Screen()
+local viewAccountScreen     = gui.Screen()
+local diskWaitPopup         = gui.Screen()
+local cardSupportPopup      = gui.Screen()
+local keypad                = nil
+local statusBar             = nil
+local acUUIDText            = nil
+local soldeText             = nil
+local pinText               = nil
 
 local function closeClient(...)
   event.cancel(touchListenerId)
@@ -124,12 +124,14 @@ local function voirCompte(pin, rawData)
         soldeText:setText("Solde : " .. solde)
         viewAccountScreen:setVisible(true)
       end
-    else voirCompte(nil, rawData) end
+    else
+      voirCompte(nil, rawData)
+    end
   end
 end
 
 local function buttonEventHandler(buttonName)
-  if  (buttonName == B_NAME_POPUP_CLOSE) then
+  if (buttonName == B_NAME_POPUP_CLOSE) then
     closePopup(diskWaitPopup)
     closePopup(cardSupportPopup)
     printStatus("cancel")
@@ -145,8 +147,8 @@ local function buttonEventHandler(buttonName)
     closePopup(cardSupportPopup)
     mode = MODE_IDLE
   end
-  if  (mode == MODE_IDLE) then
-    if     (buttonName == B_NAME_VIEW_ACCOUNT) then
+  if (mode == MODE_IDLE) then
+    if (buttonName == B_NAME_VIEW_ACCOUNT) then
       mode = MODE_VIEW_ACCOUNT
       printStatus("entering view account mode")
       openPopup(diskWaitPopup)
@@ -157,7 +159,7 @@ local function buttonEventHandler(buttonName)
       openPopup(cardSupportPopup)
     end
   elseif (mode == MODE_CREATE_ACCOUNT_1) then
-    if  (buttonName == B_NAME_FLOPPY) then
+    if (buttonName == B_NAME_FLOPPY) then
       mode = MODE_CREATE_ACCOUNT_2
       openPopup(diskWaitPopup)
       closePopup(cardSupportPopup)
@@ -172,7 +174,7 @@ end
 
 local function diskEventHandler(eName, cAddr, cType)
   if (cType == "drive") then
-    if     (mode == MODE_VIEW_ACCOUNT) then
+    if (mode == MODE_VIEW_ACCOUNT) then
       printStatus("Card inserted")
       voirCompte(nil, component.proxy(cAddr))
     elseif (mode == MODE_CREATE_ACCOUNT_2) then
@@ -190,7 +192,6 @@ local function magDataEventHandler(eName, eAddr)
 end
 
 local function init()
-
   resX, resY = gpu.getResolution()
   gpu.setResolution(80, 25)
 

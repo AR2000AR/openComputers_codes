@@ -17,7 +17,7 @@ local function normalisePath(path)
     local pt = {}
     for seg in path:gmatch("[^/]+") do
         seg = seg:gsub("?master", "master"):gsub(":master", "master")
-        pt[#pt+1] = seg
+        pt[#pt + 1] = seg
     end
     local pre = ""
     if path:sub(1, 1) == "/" then
@@ -57,7 +57,7 @@ local function parseFolders(pack, repo, info)
         repeat
             os.sleep(0)
             local s, c, reason = pcall(result.finishConnect)
-            if  (not s) then
+            if (not s) then
                 error(c, 2)
             elseif (c == nil) then
                 error(reason, 2)
@@ -68,7 +68,7 @@ local function parseFolders(pack, repo, info)
         -- read the response
         repeat
             local data, reason = result.read()
-            if  not data then
+            if not data then
                 result.close()
                 if reason then
                     error(reason, 2)
@@ -122,7 +122,7 @@ local function parseFolders(pack, repo, info)
         if not files then return nil end
         local tFiles = {}
         for _, v in pairs(files) do
-            if  v["type"] == "file" then
+            if v["type"] == "file" then
                 local newPath = v["download_url"]:gsub("https?://raw.githubusercontent.com/" .. nonSpecial(repo) .. "(.+)$", "%1"):gsub("/*$", ""):gsub("^/*", "")
                 tFiles[newPath] = relPath
             elseif v["type"] == "dir" then
@@ -214,7 +214,7 @@ for k, v in pairs(programs) do
     assert(v, "v should not be nil")
     if v.files then
         for l, m in pairs(v.files) do
-            dlfiles[#dlfiles+1] = l
+            dlfiles[#dlfiles + 1] = l
         end
     end
 end

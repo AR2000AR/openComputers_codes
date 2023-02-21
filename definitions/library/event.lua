@@ -11,7 +11,8 @@ local event = {}
 ---@param event string
 ---@param callback function
 ---@return number|boolean
-function event.listen(event, callback) end
+function event.listen(event, callback)
+end
 
 ---Unregister a previously registered event listener.
 ---event - name of the signal to unregister.
@@ -21,14 +22,16 @@ function event.listen(event, callback) end
 ---@param event string
 ---@param callback function
 ---@return boolean
-function event.ignore(event, callback) end
+function event.ignore(event, callback)
+end
 
 ---Cancels a timer previously created with event.timer.
 ---timerId - a timer ID as returned by event.timer.
 ---Returns: true if the timer was stopped, false if there was no timer with the specified ID.
 ---@param timerId number
 ---@return boolean
-function event.cancel(timerId) end
+function event.cancel(timerId)
+end
 
 ---Starts a new timer that will be called after the time specified in interval.
 ---interval - time in seconds between each invocation of the callback function. Can be a fraction like 0.05.
@@ -40,7 +43,8 @@ function event.cancel(timerId) end
 ---@param callback function
 ---@param times? number
 ---@return number
-function event.timer(interval, callback, times) end
+function event.timer(interval, callback, times)
+end
 
 ---Pulls and returns the next available event from the queue, or waits until one becomes available.
 ---timeout - if passed the function will wait for a new event for this many seconds at maximum then returns nil if no event was queued during that time.
@@ -55,7 +59,8 @@ function event.timer(interval, callback, times) end
 ---@param ... any
 ---@return  string, any ...
 ---@overload fun(name:string,...:any):string, ...:any
-function event.pull(timeout, name, ...) end
+function event.pull(timeout, name, ...)
+end
 
 ---(Since 1.5.9) Pulls and returns the next available event from the queue, or waits until one becomes available but allows filtering by specifying filter function. timeout - if passed the function will wait for a new event for this many seconds at maximum then returns nil if no event was queued during that time.
 ---filter - if passed the function will use it as a filtering function of events. Allows for advanced filtering.
@@ -85,21 +90,25 @@ function event.pull(timeout, name, ...) end
 ---@param filter? function
 ---@return string, any ...
 ---@overload fun(filer:function):string,...:any
-function event.pullFiltered(timeout, filter) end
+function event.pullFiltered(timeout, filter)
+end
 
 ---As its arguments pullMultiple accepts multiple event names to be pulled, allowing basic filtering of multiple events at once.
 ---@param ... string
 ---@return any ...
-function event.pullMultiple(...) end
+function event.pullMultiple(...)
+end
 
 ---Global event callback error handler. If an event listener throws an error, we handle it in this function to avoid it bubbling into unrelated code (that only triggered the execution by calling event.pull). Per default, this logs errors into a file on the temporary file system.
 ---You can replace this function with your own if you want to handle event errors in a different way.
 ---@param message any
-function event.onError(message) end
+function event.onError(message)
+end
 
 ---This is only an alias to computer.pushSignal. This does not modify the arguments in any way. It seemed logical to add the alias to the event library because there is also an event.pull for signals.
 ---@param name string
 ---@param ... any
-function event.push(name, ...) end
+function event.push(name, ...)
+end
 
 return event

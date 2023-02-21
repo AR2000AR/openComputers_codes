@@ -8,16 +8,16 @@ local component     = require("component")
 local term          = require("term")
 local computer      = require("computer")
 
-local transposer = component.transposer
-local gpu        = component.gpu
-local disk_drive = component.disk_drive
-local data       = component.data
+local transposer    = component.transposer
+local gpu           = component.gpu
+local disk_drive    = component.disk_drive
+local data          = component.data
 
-local CONFIG_PATH  = "/etc/bank/accountMaker/"
-local CONFIG_FILE  = CONFIG_PATH .. "config.cfg"
-local OUT_PATH     = "/var/bank/accountMaker/"
-local ACCOUNT_FILE = OUT_PATH .. "accounts.csv"
-local ERROR_FILE   = OUT_PATH .. "operr.csv"
+local CONFIG_PATH   = "/etc/bank/accountMaker/"
+local CONFIG_FILE   = CONFIG_PATH .. "config.cfg"
+local OUT_PATH      = "/var/bank/accountMaker/"
+local ACCOUNT_FILE  = OUT_PATH .. "accounts.csv"
+local ERROR_FILE    = OUT_PATH .. "operr.csv"
 
 local config        = {}
 local knownAccounts = {}
@@ -51,7 +51,7 @@ local function saveConfig()
     cFile:close()
     if (config.masterAccountCBdata) then
         ---@type cardData
-        config.masterAccountCBdata = serialization.unserialize(data.decode64(config.masterAccountCBdata--[[@as string]] ))
+        config.masterAccountCBdata = serialization.unserialize(data.decode64(config.masterAccountCBdata --[[@as string]]))
     end
 end
 
@@ -127,7 +127,7 @@ local function makeCard(playerName)
         if (status == 0) then --ok
             addToKnonwPlayer(playerName, acUUID)
             if (config.masterAccountCreditPerAccount ~= 0) then
-                status = bank.editAccount(config.masterAccountCBdata--[[@as cardData]] , config.masterAccountCreditPerAccount)
+                status = bank.editAccount(config.masterAccountCBdata --[[@as cardData]], config.masterAccountCreditPerAccount)
                 if (status ~= 0) then
                     local file = io.open(ERROR_FILE, "a")
                     assert(file, "Can't fail here")
@@ -287,7 +287,10 @@ local old_res_x, old_res_y = gpu.getResolution()
 gpu.setResolution(26, 13)
 
 --listen for ctrl+c (interrupted)
-event.listen("interrupted", function() run = false; return false end)
+event.listen("interrupted", function()
+    run = false;
+    return false
+end)
 --MAIN LOOP====================================================================
 while (run) do
     term.clear()

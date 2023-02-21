@@ -67,7 +67,7 @@ local function readPassword()
         return false
     end)
     event_keyboard = event.listen("key_down", function(self, uuid, char, code, player)
-        if  (char == 8) then
+        if (char == 8) then
             password = string.sub(password, 1, -2)
             garble = string.sub(garble, 1, -2)
             term.setCursor(cursorPosX, cursorPosY)
@@ -166,7 +166,7 @@ end
 verbose(serialization.serialize(configRaw))
 local config = serialization.unserialize(configRaw)
 
---[[config syntax 
+--[[config syntax
 {
     doors"{
         {name="door1",component="uuid",side=side,default=false,inv=false}
@@ -178,7 +178,6 @@ local config = serialization.unserialize(configRaw)
     }
 }
  ]]
-
 -- creating doors
 local doors = {}
 if (#config.doors > 0) then
@@ -198,8 +197,10 @@ if (ops.config or ops.c) then
         while try < 3 do
             io.write("Admin password :")
             local password = readPassword()
-            if (password == config.adminCode) then break
-            else try = try + 1
+            if (password == config.adminCode) then
+                break
+            else
+                try = try + 1
             end
         end
         if (try >= 3) then
@@ -221,7 +222,7 @@ if (ops.config or ops.c) then
         print("q : Exit")
         io.write(">")
         local op = io.read()
-        if     (tonumber(op)) then
+        if (tonumber(op)) then
             op = tonumber(op)
             if (op >= 1 and op <= #doors) then
                 local door = doors[op]
@@ -244,7 +245,7 @@ if (ops.config or ops.c) then
                     print("q : Exit")
                     io.write(">" .. doorID .. ">")
                     local op = io.read()
-                    if     (op == "r") then
+                    if (op == "r") then
                         io.write(">" .. doorID .. ">r>[" .. door:getName() .. "]")
                         local newName = io.read()
                         if (newName ~= "") then
@@ -268,9 +269,13 @@ if (ops.config or ops.c) then
                             config.doors[doorID].side = sides[door:getSide()]
                             saveConfig(config)
                         end
-                    elseif (op == "t") then door:toggle()
-                    elseif (op == "b") then break
-                    elseif (op == "q") then run = false break
+                    elseif (op == "t") then
+                        door:toggle()
+                    elseif (op == "b") then
+                        break
+                    elseif (op == "q") then
+                        run = false
+                        break
                     end
                 end
             end
@@ -322,7 +327,7 @@ if (ops.config or ops.c) then
                 print("q      : Exit")
                 io.write(">s>")
                 op = io.read()
-                if     (op == "p") then
+                if (op == "p") then
                     print("Enter new password")
                     io.write(">s>p>")
                     local p1 = readPassword()
@@ -349,8 +354,11 @@ if (ops.config or ops.c) then
                 elseif (tonumber(op) and tonumber(op) > 1 and tonumber(op) <= #config.whitelist) then
                     table.remove(config.whitelist, tonumber(op))
                     saveConfig(config)
-                elseif (op == "b") then break
-                elseif (op == "q") then run = false break
+                elseif (op == "b") then
+                    break
+                elseif (op == "q") then
+                    run = false
+                    break
                 end
             end
         elseif (op == "q") then
@@ -359,7 +367,6 @@ if (ops.config or ops.c) then
     end
     term.clear()
 else
-
     local function closeGUI()
         event.cancel(event_touch)
         event.cancel(event_term)
@@ -374,7 +381,10 @@ else
         local allowed = false
         if (#config.whitelist > 0) then
             for index, item in ipairs(config.whitelist) do
-                if (item == playerName) then allowed = true break end
+                if (item == playerName) then
+                    allowed = true
+                    break
+                end
             end
         else
             allowed = true

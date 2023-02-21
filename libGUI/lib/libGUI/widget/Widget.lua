@@ -1,4 +1,5 @@
-local function emptyCallback(self, ...) end
+local function emptyCallback(self, ...)
+end
 
 local Widget = require("libClass").newClass("Widget")
 Widget.type = "Widget"
@@ -7,7 +8,10 @@ Widget.setVisible = function(self, visible) self.private.visible = visible end
 Widget.isVisible = function(self) return self.private.visible end
 Widget.enable = function(self, enable) self.private.enabled = enable end
 Widget.isEnabled = function(self) return self.private.enabled end
-Widget.setPos = function(self, x, y) self:setX(x) self:setY(y) end
+Widget.setPos = function(self, x, y)
+  self:setX(x)
+  self:setY(y)
+end
 Widget.setX = function(self, x) self.private.x = x or self:getX() end
 Widget.setY = function(self, y) self.private.y = y or self:getY() end
 Widget.setCallback = function(self, callback) self.private.callback = callback or emptyCallback end
@@ -21,6 +25,9 @@ end
 Widget.collide = function(self, x, y)
   return (x == self:getX() and y == self:getY())
 end
-Widget.constructor = function(self, x, y) self:setPos(x, y) self.private.id = require("uuid").next() end
+Widget.constructor = function(self, x, y)
+  self:setPos(x, y)
+  self.private.id = require("uuid").next()
+end
 
 return Widget

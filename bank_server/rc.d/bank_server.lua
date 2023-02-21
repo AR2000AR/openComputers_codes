@@ -114,7 +114,7 @@ end
 local function writeAccount(accountUUID, solde)
   log("-> writeAccount")
   local account = {solde = solde, uuid = accountUUID}
-  account.sig = dataCard.encode64(dataCard.ecdsa(solde .. accountUUID, getKey(false))--[[@as string]] ) --encode sig to make saving it easier
+  account.sig = dataCard.encode64(dataCard.ecdsa(solde .. accountUUID, getKey(false)) --[[@as string]]) --encode sig to make saving it easier
   local fileContent = serialization.serialize(account) --convert the table into a string
   fileContent = dataCard.encrypt(fileContent, getAES(), AES_IV) --encrypt the data
   fileContent = dataCard.encode64(fileContent) --encode the encrypted data to make saving and reading it easier
@@ -154,7 +154,7 @@ local function handlerMakeTransaction(address, from, to, amount)
         sendMsg(address, PROTOCOLE_ERROR_RECEIVING_ACCOUNT, PROTOCOLE_MAKE_TRANSACTION)
       else
         ---@diagnostic disable-next-line:param-type-mismatch
-        if (editAccount(fromAccount.uuid, (-1 * math.abs(amount))) and editAccount(toAccount.uuid, (math.abs(amount)))) then
+        if (editAccount(fromAccount.uuid, ( -1 * math.abs(amount))) and editAccount(toAccount.uuid, (math.abs(amount)))) then
           sendMsg(address, PROTOCOLE_OK, PROTOCOLE_MAKE_TRANSACTION)
         else
           sendMsg(address, PROTOCOLE_ERROR_UNKNOWN, PROTOCOLE_MAKE_TRANSACTION)
@@ -265,7 +265,7 @@ local function listener(sig, local_add, remote_add, port, dist, command, arg)
   log("==> " .. remote_add .. " " .. command .. " " .. arg)
   arg = serialization.unserialize(arg)
   -------------------------------------
-  if     (command == PROTOCOLE_GET_CREDIT) then
+  if (command == PROTOCOLE_GET_CREDIT) then
     log(arg.cbData.uuid .. arg.cbData.cbUUID)
     if (cb.checkCBdata(arg.cbData, getKey(true))) then
       handlerGetCredit(remote_add, arg.cbData)

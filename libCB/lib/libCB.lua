@@ -3,13 +3,13 @@
 --=====================================
 
 ---@class libcb
-local cb            = {} --table returned by require
-local data          = require("component").data --data component used for cryptocraphic stuf
-local serialization = require("serialization") --data serialization and unserialization
-local event         = require("event")
-local proxy         = require("component").proxy
-local computer      = require("computer")
-local lastMagRead   = {}
+local cb              = {} --table returned by require
+local data            = require("component").data --data component used for cryptocraphic stuf
+local serialization   = require("serialization") --data serialization and unserialization
+local event           = require("event")
+local proxy           = require("component").proxy
+local computer        = require("computer")
+local lastMagRead     = {}
 
 ---@class cardData
 ---@field uuid string account UUID
@@ -51,11 +51,14 @@ end
 ---@return Component|boolean proxy
 function cb.waitForCB(timeout)
   local eventDetails = table.pack(event.pullFiltered(timeout, function(a, b, c, d, e, f)
-                                    if (a == "component_added" and c == "drive") then return true end
-                                    if (a == "magData") then return true end
-                                  end))
-  if (eventDetails[1]) then return proxy(eventDetails[2])
-  else return false end
+    if (a == "component_added" and c == "drive") then return true end
+    if (a == "magData") then return true end
+  end))
+  if (eventDetails[1]) then
+    return proxy(eventDetails[2])
+  else
+    return false
+  end
 end
 
 cb.loadCB = {}
@@ -173,7 +176,7 @@ function cb.createNew(uuid, cbUUID, privateKey)
     local aesIV = data.md5(cbUUID)
     local newCB = {}
     newCB.uuid = uuid
-    newCB.sig = data.encode64(data.ecdsa(uuid .. cbUUID, privateKey)--[[@as string]] )
+    newCB.sig = data.encode64(data.ecdsa(uuid .. cbUUID, privateKey) --[[@as string]])
     ---@diagnostic disable-next-line: cast-local-type
     newCB = data.encode64(data.encrypt(serialization.serialize(newCB), aesKey, aesIV))
     return newCB, pin
@@ -191,7 +194,7 @@ end
 ---@param cbDrive ComponentDrive|ComponentOsCardWriter the floppy's component proxy
 ---@return boolean cardWritten
 function cb.writeCB(rawCBdata, cbDrive)
-  if     (cbDrive.type == "drive") then
+  if (cbDrive.type == "drive") then
     ---@cast cbDrive ComponentDrive
     local buffer = serialization.serialize(rawCBdata)
     cbDrive.writeSector(1, buffer)

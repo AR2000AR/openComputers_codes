@@ -5,7 +5,8 @@ local os = {}
 
 ---Returns an approximation of the amount in seconds of CPU time used by the program.
 ---@return number
-function os.clock() end
+function os.clock()
+end
 
 ---Returns a string or a table containing date and time, formatted according to the given string format.
 ---
@@ -21,26 +22,35 @@ function os.clock() end
 ---@param format? string
 ---@param time? string | number
 ---@return string | table
-function os.date(format, time) end
+function os.date(format, time)
+end
 
-function os.execute() end
+function os.execute()
+end
 
 ---@param code? any
 ---@param close? any
-function os.exit(code, close) end
+function os.exit(code, close)
+end
 
-function os.setenv() end
+function os.setenv()
+end
 
-function os.remove() end
+function os.remove()
+end
 
-function os.rename() end
+function os.rename()
+end
 
-function os.time() end
+function os.time()
+end
 
-function os.tmpname() end
+function os.tmpname()
+end
 
 ---Sleep for x seconds
 ---@param time? number
-function os.sleep(time) end
+function os.sleep(time)
+end
 
 return os
