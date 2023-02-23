@@ -3,8 +3,8 @@
 remove OSIDataLayer
 package layers.ipv4 {
     class IPv4Layer extends OSINetworkLayer {
-        +int getMac()
-        +int getAddr()
+        + int getMac()
+        + int getAddr()
     }
     class IPv4Packet extends Payload {
         - _header IPv4Header

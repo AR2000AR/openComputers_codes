@@ -1,0 +1,47 @@
+@startuml udp
+!include ../definitions.puml
+remove OSINetworkLayer
+remove OSIDataLayer
+package layers.udp {
+    class UDPPacket extends Payload{
+        - _srcPort number
+        - _dstPort number
+        - _payload string
+        + UDPPacket(srcPort:number,dstPort:number,paylaod:string)
+        + number getDstPort()
+        + number getSrcPort()
+        + string getPayload()
+        + void setDstPort(port:number)
+        + void setSrcPort(port:number)
+        + void setPayload(value:string)
+    }
+
+    class UDPSocket {
+        ~ _lPort number
+        ~ _rAddresse number
+        ~ _rPort number
+        - _buffer table<UDPPacket>
+        - _layer UDPLayer
+        + UDPSocket(layer:UDPLayer,localPort:number)
+        + UDPSocket(layer:UDPLayer,localPort:number,remoteAddress:number,remotePort:number)
+        + UDPPacket recive()
+        + string reciveString()
+        + void send(payload:UDPPacket)
+        + void send(payload:string)
+        + void payloadHandler(updPacket:UDPPacket)
+        + void close()
+        + booelan isOpen()
+        + number getLocalPort()
+        + number getRemotePort()
+    }
+
+    class UDPLayer extends OSILayer {
+        - _sockets table<number,UDPSocket>
+        - _layer IPv4Layer
+        + UDPLayer(layer:IPv4Layer)
+        + UDPSocket?,string open([port:number,[remoteAd:number,remotePort:number]])
+        ~ void close(socket:UDPSocket)
+        + boolean isOpen(socket:UDPSocket)
+        + void send(to:number,payload:UDPPacket)
+    }
+}
