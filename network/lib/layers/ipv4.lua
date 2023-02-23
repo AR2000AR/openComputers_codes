@@ -315,6 +315,7 @@ end
 ---@field package _layer OSIDataLayer
 ---@field package _layers table<ipv4Protocol,OSINetworkLayer>
 ---@field package _arp ARPLayer
+---@field private _buffer table<number,table<number,table<number,IPv4Packet>>>
 ---@operator call:IPv4Layer
 ---@overload fun(dataLayer:OSIDataLayer,router:IPv4Router,addr:number|string,mask:number|string):IPv4Layer
 local IPv4Layer = {}
@@ -339,6 +340,7 @@ setmetatable(IPv4Layer, {
             _layers = {},
             _arp = nil,
             _router = router,
+            _buffer = {}
         }
         setmetatable(o, {__index = self})
         o:setAddr(addr)
@@ -383,7 +385,7 @@ end
 ---@return number
 function IPv4Layer:getMask() return self._mask end
 
-function IPv4Layer:getMTU() return self._layer:getMTU() - 20 end
+function IPv4Layer:getMTU() return self._layer:getMTU() - 38 end
 
 ---@param layer OSINetworkLayer
 function IPv4Layer:setLayer(layer)
@@ -412,7 +414,24 @@ end
 function IPv4Layer:payloadHandler(from, to, payload)
     local pl = IPv4Packet.unpack(payload)
     if (pl:getDst()) == self:getAddr() then
-        if (self._layers[pl:getProtocol()]) then
+        if (pl:getLen() > 1) then --merge framents
+            self._buffer[pl:getProtocol()] = self._buffer[pl:getProtocol()] or {}
+            self._buffer[pl:getProtocol()][pl:getSrc()] = self._buffer[pl:getProtocol()][pl:getSrc()] or {}
+
+            table.insert(self._buffer[pl:getProtocol()][pl:getSrc()], math.max(#self._buffer[pl:getProtocol()][pl:getSrc()], pl:getFragmentOffset()), pl)
+
+            if (#self._buffer[pl:getProtocol()][pl:getSrc()] == pl:getLen()) then
+                local fullPayload, proto = {}, pl:getProtocol()
+                for i, fragment in ipairs(self._buffer[pl:getProtocol()][pl:getSrc()]) do
+                    require("event").onError(string.format("%d %d", #fullPayload, fragment:getFragmentOffset()))
+                    table.insert(fullPayload, math.max(#fullPayload, fragment:getFragmentOffset()), fragment:getPayload())
+                end
+                pl = IPv4Packet(pl:getSrc(), pl:getDst(), table.concat(fullPayload), pl:getProtocol())
+                pl:setProtocol(proto)
+                self._buffer[pl:getProtocol()][pl:getSrc()] = nil
+            end
+        end
+        if (self._layers[pl:getProtocol()] and pl:getLen() == 1) then
             self._layers[pl:getProtocol()]:payloadHandler(pl:getSrc(), pl:getDst(), pl:getPayload())
         end
     elseif (self._router) then

@@ -205,7 +205,7 @@ end
 
 ---Get the maximum size a ethernet frame can have
 ---@return number mtu
-function EthernetInterface:getMTU() return computer.getDeviceInfo()[self._modem.address].capacity - 2 end
+function EthernetInterface:getMTU() return computer.getDeviceInfo()[self._modem.address].capacity - 72 end
 
 ---Get the interface's mac address
 ---@return string uuid
