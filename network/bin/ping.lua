@@ -13,11 +13,14 @@ local args, opts   = shell.parse(...)
 
 ---=============================================================================
 if (opts["help"] or opts["h"] or #args == 0) then
-    print("ping [-W timeout] ip")
+    print("ping [-W timeout] [-s packetsize] ip")
     os.exit()
 end
 ---=============================================================================
-opts["W"]      = opts["W"] or 10
+for k, v in pairs(opts) do print(k, v) end
+opts.W         = tonumber(opts.W) or 10
+opts.s         = tonumber(opts.s) or 56
+opts.p         = opts.p or "A"
 
 local targetIP = ipv4.address.fromString(args[1])
 local route    = network.router:getRoute(targetIP)
@@ -44,7 +47,7 @@ local sentICMP = {}
 local function ping()
     if (not run) then return end
     local param = bit32.lshift(i, 8) + 0
-    local icmpEcho = icmp.ICMPPacket(icmp.TYPE.ECHO_REQUEST, icmp.CODE.ECHO_REQUEST.Echo_request, param, "hi")
+    local icmpEcho = icmp.ICMPPacket(icmp.TYPE.ECHO_REQUEST, icmp.CODE.ECHO_REQUEST.Echo_request, param, string.rep(opts.p, math.floor(opts.s / #opts.p)))
     local sent, reason = pcall(icmpInterface.send, icmpInterface, targetIP, icmpEcho)
     local t = computer.uptime()
     if (sent) then
@@ -87,8 +90,7 @@ event.listen("interrupted", function(...)
     return false
 end)
 ---Main loop===================================================================
-print(string.format("Ping %s from %s", args[1], ipv4.address.tostring(route.interface:getAddr())))
-print(string.format("Using route %s", ipv4.address.tostring(route.network)))
+print(string.format("Ping %s from %s with %d bytes of data.", args[1], ipv4.address.tostring(route.interface:getAddr()), opts.s))
 ping()
 while run do
     os.sleep(0.1)

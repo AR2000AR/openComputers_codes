@@ -220,24 +220,32 @@ end
 ---@param maxFragmentSize number
 ---@return table<IPv4Packet>
 function IPv4Packet:getFragments(maxFragmentSize)
-    --TODO : check if framgmentation is allowed
-    local framgments = {}
-    local framgmentID = 1;
-    local framentTotal = math.ceil(#self:getPayload() / maxFragmentSize)
+    local fragments = {}
+    local fragmentID = 1;
+    local fragmentTotal = math.ceil(#self:getPayload() / maxFragmentSize)
     local currentPos = 1
+    if (fragmentTotal > 1) then
+        if (bit32.btest(self:getFlags(), 2)) then
+            error("Packet may not be fragmented", 2)
+        end
+    end
     maxFragmentSize = math.max(1, maxFragmentSize - 1)
     local currentFragment = self:getPayload():sub(currentPos, currentPos + maxFragmentSize)
     while currentFragment ~= "" do
         local framgentPacket = IPv4Packet(self:getSrc(), self:getDst(), currentFragment, self:getProtocol())
-        table.insert(framgments, framgentPacket)
+        table.insert(fragments, framgentPacket)
         framgentPacket:setId(self:getId())
-        framgentPacket:setFragmentOffset(#framgments)
-        framgentPacket:setLen(framentTotal)
-        framgmentID = framgmentID + 1
+        framgentPacket:setFragmentOffset(#fragments)
+        framgentPacket:setLen(fragmentTotal)
+        fragmentID = fragmentID + 1
         currentPos = currentPos + maxFragmentSize + 1
+        if (fragmentID < fragmentTotal) then
+            --Set the MF (more fragment flag)
+            framgentPacket:setFlags(bit32.bor(framgentPacket:getFlags(), 4))
+        end
         currentFragment = self:getPayload():sub(currentPos, currentPos + maxFragmentSize)
     end
-    return framgments
+    return fragments
 end
 
 function IPv4Packet:pack()
