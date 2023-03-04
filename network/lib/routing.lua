@@ -10,6 +10,7 @@ local routing = {}
 ---@field mask number
 ---@field gateway number
 ---@field metric number
+---@field interface IPv4Layer
 --=============================================================================
 
 ---@class IPv4Router:OSINetworkLayer
@@ -92,25 +93,16 @@ function IPv4Router:getLayer(address)
 end
 
 ---remove the interface
----@param address any
-function IPv4Router:removeLayer(address)
+---@param layer IPv4Layer
+function IPv4Router:removeLayer(layer)
     for i, v in ipairs(self._layers) do
-        if (v:getAddr() == address) then
+        if (v:getAddr() == layer:getAddr()) then
             table.remove(self._layers, i)
             break
         end
     end
-    local rmRoutes = {}
-    --find the routes to remove
-    for i, route in ipairs(self._routes) do
-        if (route.gateway == address) then
-            table.insert(rmRoutes, i)
-        end
-    end
-    --remove the routes
-    for v in pairs(rmRoutes) do
-        table.remove(self._routes, v)
-    end
+    self:removeGateway(layer:getAddr())
+    self:removeByInterface(layer)
 end
 
 ---Remove a gateway from the routing table. Useful to remove default route for a interface.
@@ -129,13 +121,32 @@ function IPv4Router:removeGateway(gateway)
     end
 end
 
+---Remove routes that use the provided interface
+---@param interface IPv4Layer
+function IPv4Router:removeByInterface(interface)
+    local rmRoutes = {}
+    --find the routes to remove
+    for i, route in ipairs(self._routes) do
+        ---@cast route Route
+        if (route.interface == interface) then
+            table.insert(rmRoutes, i)
+        end
+    end
+    --remove the routes
+    for v in pairs(rmRoutes) do
+        table.remove(self._routes, v)
+    end
+end
+
 ---send the IPv4 packet
 ---@param packet IPv4Packet
 function IPv4Router:send(packet)
     local route = self:getRoute(packet:getDst())
-    local interface = self:getLayer(route.gateway)
-    assert(interface, "Cannot send packet to : ", ipv4Address.tostring(packet:getDst()))
-    interface:send(route.gateway, packet)
+    if (route.gateway == route.interface:getAddr()) then
+        route.interface:send(packet)
+    else
+        route.interface:send(route.gateway, packet)
+    end
 end
 
 --=============================================================================

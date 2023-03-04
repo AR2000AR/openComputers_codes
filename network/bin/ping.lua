@@ -17,12 +17,19 @@ if (opts["help"] or opts["h"] or #args == 0) then
     os.exit()
 end
 ---=============================================================================
-opts["W"]      = opts["W"] or 5
+opts["W"]      = opts["W"] or 10
 
 local targetIP = ipv4.address.fromString(args[1])
 local route    = network.router:getRoute(targetIP)
-local localMac = arp.getLocalHardwareAddress(arp.HARDWARE_TYPE.ETHERNET, ethernetType.IPv4, route.gateway) --[[@as string]]
-if (not localMac) then print("No interface for route") end
+if (not route) then
+    print("No route to destination")
+    os.exit(1)
+end
+local localMac = arp.getLocalHardwareAddress(arp.HARDWARE_TYPE.ETHERNET, ethernetType.IPv4, route.interface:getAddr()) --[[@as string]]
+if (not localMac) then
+    print("No interface for route")
+    os.exit(1)
+end
 
 
 local icmpInterface = network.interfaces[localMac].icmp
@@ -44,6 +51,7 @@ local function ping()
         sentICMP[i] = t
     else
         print(reason)
+        os.sleep(1)
         ping()
     end
     i = i + 1
@@ -79,7 +87,8 @@ event.listen("interrupted", function(...)
     return false
 end)
 ---Main loop===================================================================
-print(string.format("Ping %s from %s", args[1], ipv4.address.tostring(route.gateway)))
+print(string.format("Ping %s from %s", args[1], ipv4.address.tostring(route.interface:getAddr())))
+print(string.format("Using route %s", ipv4.address.tostring(route.network)))
 ping()
 while run do
     os.sleep(0.1)

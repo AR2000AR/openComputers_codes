@@ -1,6 +1,7 @@
 local computer               = require("computer")
 local event                  = require("event")
 local component              = require("component")
+local os                     = require("os")
 
 local UUID_PATERN            = "%x%x%x%x%x%x%x%x%-%x%x%x%x%-%x%x%x%x%-%x%x%x%x%-%x%x%x%x%x%x%x%x%x%x%x%x"
 
@@ -147,6 +148,7 @@ end
 ---@field private _port number
 ---@field private _layers table<ethernetType,table>
 ---@field private _listener number
+---@field private _mtu number
 ---@overload fun(modem:ComponentModem):EthernetInterface
 local EthernetInterface = {}
 
@@ -165,7 +167,8 @@ setmetatable(EthernetInterface, {
             _modem = modem,
             _port = ethernet.RAW_PORT,
             _layers = {},
-            _listener = 0
+            _listener = 0,
+            _mtu = computer.getDeviceInfo()[modem.address].capacity - 72
         }
 
         o._modem.open(o._port)
@@ -205,7 +208,7 @@ end
 
 ---Get the maximum size a ethernet frame can have
 ---@return number mtu
-function EthernetInterface:getMTU() return computer.getDeviceInfo()[self._modem.address].capacity - 72 end
+function EthernetInterface:getMTU() return self._mtu end
 
 ---Get the interface's mac address
 ---@return string uuid
@@ -213,14 +216,25 @@ function EthernetInterface:getAddr()
     return self._modem.address
 end
 
+local function time(f, ...)
+    local t, c = computer.uptime(), os.clock()
+    local r = table.pack(f(...))
+    local t2, c2 = computer.uptime() - t, os.clock() - c
+    require("event").onError(string.format("%s:%s\t", debug.getinfo(3, "S").short_src, debug.getinfo(3, "l").currentline) .. t2 .. " " .. c2)
+    return table.unpack(r)
+end
+
 ---Send a ethernet frame
+---@param dst string
 ---@param eFrame EthernetFrame
 function EthernetInterface:send(dst, eFrame)
+    checkArg(1, dst, "string", "nil")
+    dst = dst or eFrame:getDst()
     checkArg(2, eFrame, "table")
-    if (eFrame:getDst() == ethernet.MAC_BROADCAST) then
-        self._modem.broadcast(self._port, eFrame:pack())
+    if (dst == ethernet.MAC_BROADCAST) then
+        time(self._modem.broadcast, self._port, eFrame:pack())
     else
-        self._modem.send(eFrame:getDst(), self._port, eFrame:pack())
+        time(self._modem.send, dst, self._port, eFrame:pack())
     end
 end
 

@@ -1,6 +1,5 @@
-local ipv4    = require("layers.ipv4")
-local event   = require("event")
-local network = require("network")
+local ipv4  = require("layers.ipv4")
+local event = require("event")
 --=============================================================================
 
 
@@ -94,7 +93,9 @@ icmp.CODE = {
 ---@field private _param number
 ---@field private _payload string
 ---@operator call:ICMPPacket
----@overload fun(type:icmpType,code:number,param?:number,paylaod:string):ICMPPacket
+---@overload fun(type:icmpType,code:number,param:number,paylaod:string):ICMPPacket
+---@overload fun(type:icmpType,code:number,param:number):ICMPPacket
+---@overload fun(type:icmpType,code:number):ICMPPacket
 local ICMPPacket = {}
 ICMPPacket.payloadType = ipv4.PROTOCOLS.ICMP
 
@@ -102,7 +103,7 @@ setmetatable(ICMPPacket, {
     ---@param type icmpType
     ---@param code number
     ---@param param? number
-    ---@param payload string
+    ---@param payload? string
     ---@return ICMPPacket
     __call = function(self, type, code, param, payload)
         local o = {
@@ -201,7 +202,7 @@ setmetatable(ICMPLayer, {
 ---@param payload ICMPPacket
 function ICMPLayer:send(dst, payload)
     local ipDatagram = ipv4.IPv4Packet(self._layer:getAddr(), dst, payload)
-    network.router:send(ipDatagram)
+    self._layer:getRouter():send(ipDatagram)
 end
 
 ---@param payload string
@@ -223,7 +224,7 @@ end
 ---@param packet IPv4Packet
 ---@param code number
 function ICMPLayer:sendTimeout(packet, code)
-    local icmpPacket = icmp.ICMPPacket(icmp.TYPE.TIME_EXCEEDED, icmp.CODE.TIME_EXCEEDED.TTL_expired_in_transit, string.format("%.2x%.2x%.4x%.4x%.2x%.4x%.2x%.2x%.8x%.8x%s",
+    local icmpPacket = ICMPPacket(icmp.TYPE.TIME_EXCEEDED, icmp.CODE.TIME_EXCEEDED.TTL_expired_in_transit, nil, string.format("%.2x%.2x%.4x%.4x%.2x%.4x%.2x%.2x%.8x%.8x%s",
                                                                                                                               packet:getDscp(), packet:getEcn(), packet:getLen(), packet:getId(), packet:getFlags(),
                                                                                                                               packet:getFragmentOffset(), packet:getTtl(), packet:getProtocol(),
                                                                                                                               packet:getSrc(), packet:getDst(), packet:getPayload():sub(1, 8)))

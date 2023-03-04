@@ -77,16 +77,16 @@ setmetatable(ARPFrame, {
 
 ---@return string
 function ARPFrame:pack()
-    return string.format("0x%x\0000x%x\0000x%x\0000%s\0%s\0%s\0%s", self:getHtype(), self:getPtype(), self:getOper(), self:getSha(), self:getSpa(), self:getTha(), self:getTpa())
+    return string.format("%x\0%x\0%x\0%s\0%s\0%s\0%s", self:getHtype(), self:getPtype(), self:getOper(), self:getSha(), self:getSpa(), self:getTha(), self:getTpa())
 end
 
 ---@param arpString string
 ---@return ARPFrame
 function ARPFrame.unpack(arpString)
-    local htype, ptype, oper, sha, spa, tha, tpa = arpString:match("^([^\0]+)\0([^\0]+)\0([^\0]+)\0([^\0]+)\0([^\0]+)\0([^\0]+)\0([^\0]+)$")
-    htype = tonumber(htype)
-    ptype = tonumber(ptype)
-    oper = tonumber(oper)
+    local htype, ptype, oper, sha, spa, tha, tpa = arpString:match("^(%x+)\0(%x+)\0(%x+)\0([^\0]+)\0([^\0]+)\0([^\0]+)\0([^\0]+)$")
+    htype = tonumber(htype, 16)
+    ptype = tonumber(ptype, 16)
+    oper = tonumber(oper, 16)
     if (tonumber(sha)) then sha = tonumber(sha) end
     if (tonumber(spa)) then spa = tonumber(spa) end
     if (tonumber(tha)) then tha = tonumber(tha) end

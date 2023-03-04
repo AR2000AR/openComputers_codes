@@ -61,7 +61,7 @@ setmetatable(IPv4Packet, {
                 id = 0,
                 flags = 0,
                 fragmentOffset = 0,
-                ttl = 0,
+                ttl = 64,
                 protocol = 1,
                 src = 0,
                 dst = 0,
@@ -339,19 +339,17 @@ setmetatable(IPv4Layer, {
             _layer = dataLayer,
             _layers = {},
             _arp = nil,
-            _router = router,
+            _router = nil,
             _buffer = {}
         }
         setmetatable(o, {__index = self})
         o:setAddr(addr)
         o:setMask(mask)
         dataLayer:setLayer(o)
+        o:setRouter(router)
         --arp
         o._arp = arp.ARPLayer(dataLayer)
         arp.setLocalAddress(arp.HARDWARE_TYPE.ETHERNET, arp.PROTOCOLE_TYPE.IPv4, dataLayer:getAddr(), o:getAddr())
-        --route
-        o._router:setLayer(o)
-        o._router:addRoute({network = bit32.band(o:getAddr(), o:getMask()), mask = o:getMask(), gateway = o:getAddr(), metric = 0})
         return o
     end,
 })
@@ -392,6 +390,20 @@ function IPv4Layer:setLayer(layer)
     self._layers[layer.layerType] = layer
 end
 
+---Set the layer's router. Used for rerouting packets
+---@param router IPv4Router
+function IPv4Layer:setRouter(router)
+    self._router = router
+    self._router:setLayer(self)
+    self._router:addRoute({network = bit32.band(self:getAddr(), self:getMask()), mask = self:getMask(), gateway = self:getAddr(), metric = 0, interface = self})
+end
+
+---Get the router.
+---@return IPv4Router
+function IPv4Layer:getRouter()
+    return self._router
+end
+
 ---Send a IPv4Packet
 ---@param self IPv4Layer
 ---@param to number
@@ -403,7 +415,7 @@ function IPv4Layer:send(to, payload)
         payload = to
         to = payload:getDst()
     end
-    local dst = arp.getAddress(self._arp, arp.HARDWARE_TYPE.ETHERNET, self.layerType, payload:getDst(), self:getAddr())
+    local dst = arp.getAddress(self._arp, arp.HARDWARE_TYPE.ETHERNET, self.layerType, to, self:getAddr())
     if (not dst) then error("Cannot resolve IP", 2) end
     for _, payloadFragment in pairs(payload:getFragments(self:getMTU())) do
         local eFrame = ethernet.EthernetFrame(self._layer:getAddr(), dst, nil, self.layerType, payloadFragment:pack())
@@ -413,13 +425,15 @@ end
 
 function IPv4Layer:payloadHandler(from, to, payload)
     local pl = IPv4Packet.unpack(payload)
-    if (pl:getDst()) == self:getAddr() then
+    if (pl:getDst()) == self:getAddr() then --if the packet destination is here
         if (pl:getLen() > 1) then --merge framents
             self._buffer[pl:getProtocol()] = self._buffer[pl:getProtocol()] or {}
             self._buffer[pl:getProtocol()][pl:getSrc()] = self._buffer[pl:getProtocol()][pl:getSrc()] or {}
 
+            --place the packet in a buffer
             table.insert(self._buffer[pl:getProtocol()][pl:getSrc()], math.max(#self._buffer[pl:getProtocol()][pl:getSrc()], pl:getFragmentOffset()), pl)
 
+            --if the buffer hold all the packets merge them
             if (#self._buffer[pl:getProtocol()][pl:getSrc()] == pl:getLen()) then
                 local fullPayload, proto = {}, pl:getProtocol()
                 for i, fragment in ipairs(self._buffer[pl:getProtocol()][pl:getSrc()]) do
@@ -430,7 +444,9 @@ function IPv4Layer:payloadHandler(from, to, payload)
                 pl:setProtocol(proto)
                 self._buffer[pl:getProtocol()][pl:getSrc()] = nil
             end
+            --TODO : handle merge timeout
         end
+        --if the packet is complete, send it to the arporiate layer
         if (self._layers[pl:getProtocol()] and pl:getLen() == 1) then
             self._layers[pl:getProtocol()]:payloadHandler(pl:getSrc(), pl:getDst(), pl:getPayload())
         end

@@ -25,6 +25,7 @@ local ifconfig = {}
 --- | -1 error
 --- | 0 msg
 --- | 1 verbose
+--- | 2 debug
 ---@type logLevel
 ifconfig.logLevel = 0
 --avoid cluttering the sdtout
@@ -40,9 +41,7 @@ local function log(msg, level)
     if (ifconfig.logLevel < level) then return end
     if (level == -1) then
         io.open(ifconfig.err, "a"):write(msg .. "\n"):close()
-    elseif (level == 0) then
-        io.open(ifconfig.out, "a"):write(msg .. "\n"):close()
-    elseif (level == 1) then
+    else
         io.open(ifconfig.out, "a"):write(msg .. "\n"):close()
     end
 end
@@ -138,7 +137,8 @@ function ifconfig.loadInterfaces(file)
                 line = fileHandler:read("l") --read next line
                 if (not line) then break end -- reached eof
                 while line and line:match("^%s+") do --while in the interface paragraph
-                    local opt, arg = line:match("^%s+(%w+)%s+([%d%.]+/%d+)$") --get the option name and argument
+                    flog("\tCurrent line : %q", 2, line)
+                    local opt, arg = line:match("^%s+(%w+)%s+(%g+)$") --get the option name and argument
                     if (VALID_PARAM[iType] ~= nil) then --known iType
                         if (VALID_PARAM[iType][iMode] ~= nil) then --known iMode
                             readInterfaces[iName] = readInterfaces[iName] or {iName = iName, iType = iType, iMode = iMode}
@@ -226,7 +226,7 @@ function ifconfig.ifup(iName)
             network.interfaces[iName].udp = layers.udp.UDPLayer(network.interfaces[iName].ip)
             --router
             if (interface.gateway) then
-                network.router:addRoute({network = 0, mask = 0, gateway = layers.ipv4.address.fromString(interface.gateway), metric = tonumber(interface.metric) or 100})
+                network.router:addRoute({interface = network.interfaces[iName].ip, network = 0, mask = 0, gateway = layers.ipv4.address.fromString(interface.gateway), metric = tonumber(interface.metric) or 100})
             end
 
             return true
@@ -272,10 +272,7 @@ function ifconfig.ifdown(iName)
 
     if (network.interfaces[iName]) then
         ---@cast iName - nil
-        network.router:removeLayer(network.interfaces[iName].ip:getAddr())
-        if (interface.gateway) then
-            network.router:removeGateway(layers.ipv4.address.fromString(interface.gateway))
-        end
+        network.router:removeLayer(network.interfaces[iName].ip)
         network.interfaces[iName] = nil
     else
         flog("Interface %q is not up", 0, name)

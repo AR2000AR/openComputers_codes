@@ -17,13 +17,18 @@ networklib.router     = routing.IPv4Router()
 
 ---Get the configured interfaces
 ---@param filter string
----@return table<string,OSIDataLayer>
----@overload fun():table<string,table<string,OSILayer>>
----@
+---@return InterfaceTypes
+---@overload fun():table<string,InterfaceTypes>
 function networklib.getInterface(filter)
     checkArg(1, filter, "string", "nil")
     if (filter) then return {networklib.interfaces.ethernet[component.get(filter, "modem")] or nil} end
     return networklib.interfaces
+end
+
+---Get the primary interface if set
+---@return InterfaceTypes
+function networklib.getPrimaryInterface()
+    return networklib.getInterface(component.getPrimary("modem").address)
 end
 
 return networklib
