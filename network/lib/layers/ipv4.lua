@@ -371,7 +371,16 @@ function IPv4Layer:getAddr() return self._addr end
 ---Set the interfaces's address mask
 ---@param val string|number
 function IPv4Layer:setMask(val)
-    --TODO : check valid mask
+    local found0 = false
+    for i = 31, 0, -1 do
+        if (not found0) then
+            found0 = 0 == bit32.extract(val, i)
+        else
+            if (bit32.extract(val, i) == 1) then
+                error("Invalid mask", 2)
+            end
+        end
+    end
     if (type(val) == "number" and val > 0 and val < 0xffffffff) then
         self._mask = val
     else
