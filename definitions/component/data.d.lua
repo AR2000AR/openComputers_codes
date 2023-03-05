@@ -98,17 +98,17 @@ end
 
 ---@class EcKeyPrivate :EcKey
 
----Generates a public/private key pair for various cryptiographic functions.
----Optional second parameter specifies key length, 256 or 384 bits accepted.
----Key types include “ec-public” and “ec-private”. Keys can be serialized with
+---Generates a public/private key pair for various cryptiographic functions.\
+---Optional second parameter specifies key length, 256 or 384 bits accepted.\
+---Key types include “ec-public” and “ec-private”. Keys can be serialized with\
 ---key.serialize():string Keys also contain the function key.isPublic():boolean
 ---@param bitLen? 256 | 384
 ---@return EcKeyPublic publicKey, EcKeyPrivate privateKey
 function data.generateKeyPair(bitLen)
 end
 
----Generates a signiture of data using a private key. If signature is present
----verifies the signature using the public key, the previously generated
+---Generates a signiture of data using a private key. If signature is present\
+---verifies the signature using the public key, the previously generated\
 ---signature string and the original string.
 ---@param data string
 ---@param key EcKey
@@ -117,8 +117,8 @@ end
 function data.ecdsa(data, key, sig)
 end
 
---- Generates a Diffie-Hellman shared key using the first user's private key and
---- the second user's public key. An example of a basic key relation:
+--- Generates a Diffie-Hellman shared key using the first user's private key and\
+--- the second user's public key. An example of a basic key relation:\
 --- ecdh(userA.private, userB.public) == ecdh(userB.private, userA.public)
 ---@param privateKey EcKeyPrivate
 ---@param publicKey EcKeyPublic

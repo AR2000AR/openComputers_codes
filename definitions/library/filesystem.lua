@@ -13,16 +13,16 @@ end
 function filesystem.setAutorunEnabled(value)
 end
 
----Returns the canonical form of the specified path, i.e. a path containing no “indirections” such as . or ... For example, the paths /tmp/../bin/ls.lua and /bin/./ls.lua are equivalent, and their canonical form is /bin/ls.lua.
+---Returns the canonical form of the specified path, i.e. a path containing no “indirections” such as . or ... For example, the paths /tmp/../bin/ls.lua and /bin/./ls.lua are equivalent, and their canonical form is /bin/ls.lua.\
 ---Note that this function truncates relative paths to their topmost “known” directory. For example, ../bin/ls.lua becomes bin/ls.lua. It stays a relative path, however - mind the lack of a leading slash.
 ---@param path string
 ---@return string
 function filesystem.canonical(path)
 end
 
----Returns a table containing one entry for each canonical segment of the given path. Examples:
---- - filesystem.segments("foo/bar") → {"foo","bar"}
---- - filesystem.segments("foo/bar/../baz") → {"foo","baz"}
+---Returns a table containing one entry for each canonical segment of the given path. Examples:\
+--- - filesystem.segments("foo/bar") → {"foo","bar"}\
+--- - filesystem.segments("foo/bar/../baz") → {"foo","baz"}\
 ---@param path string
 ---@return table
 function filesystem.segments(path)
@@ -115,7 +115,7 @@ end
 function filesystem.lastModified(path)
 end
 
----Returns an iterator over all elements in the directory at the specified path. Returns nil and an error messages if the path is invalid or some other error occurred.
+---Returns an iterator over all elements in the directory at the specified path. Returns nil and an error messages if the path is invalid or some other error occurred.\
 ---Note that directories usually are postfixed with a slash, to allow identifying them without an additional call to fs.isDirectory.
 ---@param path string
 ---@return function -> string or nil, string
@@ -134,7 +134,7 @@ end
 function filesystem.remove(path)
 end
 
----Renames a file or folder. If the paths point to different file system components this will only work for files, because it actually perform a copy operation, followed by a deletion if the copy succeeds.
+---Renames a file or folder. If the paths point to different file system components this will only work for files, because it actually perform a copy operation, followed by a deletion if the copy succeeds.\
 ---Returns true on success, nil and an error message otherwise.
 ---@param oldPath string
 ---@param newPath string
@@ -152,10 +152,10 @@ end
 ---@class FileHandler
 local file
 
----Opens a file at the specified path for reading or writing. If mode is not specified it defaults to “r”. Possible modes are: r, rb, w, wb, a and ab.
----Returns a file stream (see below) on success, nil and an error message otherwise.
----Note that you can only open a limited number of files per file system at the same time. Files will be automatically closed when the garbage collection kicks in, but it is generally a good idea to call close on the file stream when done with the file.
----Important*: it is generally recommended to use io.open instead of this function, to get a buffered wrapper for the file stream.
+---Opens a file at the specified path for reading or writing. If mode is not specified it defaults to “r”. Possible modes are: r, rb, w, wb, a and ab.\
+---Returns a file stream (see below) on success, nil and an error message otherwise.\
+---Note that you can only open a limited number of files per file system at the same time. Files will be automatically closed when the garbage collection kicks in, but it is generally a good idea to call close on the file stream when done with the file.\
+---Important*: it is generally recommended to use io.open instead of this function, to get a buffered wrapper for the file stream.\
 ---When opening files directly via the file system API you will get a file stream, a table with four functions. These functions are thin wrappers to the file system proxy's callbacks, which also means that read/write operations are not buffered, and can therefore be slow when reading few bytes often. You'll usually want to use io.open instead.
 ---@param path string
 ---@param mode string
@@ -173,7 +173,7 @@ end
 function file:read(n)
 end
 
----Jumps to the specified position in the file stream, if possible. Only supported by file streams opened in read mode. The first parameter determines the relative location to seek from and can be cur for the current position, set for the beginning of the stream and end for the end of the stream. The second parameter is the offset by which to modify the position. Returns the new position or nil and an error message if some error occurred.
+---Jumps to the specified position in the file stream, if possible. Only supported by file streams opened in read mode. The first parameter determines the relative location to seek from and can be cur for the current position, set for the beginning of the stream and end for the end of the stream. The second parameter is the offset by which to modify the position. Returns the new position or nil and an error message if some error occurred.\
 ---The default value for the second parameter is 0, so f:seek("set") will reset the position to the start of the file, f:seek("cur") will return the current position in the file.
 ---@param whence string
 ---@param offset? number

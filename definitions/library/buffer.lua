@@ -3,7 +3,7 @@
 ---@class bufferLib
 local buffer = {}
 
----Creates a new buffered `stream`, wrapping stream with read-write `mode`.
+---Creates a new buffered `stream`, wrapping stream with read-write `mode`.\
 ---`mode` can be readonly (r or `nil`), read-write (rw), or write-only (w).
 ---@param mode readmode
 ---@param stream table

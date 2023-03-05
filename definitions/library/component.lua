@@ -37,8 +37,8 @@ end
 function component.invoke(address, method, ...)
 end
 
----Returns a table with all components currently attached to the computer, with address as a key and component type as a value. It also provides iterator syntax via __call, so you can use it like so: for address, componentType in component.list() do ... end
----If filter is set this will only return components that contain the filter string (this is not a pattern/regular expression). For example, component.list("red") will return redstone components.
+---Returns a table with all components currently attached to the computer, with address as a key and component type as a value. It also provides iterator syntax via __call, so you can use it like so: for address, componentType in component.list() do ... end\
+---If filter is set this will only return components that contain the filter string (this is not a pattern/regular expression). For example, component.list("red") will return redstone components.\
 ---If true is passed as a second parameter, exact matching is enforced, e.g. red will not match redstone.
 ---@param filter? string
 ---@param exact? boolean
@@ -52,8 +52,8 @@ end
 function component.methods(address)
 end
 
----Gets a 'proxy' object for a component that provides all methods the component provides as fields, so they can be called more directly (instead of via invoke). This is what's used to generate 'primaries' of the individual component types, i.e. what you get via component.blah.
----For example, you can use it like so: component.proxy(component.list("redstone")()).getInput(sides.north), which gets you a proxy for the first redstone component returned by the component.list iterator, and then calls getInput on it.
+---Gets a 'proxy' object for a component that provides all methods the component provides as fields, so they can be called more directly (instead of via invoke). This is what's used to generate 'primaries' of the individual component types, i.e. what you get via component.blah.\
+---For example, you can use it like so: component.proxy(component.list("redstone")()).getInput(sides.north), which gets you a proxy for the first redstone component returned by the component.list iterator, and then calls getInput on it.\
 ---Note that proxies will always have at least two fields, type with the component's type name, and address with the component's address.
 ---@param address string
 ---@return Component proxy
@@ -97,7 +97,7 @@ end
 function component.getPrimary(componentType)
 end
 
----Sets a new primary component for the specified component type. The address may be abbreviated, but must be valid if it is not nil. Triggers the component_unavailable and component_available signals if set to nil or a new value, respectively.
+---Sets a new primary component for the specified component type. The address may be abbreviated, but must be valid if it is not nil. Triggers the component_unavailable and component_available signals if set to nil or a new value, respectively.\
 ---Note that the component API has a metatable that allows the following syntax:
 ---@param componentType string
 ---@param address string

@@ -13,9 +13,9 @@ end
 function os_magreader.swipeIndicator(enableLights)
 end
 
----Sets the light state of the magreader. Takes in a number from 0 to 7. default is 0
---- - 1 : red
---- - 2 : yellow
+---Sets the light state of the magreader. Takes in a number from 0 to 7. default is 0\
+--- - 1 : red\
+--- - 2 : yellow\
 --- - 4 : green
 ---@param lightState number light state as a binary number (1 : red, 3 red + yellow)
 ---@return boolean lightChanged

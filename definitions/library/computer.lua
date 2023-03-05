@@ -59,8 +59,8 @@ end
 function computer.setBootAddress(address)
 end
 
----Returns the current runlevel the computer is in. Current Runlevels in OpenOS are:
----S: Single-User mode, no components or filesystems initialized yet
+---Returns the current runlevel the computer is in. Current Runlevels in OpenOS are:\
+---S: Single-User mode, no components or filesystems initialized yet\
 ---1: Single-User mode, filesystems and components initialized - OpenOS finished booting
 ---@return string|number
 function computer.runlevel()
@@ -71,35 +71,35 @@ end
 function computer.users()
 end
 
----Registers a new user with this computer. Returns true if the user was successfully added. Returns nil and an error message otherwise.
+---Registers a new user with this computer. Returns true if the user was successfully added. Returns nil and an error message otherwise.\
 ---The user must be currently in the game. The user will gain full access rights on the computer. In the shell, useradd USER is a command line option to invoke this method.
 ---@param name string
 ---@return boolean or nil, string
 function computer.addUser(name)
 end
 
----Unregisters a user from this computer. Returns true if the user was removed, false if they weren't registered in the first place.
+---Unregisters a user from this computer. Returns true if the user was removed, false if they weren't registered in the first place.\
 ---The user will lose all access to this computer. When the last user is removed from the user list, the computer becomes accessible to all players. userdel USER is a command line option to invoke this method.
 ---@param name string
 ---@return boolean
 function computer.removeUser(name)
 end
 
----Pushes a new signal into the queue. Signals are processed in a FIFO order. The signal has to at least have a name. Arguments to pass along with it are optional. Note that the types supported as signal parameters are limited to the basic types nil, boolean, number, string, and tables. Yes tables are supported (keep reading). Threads and functions are not supported.
+---Pushes a new signal into the queue. Signals are processed in a FIFO order. The signal has to at least have a name. Arguments to pass along with it are optional. Note that the types supported as signal parameters are limited to the basic types nil, boolean, number, string, and tables. Yes tables are supported (keep reading). Threads and functions are not supported.\
 ---Note that only tables of the supported types are supported. That is, tables must compose types supported, such as other strings and numbers, or even sub tables. But not of functions or threads.
 ---@param name string
 ---@param ...? any
 function computer.pushSignal(name, ...)
 end
 
----Tries to pull a signal from the queue, waiting up to the specified amount of time before failing and returning nil. If no timeout is specified waits forever.
+---Tries to pull a signal from the queue, waiting up to the specified amount of time before failing and returning nil. If no timeout is specified waits forever.\
 ---The first returned result is the signal name, following results correspond to what was pushed in pushSignal, for example. These vary based on the event type. Generally it is more convenient to use event.pull from the event library. The return value is the very same, but the event library provides some more options.
 ---@param timeout? number
 ---@return string signalName, any ...
 function computer.pullSignal(timeout)
 end
 
----if frequency is a number it value must be between 20 and 2000.
+---if frequency is a number it value must be between 20 and 2000.\
 ---Causes the computer to produce a beep sound at frequency Hz for duration seconds. This method is overloaded taking a single string parameter as a pattern of dots . and dashes - for short and long beeps respectively.
 ---@param frequency? number|string
 ---@param duration? number

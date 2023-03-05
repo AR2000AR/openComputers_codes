@@ -117,14 +117,14 @@ end
 function transposer.getTankCapacity(side, tank)
 end
 
----Get a description of all stacks in the inventory on the specified side of the device.
----The return value is callable. Calling it will return a table describing the stack in the inventory or nothing if the iterator reaches end.
----The return value provides the followings callbacks:
----Returns ALL the stack in the this.array. Memory intensive.
----getAll():table
----Returns the number of elements in the this.array.
----count():number
----Reset the iterator index so that the next call will return the first element.
+---Get a description of all stacks in the inventory on the specified side of the device.\
+---The return value is callable. Calling it will return a table describing the stack in the inventory or nothing if the iterator reaches end.\
+---The return value provides the followings callbacks:\
+---Returns ALL the stack in the this.array. Memory intensive.\
+---getAll():table\
+---Returns the number of elements in the this.array.\
+---count():number\
+---Reset the iterator index so that the next call will return the first element.\
 ---reset()
 ---@param side side
 ---@return userdata
