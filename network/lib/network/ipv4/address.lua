@@ -5,18 +5,15 @@ local ipv4Adress = {}
 
 function ipv4Adress.fromString(val)
     local a, b, c, d = val:match("^(%d+)%.(%d+)%.(%d+)%.(%d+)$")
-    a = tonumber(a)
-    b = tonumber(b)
-    c = tonumber(c)
-    d = tonumber(d)
+    if (not a or not b or not c or not d) then error("Not a IPv4", 2) end
+    a = assert(tonumber(a))
+    b = assert(tonumber(b))
+    c = assert(tonumber(c))
+    d = assert(tonumber(d))
     if (not (0 <= a and a <= 255)) then error("#1 Not a valid IPv4", 2) end
     if (not (0 <= b and b <= 255)) then error("#1 Not a valid IPv4", 2) end
     if (not (0 <= c and c <= 255)) then error("#1 Not a valid IPv4", 2) end
     if (not (0 <= d and d <= 255)) then error("#1 Not a valid IPv4", 2) end
-    assert(a)
-    assert(b)
-    assert(c)
-    assert(d)
     return bit32.lshift(a, 8 * 3) + bit32.lshift(b, 8 * 2) + bit32.lshift(c, 8 * 1) + d
 end
 
