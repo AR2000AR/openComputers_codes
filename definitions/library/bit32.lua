@@ -73,7 +73,7 @@ end
 ---@param n number
 ---@param v number
 ---@param field number
----@param width number
+---@param width? number
 ---@return number
 function bit32.replace(n, v, field, width)
 end
