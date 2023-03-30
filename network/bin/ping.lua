@@ -1,15 +1,14 @@
-local shell        = require("shell")
-local event        = require("event")
-local computer     = require("computer")
-local os           = require("os")
-local bit32        = require("bit32")
-local network      = require("network")
-local ethernetType = require("network.ethernet").TYPE
-local icmp         = require("network.icmp")
-local ipv4         = require("network.ipv4")
-local arp          = require("network.arp")
+local shell       = require("shell")
+local event       = require("event")
+local computer    = require("computer")
+local os          = require("os")
+local bit32       = require("bit32")
+local network     = require("network")
+local icmp        = require("network.icmp")
+local ipv4Address = require("network.ipv4.address")
+local dns         = require("socket.dns")
 
-local args, opts   = shell.parse(...)
+local args, opts  = shell.parse(...)
 
 ---=============================================================================
 if (opts["help"] or opts["h"] or #args == 0) then
@@ -22,15 +21,10 @@ opts.W         = tonumber(opts.W) or 5
 opts.s         = tonumber(opts.s) or 56
 opts.p         = opts.p or "A"
 
-local targetIP = ipv4.address.fromString(args[1])
+local targetIP = ipv4Address.fromString(assert(dns.toip(args[1])))
 local route    = network.router:getRoute(targetIP)
 if (not route) then
     print("No route to destination")
-    os.exit(1)
-end
-local localMac = arp.getLocalHardwareAddress(arp.HARDWARE_TYPE.ETHERNET, ethernetType.IPv4, route.interface:getAddr()) --[[@as string]]
-if (not localMac) then
-    print("No interface for route")
     os.exit(1)
 end
 
@@ -90,7 +84,7 @@ event.listen("interrupted", function(...)
     return false
 end)
 --Main loop====================================================================
-print(string.format("Ping %s from %s with %d bytes of data.", args[1], ipv4.address.tostring(route.interface:getAddr()), opts.s))
+print(string.format("Ping %s (%s) from %s with %d bytes of data.", args[1], ipv4Address.tostring(targetIP), ipv4Address.tostring(route.interface:getAddr()), opts.s))
 ping()
 while run do
     os.sleep(0.1)
