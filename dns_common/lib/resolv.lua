@@ -1,7 +1,6 @@
-local dns         = require("dns")
-local ipv4Address = require("network.ipv4").address
-local socket      = require("socket")
-local os          = require("os")
+local dns = require("dns")
+local udp = require("socket.udp")
+local os  = require("os")
 --=============================================================================
 
 
@@ -42,6 +41,9 @@ dnsapi.getConfig = getConfig
 ---@param rtype dnsRecordType
 ---@return DNSMessage? message,string? reason
 function dnsapi.resolve(name, class, rtype)
+    if (not name:match("%.$")) then
+        name = name .. "."
+    end
     local config = getConfig()
 
     local question = dns.DNSQuestion(name, rtype, class)
@@ -55,7 +57,7 @@ function dnsapi.resolve(name, class, rtype)
         additional = {}
     }
 
-    local udpSocket, reason = socket.udp()
+    local udpSocket, reason = udp()
     assert(udpSocket:setpeername(config.nameserver[1], 51), reason)
     udpSocket:settimeout(config.options.timeout)
 
