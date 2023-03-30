@@ -1,17 +1,7 @@
 local bit32    = require("bit32")
-local arp      = require("layers.arp")
-local ethernet = require("layers.ethernet")
+local ethernet = require("network.ethernet")
 
 
----@class ipv4lib
-local ipv4lib          = {}
----@enum ipv4Protocol
-ipv4lib.PROTOCOLS      = {
-    ICMP = 1, --  Internet Control Message Protocol
-    TCP  = 6, --  Transmission Control Protocol
-    UDP  = 17, -- User Datagram Protocol
-    OSPF = 89, -- Open Shortest Path First
-}
 ---@class IPv4Header
 ---@field dscp number Differentiated Services Code Point
 ---@field ecn number Explicit Congestion Notification
@@ -30,7 +20,6 @@ ipv4lib.PROTOCOLS      = {
 ---@field protocol ipv4Protocol
 
 --=============================================================================
-
 --#region IPv4Packet
 
 ---@class IPv4Packet : Payload
@@ -260,17 +249,17 @@ end
 function IPv4Packet.unpack(val)
     local o = "%x%x"
     local patern = string.format("(%s)(%s)(%s)(%s)(%s)(%s)(%s)(%s)(%s)(%s)(%s)",
-                                 o, --dscp
-                                 o, --ecn
+                                 o,        --dscp
+                                 o,        --ecn
                                  o:rep(2), --len
                                  o:rep(2), --id
-                                 o, --flags
+                                 o,        --flags
                                  o:rep(2), --fragmentOffset
-                                 o, --ttl
-                                 o, --protocol
+                                 o,        --ttl
+                                 o,        --protocol
                                  o:rep(4), --src
                                  o:rep(4), --dst
-                                 ".*" --payload
+                                 ".*"      --payload
     )
     local dscp, ecn, len, id, flags, fragmentOffset, ttl, protocol, src, dst, payload = val:match(patern)
 
@@ -311,214 +300,4 @@ function IPv4Packet.unpack(val)
     return packet
 end
 
---#endregion
---=============================================================================
-
---#region IPv4Layer
-
----@class IPv4Layer : OSINetworkLayer
----@field private _addr number
----@field private _mask number
----@field private _router IPv4Router
----@field package _layer OSIDataLayer
----@field package _layers table<ipv4Protocol,OSINetworkLayer>
----@field package _arp ARPLayer
----@field private _buffer table<number,table<number,table<number,IPv4Packet>>>
----@operator call:IPv4Layer
----@overload fun(dataLayer:OSIDataLayer,router:IPv4Router,addr:number|string,mask:number|string):IPv4Layer
-local IPv4Layer = {}
-
-IPv4Layer.layerType = ethernet.TYPE.IPv4
-
-
-setmetatable(IPv4Layer, {
-    ---@param dataLayer OSIDataLayer
-    ---@param router IPv4Router
-    ---@param addr number|string
-    ---@param mask number|string
-    ---@return IPv4Layer
-    __call = function(self, dataLayer, router, addr, mask)
-        checkArg(1, dataLayer, "table")
-        checkArg(2, addr, "number", "string")
-        checkArg(3, mask, "number", "string")
-        local o = {
-            _addr = 0,
-            _mask = 0,
-            _layer = dataLayer,
-            _layers = {},
-            _arp = nil,
-            _router = nil,
-            _buffer = {}
-        }
-        setmetatable(o, {__index = self})
-        o:setAddr(addr)
-        o:setMask(mask)
-        dataLayer:setLayer(o)
-        o:setRouter(router)
-        --arp
-        o._arp = arp.ARPLayer(dataLayer)
-        arp.setLocalAddress(arp.HARDWARE_TYPE.ETHERNET, arp.PROTOCOLE_TYPE.IPv4, dataLayer:getAddr(), o:getAddr())
-        return o
-    end,
-})
-
----Set the interfaces's address
----@param val string|number
-function IPv4Layer:setAddr(val)
-    if (type(val) == "number" and val > 0 and val < 0xffffffff) then
-        self._addr = val
-    else
-        self._addr = ipv4lib.address.fromString(val)
-    end
-end
-
----Get the local IPv4
----@return number
-function IPv4Layer:getAddr() return self._addr end
-
----Set the interfaces's address mask
----@param val string|number
-function IPv4Layer:setMask(val)
-    local found0 = false
-    for i = 31, 0, -1 do
-        if (not found0) then
-            found0 = 0 == bit32.extract(val, i)
-        else
-            if (bit32.extract(val, i) == 1) then
-                error("Invalid mask", 2)
-            end
-        end
-    end
-    if (type(val) == "number" and val > 0 and val < 0xffffffff) then
-        self._mask = val
-    else
-        self._mask = ipv4lib.address.fromString(val)
-    end
-end
-
----Get the local mask
----@return number
-function IPv4Layer:getMask() return self._mask end
-
-function IPv4Layer:getMTU() return self._layer:getMTU() - 38 end
-
----@param layer OSINetworkLayer
-function IPv4Layer:setLayer(layer)
-    self._layers[layer.layerType] = layer
-end
-
----Set the layer's router. Used for rerouting packets
----@param router IPv4Router
-function IPv4Layer:setRouter(router)
-    self._router = router
-    self._router:setLayer(self)
-    self._router:addRoute({network = bit32.band(self:getAddr(), self:getMask()), mask = self:getMask(), gateway = self:getAddr(), metric = 0, interface = self})
-end
-
----Get the router.
----@return IPv4Router
-function IPv4Layer:getRouter()
-    return self._router
-end
-
----Send a IPv4Packet
----@param self IPv4Layer
----@param to number
----@param payload IPv4Packet
----@overload fun(self:IPv4Layer,payload:IPv4Packet)
-function IPv4Layer:send(to, payload)
-    if (not payload) then
-        ---@diagnostic disable-next-line: cast-local-type
-        payload = to
-        to = payload:getDst()
-    end
-    local dst = arp.getAddress(self._arp, arp.HARDWARE_TYPE.ETHERNET, self.layerType, to, self:getAddr())
-    if (not dst) then error("Cannot resolve IP", 2) end
-    for _, payloadFragment in pairs(payload:getFragments(self:getMTU())) do
-        local eFrame = ethernet.EthernetFrame(self._layer:getAddr(), dst, nil, self.layerType, payloadFragment:pack())
-        self._layer:send(dst, eFrame)
-    end
-end
-
-function IPv4Layer:payloadHandler(from, to, payload)
-    local pl = IPv4Packet.unpack(payload)
-    if (pl:getDst()) == self:getAddr() then --if the packet destination is here
-        if (pl:getLen() > 1) then --merge framents
-            self._buffer[pl:getProtocol()] = self._buffer[pl:getProtocol()] or {}
-            self._buffer[pl:getProtocol()][pl:getSrc()] = self._buffer[pl:getProtocol()][pl:getSrc()] or {}
-
-            --place the packet in a buffer
-            table.insert(self._buffer[pl:getProtocol()][pl:getSrc()], math.max(#self._buffer[pl:getProtocol()][pl:getSrc()], pl:getFragmentOffset()), pl)
-
-            --if the buffer hold all the packets merge them
-            if (#self._buffer[pl:getProtocol()][pl:getSrc()] == pl:getLen()) then
-                local fullPayload, proto = {}, pl:getProtocol()
-                for i, fragment in ipairs(self._buffer[pl:getProtocol()][pl:getSrc()]) do
-                    require("event").onError(string.format("%d %d", #fullPayload, fragment:getFragmentOffset()))
-                    table.insert(fullPayload, math.max(#fullPayload, fragment:getFragmentOffset()), fragment:getPayload())
-                end
-                pl = IPv4Packet(pl:getSrc(), pl:getDst(), table.concat(fullPayload), pl:getProtocol())
-                pl:setProtocol(proto)
-                self._buffer[pl:getProtocol()][pl:getSrc()] = nil
-            end
-            --TODO : handle merge timeout
-        end
-        --if the packet is complete, send it to the arporiate layer
-        if (self._layers[pl:getProtocol()] and pl:getLen() == 1) then
-            self._layers[pl:getProtocol()]:payloadHandler(pl:getSrc(), pl:getDst(), pl:getPayload())
-        end
-    elseif (self._router) then
-        --reduce ttl
-        pl:setTtl(pl:getTtl() - 1)
-        if (pl:getTtl() >= 1) then
-            self._router:send(pl)
-        else
-            if (self._layers[ipv4lib.PROTOCOLS.ICMP]) then
-                self._layers[ipv4lib.PROTOCOLS.ICMP] --[[@as ICMPLayer]]:sendTimeout(pl, 1)
-            end
-        end
-    end
-end
-
---#endregion
---=============================================================================
-
-ipv4lib.address = {}
-
-function ipv4lib.address.fromString(val)
-    local a, b, c, d = val:match("^(%d+)%.(%d+)%.(%d+)%.(%d+)$")
-    a = tonumber(a)
-    b = tonumber(b)
-    c = tonumber(c)
-    d = tonumber(d)
-    if (not (0 <= a and a <= 255)) then error("#1 Not a valid IPv4", 2) end
-    if (not (0 <= b and b <= 255)) then error("#1 Not a valid IPv4", 2) end
-    if (not (0 <= c and c <= 255)) then error("#1 Not a valid IPv4", 2) end
-    if (not (0 <= d and d <= 255)) then error("#1 Not a valid IPv4", 2) end
-    return bit32.lshift(a, 8 * 3) + bit32.lshift(b, 8 * 2) + bit32.lshift(c, 8 * 1) + d
-end
-
-function ipv4lib.address.tostring(val)
-    local a = bit32.extract(val, 24, 8)
-    local b = bit32.extract(val, 16, 8)
-    local c = bit32.extract(val, 8, 8)
-    local d = bit32.extract(val, 0, 8)
-    return string.format("%d.%d.%d.%d", a, b, c, d)
-end
-
----Get the address and mask from the CIDR notation
----@param cidr string
----@return number address, number mask
-function ipv4lib.address.fromCIDR(cidr)
-    local address, mask = cidr:match("^(%d+%.%d+%.%d+%.%d+)/(%d+)$")
-    mask = tonumber(mask)
-    assert(mask >= 0, "Invalid mask")
-    assert(mask <= 32, "Invalid mask")
-    return ipv4lib.address.fromString(address), bit32.lshift(2 ^ mask - 1, 32 - mask)
-end
-
---=============================================================================
-
-ipv4lib.IPv4Layer = IPv4Layer
-ipv4lib.IPv4Packet = IPv4Packet
-return ipv4lib
+return IPv4Packet

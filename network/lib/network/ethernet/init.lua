@@ -216,14 +216,6 @@ function EthernetInterface:getAddr()
     return self._modem.address
 end
 
-local function time(f, ...)
-    local t, c = computer.uptime(), os.clock()
-    local r = table.pack(f(...))
-    local t2, c2 = computer.uptime() - t, os.clock() - c
-    require("event").onError(string.format("%s:%s\t", debug.getinfo(3, "S").short_src, debug.getinfo(3, "l").currentline) .. t2 .. " " .. c2)
-    return table.unpack(r)
-end
-
 ---Send a ethernet frame
 ---@param dst string
 ---@param eFrame EthernetFrame
@@ -232,9 +224,9 @@ function EthernetInterface:send(dst, eFrame)
     dst = dst or eFrame:getDst()
     checkArg(2, eFrame, "table")
     if (dst == ethernet.MAC_BROADCAST) then
-        time(self._modem.broadcast, self._port, eFrame:pack())
+        self._modem.broadcast(self._port, eFrame:pack())
     else
-        time(self._modem.send, dst, self._port, eFrame:pack())
+        self._modem.send(dst, self._port, eFrame:pack())
     end
 end
 

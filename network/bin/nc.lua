@@ -1,28 +1,29 @@
-local network      = require("network")
-local modem        = require("component").modem
-local ipv4Address  = require("layers").ipv4.address
-local shell        = require("shell")
-local event        = require("event")
-local thread       = require("thread")
-local term         = require("term")
-local os           = require("os")
+local shell  = require("shell")
+local event  = require("event")
+local thread = require("thread")
+local term   = require("term")
+local os     = require("os")
+local socket = require("socket")
 
-local args, opts   = shell.parse(...)
-local udpInterface = network.interfaces[modem.address].udp
-local socket, reason
+
+local args, opts        = shell.parse(...)
+local udpSocket, reason = socket.udp()
 local listenerThread
 
 
-opts.p = tonumber(opts.p)
+opts.p = tonumber(opts.p) or 0
+opts.b = opts.b or "0.0.0.0"
 
+---@param listenedSocket UDPSocket
 local function listenSocket(listenedSocket)
-    repeat
-        local msg = listenedSocket:reciveString()
-        if (msg) then
-            term.write(msg)
+    checkArg(1, listenedSocket, 'table')
+    while true do
+        local datagram = listenedSocket:recieve()
+        if (datagram) then
+            term.write(datagram)
         end
         os.sleep()
-    until not listenedSocket:isOpen()
+    end
 end
 
 local function help()
@@ -37,7 +38,7 @@ local function help()
 end
 
 event.listen("interrupted", function(...)
-    if (socket) then socket:close() end
+    if (udpSocket) then udpSocket:close() end
     if (listenerThread) then
         if (not listenerThread:join(3)) then
             listenerThread:kill()
@@ -49,30 +50,28 @@ end
 if (opts.h or opts.help) then
     help()
     os.exit()
-elseif (opts.l and opts.u and (opts.p or tonumber(arg[1]))) then --listen UDP
-    socket = udpInterface:open(opts.p or tonumber(arg[1]))
-    assert(socket)
-    print(string.format("Listening on port %d", socket:getLocalPort()))
-    listenerThread = thread.create(listenSocket, socket)
-    while socket:isOpen() do
+elseif (opts.l and opts.u and (tonumber(args[1]) or opts.p)) then --listen UDP
+    assert(udpSocket:setsockname("*", tonumber(args[1]) or opts.p))
+    --udpSocket:setCallback(listenSocket)
+    print(string.format("Listening on %s:%d", udpSocket:getsockname()))
+    listenerThread = thread.create(listenSocket, udpSocket)
+    while true do
         --no remote addr/port. We cannot send msgs
         os.sleep()
     end
-    socket:close()
+    udpSocket:close()
 elseif (opts.u) then --connect UDP
-    socket, reason = udpInterface:open(opts.p or tonumber(args[2]), ipv4Address.fromString(args[1]), tonumber(args[2]))
-    if (not socket) then
-        print("Could not open socket : " .. reason)
-        os.exit(1)
-    end
-    assert(socket)
-    print(string.format("Listening on port %d", socket:getLocalPort()))
-    listenerThread = thread.create(listenSocket, socket)
+    assert(udpSocket:setsockname(opts.b, opts.p))
+    args[2] = assert(tonumber(args[2]), "Invalid port number")
+    assert(udpSocket:setpeername(args[1], args[2]))
+    --udpSocket:setCallback(listenSocket)
+    print(string.format("Listening on %s:%d", udpSocket:getsockname()))
+    listenerThread = thread.create(listenSocket, udpSocket)
     repeat
         local msg = term.read()
-        if (msg) then socket:send(msg .. "\n") end
-    until not msg or not socket:isOpen()
-    socket:close()
+        if (msg) then udpSocket:send(msg .. "\n") end
+    until not msg
+    udpSocket:close()
 else
     help()
 end

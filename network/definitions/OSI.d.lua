@@ -46,6 +46,10 @@ end
 
 --=============================================================================
 
+---@class OSITransportLayer : OSILayer
+
+--=============================================================================
+
 ---@class Payload
 ---@field payloadType number
 local Payload = {}
@@ -59,4 +63,12 @@ end
 ---@param ... any
 ---@return Payload
 function Payload.unpack(...)
+end
+
+---@return string
+function Payload:getPayload()
+end
+
+---@param payload string
+function Payload:setPayload(payload)
 end

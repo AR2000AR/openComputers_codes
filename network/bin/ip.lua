@@ -1,6 +1,6 @@
 local networklib = require("network")
-local ethernet   = require("layers.ethernet")
-local ipv4       = require("layers.ipv4")
+local ethernet   = require("network.ethernet")
+local ipv4       = require("network.ipv4")
 local shell      = require("shell")
 
 local args, opts = shell.parse(...)

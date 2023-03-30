@@ -1,5 +1,6 @@
 local bit32 = require("bit32")
-local ipv4Address = require("layers.ipv4").address
+local ipv4Address = require("network.ipv4").address
+local ipv4 = require("network.ipv4")
 
 ---@class routingLib
 local routing = {}
@@ -15,18 +16,18 @@ local routing = {}
 
 ---@class IPv4Router:OSINetworkLayer
 ---@field private _routes table<Route>
----@field private _layers table<IPv4Layer>
+---@field private _protocols table<ipv4Protocol,OSILayer>
 ---@operator call:IPv4Router
 ---@overload fun():IPv4Router
 local IPv4Router = {}
-IPv4Router.layerType = require("layers.ethernet").TYPE.IPv4
+IPv4Router.layerType = require("network.ethernet").TYPE.IPv4
 
 ---@return IPv4Router
 setmetatable(IPv4Router, {
     __call = function(self)
         local o = {
             _routes = {},
-            _layers = {}
+            _protocols = {}
         }
         setmetatable(o, {__index = self})
         return o
@@ -37,24 +38,54 @@ setmetatable(IPv4Router, {
 ---@param route Route
 function IPv4Router:addRoute(route)
     if (not route.network) then return end
-    --TODO : sort by metrics
     if (not (route.network == 0 and route.mask == 0)) then
         table.insert(self._routes, 1, route)
     else
         table.insert(self._routes, route)
     end
+    ---@param a Route
+    ---@param b Route
+    ---@return boolean
+    table.sort(self._routes, function(a, b)
+        if (a.network == 0 and b.network == 0) then
+            return a.metric > b.metric
+        elseif (a.network ~= 0 and b.network ~= 0) then
+            if (a.metric == b.metric) then
+                if (a.network == b.network) then
+                    return a.mask > b.mask
+                else
+                    return a.network < b.network
+                end
+            else
+                return a.metric > b.metric
+            end
+        elseif (a.network == 0) then
+            return false
+        else
+            return true
+        end
+    end
+    )
 end
 
 ---Get the route for the prodvided network address / mask
----@param address number
+---@param address? number
 ---@return Route
 function IPv4Router:getRoute(address)
-    for id, route in ipairs(self._routes) do
+    checkArg(1, address, 'nil', 'number')
+    if (not address) then
+        for id, route in ipairs(self:listRoutes()) do
+            ---@cast route Route
+            if (route.network == 0 and route.mask == 0) then return route end
+        end
+    end
+    for id, route in ipairs(self:listRoutes()) do
+        ---@cast route Route
         local address1 = bit32.band(address, route.mask)
         local address2 = bit32.band(route.network, route.mask)
         if (address1 == address2) then return route end
     end
-    error("No route found. This is not normal. Make sure a default route is set", 2)
+    error(string.format("No route found to %s. This is not normal. Make sure a default route is set", ipv4.address.tostring(address)), 2)
 end
 
 ---Remove a route
@@ -71,38 +102,6 @@ function IPv4Router:listRoutes(id)
     checkArg(1, id, "number", "nil")
     if (id) then return self._routes[id] end
     return self._routes
-end
-
----Add a gateway (IPv4Lyer)
----@param interface IPv4Layer
-function IPv4Router:setLayer(interface)
-    table.insert(self._layers, interface)
-end
-
----Get the interface with the given address
----@param address number
----@return IPv4Layer?
----@overload fun(self:IPv4Router):table<IPv4Layer>
-function IPv4Router:getLayer(address)
-    if (not address) then return self._layers end
-    for _, layer in ipairs(self._layers) do
-        if (layer:getAddr() == address) then
-            return layer
-        end
-    end
-end
-
----remove the interface
----@param layer IPv4Layer
-function IPv4Router:removeLayer(layer)
-    for i, v in ipairs(self._layers) do
-        if (v:getAddr() == layer:getAddr()) then
-            table.remove(self._layers, i)
-            break
-        end
-    end
-    self:removeGateway(layer:getAddr())
-    self:removeByInterface(layer)
 end
 
 ---Remove a gateway from the routing table. Useful to remove default route for a interface.
@@ -136,17 +135,55 @@ function IPv4Router:removeByInterface(interface)
     for v in pairs(rmRoutes) do
         table.remove(self._routes, v)
     end
+    self:removeGateway(interface:getAddr())
 end
 
 ---send the IPv4 packet
 ---@param packet IPv4Packet
 function IPv4Router:send(packet)
+    if (self:getRoute(packet:getDst()).interface:getAddr() == packet:getDst()) then
+        local layer = self:getRoute(packet:getDst()).interface
+        assert(layer)
+        self:getRoute(packet:getDst()).interface:payloadHandler(layer:getAddr(), packet:getDst(), packet)
+    end
     local route = self:getRoute(packet:getDst())
+    if (packet:getSrc()) then packet:setSrc(route.interface:getAddr()) end
     if (route.gateway == route.interface:getAddr()) then
         route.interface:send(packet)
     else
         route.interface:send(route.gateway, packet)
     end
+end
+
+---@param protocolHandler OSILayer
+function IPv4Router:setProtocol(protocolHandler)
+    self._protocols[protocolHandler.layerType] = protocolHandler
+end
+
+IPv4Router.setLayer = IPv4Router.setProtocol
+
+---@param protocolID ipv4Protocol
+---@return OSILayer
+function IPv4Router:getProtocol(protocolID)
+    return self._protocols[protocolID]
+end
+
+---@param from number
+---@param to number
+---@param payload string
+function IPv4Router:payloadHandler(from, to, payload)
+    local datagram = ipv4.IPv4Packet.unpack(payload)
+    if (self._protocols[datagram:getProtocol()]) then
+        self._protocols[datagram:getProtocol()]:payloadHandler(from, to, datagram:getPayload())
+    end
+end
+
+function IPv4Router:getAddr()
+    return self:getRoute().interface
+end
+
+function IPv4Router:getMTU()
+    return self:getRoute().interface:getMTU()
 end
 
 --=============================================================================

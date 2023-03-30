@@ -3,7 +3,10 @@ local fs        = require("filesystem")
 local component = require("component")
 local computer  = require("computer")
 local network   = require("network")
-local layers    = require("layers")
+local icmp      = require("network.icmp")
+local ipv4      = require("network.ipv4")
+local udp       = require("network.udp")
+local ethernet  = require("network.ethernet")
 
 
 --=============================================================================
@@ -134,13 +137,13 @@ function ifconfig.loadInterfaces(file)
             if (iName and iType and iMode) then --check valid interface
                 flog("Found interface : %s", 1, iName)
                 autoInterface[iName] = false or autoInterface[iName]
-                line = fileHandler:read("l") --read next line
-                if (not line) then break end -- reached eof
-                while line and line:match("^%s+") do --while in the interface paragraph
+                line = fileHandler:read("l")                          --read next line
+                if (not line) then break end                          -- reached eof
+                while line and line:match("^%s+") do                  --while in the interface paragraph
                     flog("\tCurrent line : %q", 2, line)
                     local opt, arg = line:match("^%s+(%w+)%s+(%g+)$") --get the option name and argument
-                    if (VALID_PARAM[iType] ~= nil) then --known iType
-                        if (VALID_PARAM[iType][iMode] ~= nil) then --known iMode
+                    if (VALID_PARAM[iType] ~= nil) then               --known iType
+                        if (VALID_PARAM[iType][iMode] ~= nil) then    --known iMode
                             readInterfaces[iName] = readInterfaces[iName] or {iName = iName, iType = iType, iMode = iMode}
                             if (VALID_PARAM[iType][iMode][opt] == true) then
                                 flog("\tFound option %q with argument %q", 1, opt, arg)
@@ -192,6 +195,14 @@ end
 
 ---@param iName string
 function ifconfig.ifup(iName)
+    if (not network.internal.icmp) then
+        network.internal.icmp = icmp.ICMPLayer(network.router)
+        network.router:setProtocol(network.internal.icmp)
+    end
+    if (not network.interfaces.udp) then
+        network.internal.udp = udp.UDPLayer(network.router)
+        network.router:setProtocol(network.internal.udp)
+    end
     local interface = ifconfig.findInterface(iName)
     if (not interface) then
         flog("No such interface : %s", -1, iName)
@@ -216,17 +227,13 @@ function ifconfig.ifup(iName)
             ---@cast iName - nil
             network.interfaces[iName] = {}
             --ethernet
-            network.interfaces[iName].ethernet = layers.ethernet.EthernetInterface(component.proxy(iName))
+            network.interfaces[iName].ethernet = ethernet.EthernetInterface(component.proxy(iName))
             --ip
-            local address, mask = layers.ipv4.address.fromCIDR(interface.address)
-            network.interfaces[iName].ip = layers.ipv4.IPv4Layer(network.interfaces[iName].ethernet, network.router, address, mask)
-            --icmp
-            network.interfaces[iName].icmp = layers.icmp.ICMPLayer(network.interfaces[iName].ip)
-            --udp
-            network.interfaces[iName].udp = layers.udp.UDPLayer(network.interfaces[iName].ip)
+            local address, mask = ipv4.address.fromCIDR(interface.address)
+            network.interfaces[iName].ip = ipv4.IPv4Layer(network.interfaces[iName].ethernet, network.router, address, mask)
             --router
             if (interface.gateway) then
-                network.router:addRoute({interface = network.interfaces[iName].ip, network = 0, mask = 0, gateway = layers.ipv4.address.fromString(interface.gateway), metric = tonumber(interface.metric) or 100})
+                network.router:addRoute({interface = network.interfaces[iName].ip, network = 0, mask = 0, gateway = ipv4.address.fromString(interface.gateway), metric = tonumber(interface.metric) or 100})
             end
 
             return true
@@ -272,7 +279,7 @@ function ifconfig.ifdown(iName)
 
     if (network.interfaces[iName]) then
         ---@cast iName - nil
-        network.router:removeLayer(network.interfaces[iName].ip)
+        network.router:removeByInterface(network.interfaces[iName].ip)
         network.interfaces[iName] = nil
     else
         flog("Interface %q is not up", 0, name)
