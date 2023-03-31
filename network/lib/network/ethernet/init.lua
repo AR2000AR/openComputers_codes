@@ -251,24 +251,6 @@ end
 --#endregion
 --=============================================================================
 
----Get the EthernetInterface from the modem component or mac/uuid
----@param mac? string|ComponentModem
----@return EthernetInterface
-function ethernet.getInterface(mac)
-    if (not mac) then mac = component.getPrimary("modem").address end
-    checkArg(1, mac, "string", "table")
-    if (type(mac) == "table") then
-        if (mac.type and mac.type == "modem") then mac = mac.address end
-    end
-    ---@cast mac string
-    if (not checkUUIDformat(mac)) then error("#1 : not a uuid/mac", 2) end
-    if (ethernet.internal.interfaces[mac]) then return ethernet.internal.interfaces[mac] end
-    local modem = component.proxy(mac)
-    if (not modem or not modem.type == "modem") then error("#1 : no such modem component", 2) end
-    ethernet.internal.interfaces[modem.address] = EthernetInterface(modem)
-    return ethernet.internal.interfaces[modem.address]
-end
-
 ethernet.EthernetFrame = EthernetFrame
 ethernet.EthernetInterface = EthernetInterface
 return ethernet
