@@ -1,4 +1,5 @@
 return {
     udp = require("socket.udp"),
-    dns = require("socket.dns")
+    ---@type socketdns
+    dns = select(2, pcall(require, "socket.dns"))
 }

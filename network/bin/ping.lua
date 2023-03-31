@@ -17,11 +17,17 @@ if (opts["help"] or opts["h"] or #args == 0) then
 end
 ---=============================================================================
 for k, v in pairs(opts) do print(k, v) end
-opts.W         = tonumber(opts.W) or 5
-opts.s         = tonumber(opts.s) or 56
-opts.p         = opts.p or "A"
+opts.W      = tonumber(opts.W) or 5
+opts.s      = tonumber(opts.s) or 56
+opts.p      = opts.p or "A"
 
-local targetIP = ipv4Address.fromString(assert(dns.toip(args[1])))
+--in case dns_common is not installed
+local rawIP = args[1]
+if (dns) then
+    rawIP = assert(dns.toip(args[1]))
+end
+
+local targetIP = ipv4Address.fromString(assert(rawIP))
 local route    = network.router:getRoute(targetIP)
 if (not route) then
     print("No route to destination")
@@ -47,7 +53,7 @@ local function ping()
     if (sent) then
         sentICMP[i] = t
     else
-        print(reason)
+        io.stderr:write(reason .. "\n")
         os.sleep(1)
         ping()
     end
