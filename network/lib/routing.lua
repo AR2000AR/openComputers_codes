@@ -1,5 +1,4 @@
 local bit32 = require("bit32")
-local ipv4Address = require("network.ipv4").address
 local ipv4 = require("network.ipv4")
 
 ---@class routingLib
@@ -141,13 +140,9 @@ end
 ---send the IPv4 packet
 ---@param packet IPv4Packet
 function IPv4Router:send(packet)
-    if (self:getRoute(packet:getDst()).interface:getAddr() == packet:getDst()) then
-        local layer = self:getRoute(packet:getDst()).interface
-        assert(layer)
-        self:getRoute(packet:getDst()).interface:payloadHandler(layer:getAddr(), packet:getDst(), packet)
-    end
+    packet:setTtl(packet:getTtl() - 1)
+    --TODO : icmp error if ttl 0
     local route = self:getRoute(packet:getDst())
-    if (packet:getSrc()) then packet:setSrc(route.interface:getAddr()) end
     if (route.gateway == route.interface:getAddr()) then
         route.interface:send(packet)
     else
@@ -172,9 +167,12 @@ end
 ---@param to number
 ---@param payload string
 function IPv4Router:payloadHandler(from, to, payload)
-    local datagram = ipv4.IPv4Packet.unpack(payload)
-    if (self._protocols[datagram:getProtocol()]) then
-        self._protocols[datagram:getProtocol()]:payloadHandler(from, to, datagram:getPayload())
+    checkArg(1, from, 'number')
+    checkArg(2, to, 'number')
+    checkArg(3, payload, 'string')
+    local packet = ipv4.IPv4Packet.unpack(payload)
+    if (self._protocols[packet:getProtocol()]) then
+        self._protocols[packet:getProtocol()]:payloadHandler(from, to, packet:getPayload())
     end
 end
 

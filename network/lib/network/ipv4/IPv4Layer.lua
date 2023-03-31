@@ -121,20 +121,29 @@ function IPv4Layer:send(to, payload)
         to = payload:getDst()
     end
     ---@cast payload IPv4Packet
-    if (to == self:getAddr()) then self:payloadHandler(self:getAddr(), to, payload) end
-
-    local dst = arp.getAddress(self._arp, arp.HARDWARE_TYPE.ETHERNET, self.layerType, to, self:getAddr())
-    if (not dst) then error("Cannot resolve IP", 2) end
-    for _, payloadFragment in pairs(payload:getFragments(self:getMTU())) do
-        local eFrame = ethernet.EthernetFrame(self._layer:getAddr(), dst, nil, self.layerType, payloadFragment:pack())
-        self._layer:send(dst, eFrame)
+    if (to == self:getAddr()) then --sent to self
+        local l = self._layer --[[@as EthernetInterface]]
+        self:payloadHandler(l:getAddr(), l:getAddr(), payload:pack())
+    else
+        local dst = arp.getAddress(self._arp, arp.HARDWARE_TYPE.ETHERNET, self.layerType, to, self:getAddr())
+        if (not dst) then error("Cannot resolve IP", 2) end
+        for _, payloadFragment in pairs(payload:getFragments(self:getMTU())) do
+            local eFrame = ethernet.EthernetFrame(self._layer:getAddr(), dst, nil, self.layerType, payloadFragment:pack())
+            self._layer:send(dst, eFrame)
+        end
     end
 end
 
+---@param from string
+---@param to string
+---@param payload string
 function IPv4Layer:payloadHandler(from, to, payload)
+    checkArg(1, from, 'string')
+    checkArg(2, to, 'string')
+    checkArg(3, payload, 'string')
     local pl = IPv4Packet.unpack(payload)
-    if (pl:getDst()) == self:getAddr() then --if the packet destination is here
-        if (pl:getLen() > 1) then           --merge framents
+    if (pl:getDst() == self:getAddr()) then
+        if (pl:getLen() > 1) then --merge framents
             local bufferID = string.format("%d%d%d%d", from, to, pl:getProtocol(), pl:getId())
             self._buffer[bufferID] = self._buffer[bufferID] or {}
 
@@ -153,19 +162,13 @@ function IPv4Layer:payloadHandler(from, to, payload)
             end
             --TODO : handle merge timeout
         end
-        --if the packet is complete, send it to the router to be handed to the destination program
-        self._router:payloadHandler(pl:getSrc(), pl:getDst(), pl:pack())
-    elseif (self._router) then
-        --reduce ttl
-        pl:setTtl(pl:getTtl() - 1)
-        if (pl:getTtl() >= 1) then
-            self._router:send(pl)
-        else
-            --TODO : refactor using router
-            if (self._layers[ipv4Consts.PROTOCOLS.ICMP]) then
-                self._layers[ipv4Consts.PROTOCOLS.ICMP] --[[@as ICMPLayer]]:sendTimeout(pl, 1)
-            end
+        if (pl:getLen() == 1) then
+            --if the packet is complete, send it to the router to be handed to the destination program
+            self._router:payloadHandler(pl:getSrc(), pl:getDst(), pl:pack())
         end
+    else
+        --TODO : check if routing is enabled
+        self._router:send(pl)
     end
 end
 

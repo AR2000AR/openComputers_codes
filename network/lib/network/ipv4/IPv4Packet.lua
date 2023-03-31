@@ -247,6 +247,7 @@ end
 ---@param val string
 ---@return IPv4Packet
 function IPv4Packet.unpack(val)
+    checkArg(1, val, 'string')
     local o = "%x%x"
     local patern = string.format("(%s)(%s)(%s)(%s)(%s)(%s)(%s)(%s)(%s)(%s)(%s)",
                                  o,        --dscp
