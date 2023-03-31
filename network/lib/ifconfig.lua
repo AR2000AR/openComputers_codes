@@ -56,7 +56,16 @@ local function flog(format, level, ...)
     log(string.format(format, ...), level)
 end
 --=============================================================================
-
+--init the interfaces during first import. Since the lib is imported in /boot/30_network.lua, it is done during system boot
+if (not network.internal.icmp) then
+    network.internal.icmp = icmp.ICMPLayer(network.router)
+    network.router:setProtocol(network.internal.icmp)
+end
+if (not network.interfaces.udp) then
+    network.internal.udp = udp.UDPLayer(network.router)
+    network.router:setProtocol(network.internal.udp)
+end
+--=============================================================================
 ---@class iInfo
 ---@field iName string
 ---@field iType string
@@ -73,14 +82,28 @@ end
 function ifconfig.loadInterfaces(file)
     --#region functions definitions
 
+    ---read the next line, removing any comments
+    ---@param fileHandler file*
+    ---@return string?
+    local function readNextLine(fileHandler)
+        local line = fileHandler:read("l")
+        if (line) then
+            return line:match("^[^#]*")
+        else
+            return line
+        end
+    end
+
     ---skip the current interface paragraph
     ---@param fileHandler file*
     local function skipInterface(fileHandler)
         local line
         repeat
             line = fileHandler:read("l")
-        until line:match("^%w")
-        fileHandler:seek("cur", #line + 1)
+        until line:match("^%w") or not line
+        if (line) then
+            fileHandler:seek("cur", #line + 1)
+        end
     end
     --#endregion
 
@@ -98,7 +121,11 @@ function ifconfig.loadInterfaces(file)
     local fileHandler = io.open(file, "r")
     assert(fileHandler, "File " .. file .. " does not exists")
 
-    local line = fileHandler:read("l")
+    local line = readNextLine(fileHandler)
+    if (not line) then
+        fileHandler:close()
+        return {}, {}
+    end
     repeat
         if (line:match("^source")) then --SOURCE
             local extraFileName = line:match("^source (.*)$")
@@ -126,18 +153,18 @@ function ifconfig.loadInterfaces(file)
                     for k, v in pairs(ifconfig.loadInterfaces(extraFileName)) do readInterfaces[k] = v end
                 end
             end
-            line = fileHandler:read("l") --read the next line
+            line = readNextLine(fileHandler) --read the next line
         elseif (line:match("^auto")) then
             local iName = line:match("^auto%s+(%w+)")
             autoInterface[iName] = true
-            line = fileHandler:read("l")
+            line = readNextLine(fileHandler)
         elseif line:match("^iface") then --iface
             --read the iterface "title"
             local iName, iType, iMode = line:match("^iface (%w+) (%w+) (%w+)$")
             if (iName and iType and iMode) then --check valid interface
                 flog("Found interface : %s", 1, iName)
                 autoInterface[iName] = false or autoInterface[iName]
-                line = fileHandler:read("l")                          --read next line
+                line = readNextLine(fileHandler)                      --read next line
                 if (not line) then break end                          -- reached eof
                 while line and line:match("^%s+") do                  --while in the interface paragraph
                     flog("\tCurrent line : %q", 2, line)
@@ -159,9 +186,11 @@ function ifconfig.loadInterfaces(file)
                         flog("Invalid interface type : %q", -1, iType)
                         skipInterface(fileHandler)
                     end
-                    line = fileHandler:read("l")
+                    line = readNextLine(fileHandler)
                 end
             end
+        else
+            line = readNextLine(fileHandler)
         end
     until not line
 
@@ -195,14 +224,6 @@ end
 
 ---@param iName string
 function ifconfig.ifup(iName)
-    if (not network.internal.icmp) then
-        network.internal.icmp = icmp.ICMPLayer(network.router)
-        network.router:setProtocol(network.internal.icmp)
-    end
-    if (not network.interfaces.udp) then
-        network.internal.udp = udp.UDPLayer(network.router)
-        network.router:setProtocol(network.internal.udp)
-    end
     local interface = ifconfig.findInterface(iName)
     if (not interface) then
         flog("No such interface : %s", -1, iName)
@@ -218,16 +239,36 @@ function ifconfig.ifup(iName)
                 return false
             end
             flog("Setting up %s", 1, interface.iName)
-            ---@diagnostic disable-next-line: cast-local-type
-            iName = component.get(iName, "modem")
-            if (not iName) then
-                flog("Cannot find a modem component for %q", -1, iName)
-                return false
+
+            --#region find component from interface name
+            local modem
+            if (iName:match("^eth%d$")) then
+                local compId = tonumber(iName:match("%d"))
+                for modemCard in component.list("modem") do
+                    local proxy = component.proxy(modemCard)
+                    if proxy.slot == tonumber(compId) then
+                        modem = proxy
+                    end
+                end
+                if (not modem) then
+                    flog("Cannot find a modem component for %q", -1, iName)
+                    return false
+                end
+            else
+                ---@diagnostic disable-next-line: cast-local-type
+                iName = component.get(iName, "modem")
+                if (not iName) then
+                    flog("Cannot find a modem component for %q", -1, iName)
+                    return false
+                end
+                modem = component.proxy(iName)
             end
+            --#endregion
+
             ---@cast iName - nil
             network.interfaces[iName] = {}
             --ethernet
-            network.interfaces[iName].ethernet = ethernet.EthernetInterface(component.proxy(iName))
+            network.interfaces[iName].ethernet = ethernet.EthernetInterface(modem)
             --ip
             local address, mask = ipv4.address.fromCIDR(interface.address)
             network.interfaces[iName].ip = ipv4.IPv4Layer(network.interfaces[iName].ethernet, network.router, address, mask)
@@ -253,7 +294,9 @@ end
 function ifconfig.autoIfup(iName)
     local _, auto = ifconfig.loadInterfaces(INTERFACES_FILE)
     local interface = ifconfig.findInterface(iName)
-    if (not interface) then return false end
+    if (not interface) then
+        interface = ifconfig.findInterface(string.format("eth%d", component.proxy(iName).slot))
+    end
     iName = interface.iName
     if (auto[iName] or auto[component.get(iName, "modem")]) then
         return ifconfig.ifup(iName)
@@ -266,23 +309,23 @@ end
 
 ---@param iName string
 function ifconfig.ifdown(iName)
-    local interface = ifconfig.findInterface(iName)
-    if (not interface) then
-        flog("No such interface : %s", -1, iName)
-        return false
-    end
-    ---@cast interface - boolean
-
-    local name = iName
     ---@diagnostic disable-next-line: cast-local-type
-    iName = component.get(iName, "modem") or name
+    local address = component.get(iName, "modem")
 
-    if (network.interfaces[iName]) then
-        ---@cast iName - nil
-        network.router:removeByInterface(network.interfaces[iName].ip)
-        network.interfaces[iName] = nil
-    else
-        flog("Interface %q is not up", 0, name)
+    local relatedInterfaces = {}
+    for interfaceName, interface in pairs(network.interfaces) do
+        if (interfaceName == iName or interfaceName == address or interface.ethernet:getAddr() == iName) then
+            table.insert(relatedInterfaces, interfaceName)
+        end
+    end
+
+    for _, name in pairs(relatedInterfaces) do
+        if (network.interfaces[name]) then
+            network.router:removeByInterface(network.interfaces[name].ip)
+            network.interfaces[name] = nil
+        else
+            flog("Interface %q is not up", 0, name)
+        end
     end
 end
 

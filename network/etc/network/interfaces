@@ -1,0 +1,5 @@
+# example configuration
+# auto eth0 #the card in the first slot
+# iface eth0 inet static
+#   address 192.168.1.2/24
+#   gateway 192.168.1.1
