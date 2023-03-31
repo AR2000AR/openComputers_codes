@@ -8,8 +8,8 @@ local args, opts = shell.parse(...)
 
 if (args[1] == "a") then
     local interfaces = networklib.getInterface()
-    for mac, itf in pairs(interfaces) do
-        print(mac:match("(%x+)"))
+    for interfaceName, itf in pairs(interfaces) do
+        print(interfaceName:match("(%w+)"))
         print(string.format("\tMAC : %s MTU : %d", itf.ethernet:getAddr(), itf.ethernet:getMTU()))
         local ipLayer = itf.ethernet:getLayer(ethernet.TYPE.IPv4) --[[@as IPv4Layer]]
         print(string.format("\tIP : %s Mask : %s", ipv4.address.tostring(ipLayer:getAddr()), ipv4.address.tostring(ipLayer:getMask())))
