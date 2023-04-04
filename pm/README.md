@@ -55,7 +55,8 @@ A table of all configurations files. They will not be overridden on update or re
 ### name :
 The display name
 ### version :
-The package's version. Version is in the format `major.minor.patch`. `minor` and `patch` can be omitted.
+The package's version. Version is in the format `major.minor.patch`. `minor` and `patch` can be omitted.\
+A other valid version number is `"oppm"` for oppm packages without a version number
 ### description :
 Package's description
 ### note :

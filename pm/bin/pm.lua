@@ -276,7 +276,9 @@ elseif (mode == "install") then
     --check if the package is already installed
     if (isInstalled(manifest.package)) then
         local currentManifest = getManifestFromInstalled(manifest.package)
-        if (manifest.version == currentManifest.version) then
+        if (manifest.version == "oppm" or currentManifest.version == "oppm") then
+            --do nothing. We force reinstallation for oppm since there is no version number
+        elseif (manifest.version == currentManifest.version) then
             print("Already installed")
             os.exit(0)
         elseif (compareVersion(currentManifest.version, manifest.version)) then --downgrade
@@ -296,20 +298,24 @@ elseif (mode == "install") then
             version = version:match("%d.*$")
             print(compType, version)
             local installedVersion = getManifestFromInstalled(dep).version
-            if (compType == "=") then
-                if (not version == installedVersion) then
-                    printf("Package %s require %s version %s but %s is installed", manifest.package, dep, version, installedVersion)
-                    os.exit(1)
-                end
-            elseif (compType == "<") then
-                if (compareVersion(version, installedVersion)) then
-                    printf("Package %s require %s version %s but %s is installed", manifest.package, dep, version, installedVersion)
-                    os.exit(1)
-                end
+            if (installedVersion == "oppm") then
+                printf("Warning : %s is using a oppm version. Cannot determine real installed version", dep)
             else
-                if (compareVersion(version, installedVersion) and version ~= installedVersion) then
-                    printf("Package %s require %s version %s but %s is installed", manifest.package, dep, version, installedVersion)
-                    os.exit(1)
+                if (compType == "=") then
+                    if (not version == installedVersion) then
+                        printf("Package %s require %s version %s but %s is installed", manifest.package, dep, version, installedVersion)
+                        os.exit(1)
+                    end
+                elseif (compType == "<") then
+                    if (compareVersion(version, installedVersion)) then
+                        printf("Package %s require %s version %s but %s is installed", manifest.package, dep, version, installedVersion)
+                        os.exit(1)
+                    end
+                else
+                    if (compareVersion(version, installedVersion) and version ~= installedVersion) then
+                        printf("Package %s require %s version %s but %s is installed", manifest.package, dep, version, installedVersion)
+                        os.exit(1)
+                    end
                 end
             end
         end
