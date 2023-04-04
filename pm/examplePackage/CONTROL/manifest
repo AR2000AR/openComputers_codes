@@ -1,0 +1,17 @@
+{
+    manifestVersion = "1.0",
+    package = "example",
+    dependencies = {
+        ["neededpackage"] = "=1.0"
+    },
+    configFiles = {
+        "/etc/example.conf"
+    }, --list configurations files that need to be left on update / uninstallation of the package
+    name = "Example Package",
+    version = "1.0.0",
+    description = "Package description",
+    authors = "AR2000AR",
+    note = "Extra bit of information",
+    hidden = false,
+    repo = "https://github.com/AR2000AR/openComputers_codes"
+}
