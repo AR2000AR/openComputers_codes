@@ -48,6 +48,7 @@ local function printHelp()
     printf("\tinstall <packageFile>")
     printf("\tuninstall <packageName>")
     printf("\tinfo <packageName>|<packageFile>")
+    printf("\tlist-installed")
     printf("opts :")
     printf("\t--purge : remove configuration files")
     printf("\t--dry-run : do not really perform the operation")
@@ -380,12 +381,15 @@ elseif (mode == "uninstall") then
         os.exit(1)
     end
 
+    --make the values the keys for easier test later
     local configFiles = {}
     for _, file in pairs(manifest.configFiles) do
         configFiles[file] = true
     end
+
     local fileListFile = assert(io.open(f("/etc/pm/info/%s.files", args[1])))
     local dirs = {}
+    --delete the files
     for path in fileListFile:lines() do
         if (not configFiles[path] or opts.purge) then
             if (not filesystem.isDirectory(path)) then
@@ -398,6 +402,7 @@ elseif (mode == "uninstall") then
         end
     end
     fileListFile:close()
+    --delete empty directory left behind
     for _, dir in pairs(dirs) do
         if (not RM_BLACKLIST[dir]) then
             rmdir(f("%q", dir))
