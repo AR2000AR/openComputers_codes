@@ -2,6 +2,24 @@ local filesystem = require("filesystem")
 local shell = require("shell")
 local io = require("io")
 
+---@class tarHeader
+---@field name any
+---@field mode any
+---@field uid any
+---@field gid any
+---@field size any
+---@field mtime any
+---@field chksum any
+---@field typeflag any
+---@field linkname any
+---@field magic any
+---@field version any
+---@field uname any
+---@field gname any
+---@field devmajor any
+---@field devminor any
+---@field prefix any
+
 ---https://github.com/luarocks/luarocks/blob/master/src/luarocks/core/dir.lua
 local function unquote(c)
     local first, last = c:sub(1, 1), c:sub(-1)
@@ -114,6 +132,7 @@ local function read_header_block(block)
     return header
 end
 
+
 function tar.untar(filename, destdir)
     checkArg(1, filename, "string")
     checkArg(2, destdir, "string")
@@ -160,20 +179,11 @@ function tar.untar(filename, destdir)
         local pathname = dir.path(destdir, header.name)
         pathname = filesystem.canonical(pathname)
         if header.typeflag == "directory" then
-            ok, err = make_dir(pathname)
-            if not ok then
-                require("event").onError("[tar]" .. err)
-                break
-            end
+            make_dir(pathname)
         elseif header.typeflag == "file" then
-            require("event").onError(pathname)
             local dirname = filesystem.path(pathname)
             if dirname ~= "" then
-                ok, err = make_dir(dirname)
-                if not ok then
-                    require("event").onError("[tar]" .. err)
-                    --break
-                end
+                make_dir(dirname)
             end
             local file_handle
             file_handle, err = io.open(pathname, "wb")
@@ -182,8 +192,7 @@ function tar.untar(filename, destdir)
                 require("event").onError("[tar]" .. err)
                 break
             end
-            file_handle:write(file_data)
-            file_handle:close()
+            file_handle:write(file_data):close()
         end
     end
     tar_handle:close()
@@ -194,7 +203,7 @@ end
 
 ---Retrun the headers
 ---@param filename string
----@return table?, string? reason
+---@return table<number,tarHeader>?, string? reason
 function tar.list(filename)
     checkArg(1, filename, 'string')
     local tar_handle = io.open(filename, "rb")
@@ -233,22 +242,59 @@ function tar.list(filename)
                 long_link_name = nil
             end
         end
-        table.insert(files, header)
+        if (header.typeflag == "file" or header.typeflag == "directory") then
+            table.insert(files, header)
+        end
     end
     tar_handle:close()
     return files, err
 end
 
-function tar.extract(tarname, filename, destdir)
+---Extract files that match filename `fineNameInArchive:match("^"..filename)
+---@param tarname string
+---@param filename? string|table
+---@param overwrite boolean overwrite existing files.
+---@param ignore? string|table
+---@param destdir string
+---@param newRoot? string
+function tar.extract(tarname, destdir, overwrite, filename, ignore, newRoot)
     checkArg(1, tarname, "string")
-    checkArg(2, filename, "string")
-    checkArg(3, destdir, "string")
+    checkArg(2, destdir, "string")
+    checkArg(3, overwrite, "boolean")
+    checkArg(4, filename, "string", "table", 'nil')
+    checkArg(5, ignore, "string", "table", 'nil')
+    checkArg(6, destdir, "string")
+    checkArg(7, newRoot, "string", "nil")
+
+    ---@param name string
+    ---@return boolean
+    local function shouldExtractFile(name)
+        local ok = true
+        if (filename and type(filename) == "string") then
+            if (not name:match("^" .. filename)) then ok = false end
+        end
+        if (filename and type(filename) == "table") then
+            for _, fname in pairs(filename) do
+                if (not name:match("^" .. fname)) then ok = false end
+            end
+        end
+        if (ignore and type(ignore) == "string") then
+            if (name:match("^" .. ignore)) then ok = false end
+        end
+        if (ignore and type(ignore) == "table") then
+            for _, fname in pairs(ignore) do
+                if (name:match("^" .. fname)) then ok = false end
+            end
+        end
+        return ok
+    end
 
     local tar_handle = io.open(tarname, "rb")
     if not tar_handle then return nil, "Error opening file " .. tarname end
 
     local long_name, long_link_name
-    local ok, err
+    ---@type boolean?, string?
+    local ok, err = true, nil
     local make_dir = filesystem.makeDirectory
     while true do
         local block
@@ -283,34 +329,37 @@ function tar.extract(tarname, filename, destdir)
                 long_link_name = nil
             end
         end
-        local pathname = dir.path(destdir, header.name)
-        pathname = filesystem.canonical(pathname)
 
-        if header.typeflag == "file" and header.name == filename then
-            require("event").onError(pathname)
-            local dirname = filesystem.path(pathname)
-            if dirname ~= "" then
-                ok, err = make_dir(dirname)
-                if not ok then
-                    require("event").onError("[tar]" .. err)
-                    --break
+
+        if (shouldExtractFile(header.name)) then
+            local pathname = dir.path(destdir, header.name)
+            if (newRoot) then --change the archive root
+                pathname = pathname:gsub(newRoot, "")
+            end
+            pathname = filesystem.canonical(pathname)
+
+            if header.typeflag == "directory" then
+                make_dir(pathname)
+            elseif header.typeflag == "file" then
+                local dirname = filesystem.path(pathname)
+                if dirname ~= "" then
+                    make_dir(dirname)
+                end
+                if (overwrite or not (filesystem.exists(pathname) and not filesystem.isDirectory(pathname))) then
+                    local file_handle
+                    file_handle, err = io.open(pathname, "wb")
+                    if not file_handle then
+                        ok = nil
+                        require("event").onError("[tar]" .. err)
+                        break
+                    end
+                    file_handle:write(file_data):close()
                 end
             end
-            local file_handle
-            file_handle, err = io.open(pathname, "wb")
-            if not file_handle then
-                ok = nil
-                require("event").onError("[tar]" .. err)
-                break
-            end
-            file_handle:write(file_data)
-            file_handle:close()
-            tar_handle:close()
-            return pathname, err
         end
     end
     tar_handle:close()
-    return ok, "file not found in archive"
+    return ok, err
 end
 
 return tar
