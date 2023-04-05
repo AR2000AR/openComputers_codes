@@ -1,6 +1,7 @@
 local shell         = require("shell")
 local filesystem    = require("filesystem")
-local tar           = require("tar")
+--local tar           = require("tar")
+local tar           = dofile("/usr/lib/tar.lua")
 local uuid          = require("uuid")
 local os            = require("os")
 local io            = require("io")
@@ -53,44 +54,11 @@ local function printHelp()
     printf("\t--purge : remove configuration files")
     printf("\t--dry-run : do not really perform the operation")
     printf("\t--include-removed : also list non completly removed packages")
+    printf("\t--allow-same-version : allow a package of the same version to be used for to update the installed version")
 end
 
 local function cleanup(path)
     filesystem.remove(path)
-end
-
----@param path string
----@return table
-local function recursivelist(path)
-    local files = {}
-    if (not path:match(".*/$")) then path = path .. "/" end
-    for file in filesystem.list(path) do
-        if (filesystem.isDirectory(path .. "/" .. file)) then
-            for _, file2 in pairs(recursivelist(path .. file)) do
-                table.insert(files, file2)
-            end
-        else
-            table.insert(files, path .. file)
-        end
-    end
-    return files
-end
-
----Extract the package tar and return the extracted path
----@param packagePath string
----@return string? path,string? reason
-local function extractPackage(packagePath)
-    packagePath = filesystem.canonical(packagePath)
-    printf("extracting : %s", packagePath)
-    local tmpPath = "/tmp/pm/"
-    if (not filesystem.exists(packagePath)) then return nil, "Invalid path" end
-    filesystem.makeDirectory("/tmp/pm/")
-    repeat
-        tmpPath = "/tmp/pm/" .. uuid.next()
-    until not filesystem.isDirectory(tmpPath)
-    filesystem.makeDirectory(tmpPath)
-    tar.untar(packagePath, tmpPath)
-    return tmpPath
 end
 
 ---@return manifest
@@ -108,6 +76,7 @@ end
 ---@return string? reason
 ---@return string? parserError
 local function getManifestFromPackage(packagePath)
+    checkArg(1, packagePath, "string")
     packagePath = filesystem.canonical(packagePath)
     local tmpPath = "/tmp/pm/"
     if (not filesystem.exists(packagePath)) then return nil, "Invalid path" end
@@ -116,8 +85,8 @@ local function getManifestFromPackage(packagePath)
         tmpPath = "/tmp/pm/" .. uuid.next()
     until not filesystem.isDirectory(tmpPath)
     filesystem.makeDirectory(tmpPath)
-    local filepath, reason = tar.extract(packagePath, "CONTROL/manifest", tmpPath)
-
+    local ok, reason = tar.extract(packagePath, tmpPath, true, "CONTROL/manifest", nil, "CONTROL/")
+    local filepath = tmpPath .. "/manifest"
 
     if (not filepath) then
         return nil, f("Invalid package format")
@@ -132,6 +101,17 @@ local function getManifestFromPackage(packagePath)
     return manifest
 end
 
+---Extract the package tar and return the extracted path
+---@param packagePath string
+---@return boolean? ok, string? reason
+local function extractPackage(packagePath)
+    checkArg(1, packagePath, "string")
+    if (opts["dry-run"]) then return true, nil end
+    packagePath = filesystem.canonical(packagePath)
+    printf("extracting : %s", packagePath)
+    return tar.extract(packagePath, "/", false, "DATA/", nil, "DATA/")
+end
+
 ---get the list of installed packages
 ---@param includeNonPurged? boolean
 ---@return table<string,manifest>
@@ -141,7 +121,7 @@ local function getInstalled(includeNonPurged)
     if (includeNonPurged) then prefix = "%.manifest$" end
     local installed = {}
     for file in filesystem.list("/etc/pm/info/") do
-        local pacakgeName = file:match("(%w+)" .. prefix)
+        local pacakgeName = file:match("(.+)" .. prefix)
         if (pacakgeName) then
             installed[pacakgeName] = getManifestFromInstalled(pacakgeName)
         end
@@ -160,6 +140,7 @@ end
 ---check if a install package depend of the package
 ---@return boolean,string?
 local function checkDependant(pacakge)
+    printf("Checking for package dependant of %s", pacakge)
     for pkg, manifest in pairs(getInstalled(false)) do
         ---@cast pkg string
         ---@cast manifest manifest
@@ -168,24 +149,6 @@ local function checkDependant(pacakge)
         end
     end
     return false
-end
-
-local function cp(...)
-    local cmd = f("cp %s", table.concat({...}, " "))
-    if (opts["dry-run"]) then
-        print(cmd)
-    else
-        shell.execute(cmd)
-    end
-end
-
-local function mkdir(...)
-    local cmd = f("mkdir %s", table.concat({...}, " "))
-    if (opts["dry-run"]) then
-        print(cmd)
-    else
-        shell.execute(cmd)
-    end
 end
 
 local function rm(...)
@@ -278,7 +241,7 @@ elseif (mode == "install") then
         local currentManifest = getManifestFromInstalled(manifest.package)
         if (manifest.version == "oppm" or currentManifest.version == "oppm") then
             --do nothing. We force reinstallation for oppm since there is no version number
-        elseif (manifest.version == currentManifest.version) then
+        elseif (manifest.version == currentManifest.version and not opts["allow-same-version"]) then
             print("Already installed")
             os.exit(0)
         elseif (compareVersion(currentManifest.version, manifest.version)) then --downgrade
@@ -296,7 +259,6 @@ elseif (mode == "install") then
             end
             local compType = version:match("^[<>=]") or ">"
             version = version:match("%d.*$")
-            print(compType, version)
             local installedVersion = getManifestFromInstalled(dep).version
             if (installedVersion == "oppm") then
                 printf("Warning : %s is using a oppm version. Cannot determine real installed version", dep)
@@ -321,20 +283,23 @@ elseif (mode == "install") then
         end
     end
 
-    --extract the package into the pm's temp folder
-    local extracted, reason = extractPackage(args[1])
-    if (not extracted) then
-        printf("\27[37m%s\27[m", reason or "Unkown errro")
-        os.exit(1)
+    --make the values the keys for easier test later
+    local configFiles = {}
+    if (manifest.configFiles) then
+        for _, file in pairs(manifest.configFiles) do
+            configFiles[file] = true
+        end
     end
 
     --check that no file not from the package get overwriten
-    for _, file in pairs(recursivelist(extracted .. "/DATA/")) do
-        local destination = file:sub(#(extracted .. "/DATA/"))
-        if (filesystem.exists(destination)) then
-            printf("File already exists %s", destination)
-            cleanup(extracted)
-            os.exit(1)
+    for _, header in pairs(assert(tar.list(args[1]))) do
+        if (header.name:match("^/DATA/") and header.typeflag == "file") then
+            local destination = header.name:sub(#("/DATA/"))
+            --TODO : ignore config files
+            if (filesystem.exists(destination)) then
+                printf("File already exists %s", destination)
+                os.exit(1)
+            end
         end
     end
 
@@ -343,17 +308,11 @@ elseif (mode == "install") then
         shell.execute(f("pm uninstall %q --no-dependencies-check", args[1]))
     end
 
-    --copy the files
-    for _, file in pairs(recursivelist(extracted .. "/DATA/")) do
-        local destination = file:sub(#(extracted .. "/DATA/"))
-        if (not filesystem.isDirectory(filesystem.path(destination))) then
-            mkdir(filesystem.path(destination))
-        end
-        if (manifest.configFiles and manifest.configFiles[destination]) then
-            cp("-n", file, destination)
-        else
-            cp(file, destination)
-        end
+    --extract the files in the correct path
+    local extracted, reason = extractPackage(args[1])
+    if (not extracted) then
+        printf("\27[37m%s\27[m", reason or "Unkown error")
+        os.exit(1)
     end
 
     --save the package info and file list
@@ -367,15 +326,17 @@ elseif (mode == "install") then
             end
         end
         listFile:close()
-        filesystem.copy(extracted .. "/CONTROL/manifest", f("/etc/pm/info/%s.manifest", manifest.package))
+        assert(tar.extract(args[1], "/tmp/pm/", true, "CONTROL/manifest", nil, "CONTROL/"))
+        filesystem.rename("/tmp/pm/manifest", f("/etc/pm/info/%s.manifest", manifest.package))
     end
 
     --remove the tmp folder
-    cleanup(extracted)
+    --cleanup(extracted)
 elseif (mode == "uninstall") then
     --check if the package exists
     if (not isInstalled(args[1])) then
-        print("Not installed")
+        printf("Package %q is not installed", args[1])
+        os.exit(0)
     end
 
     local manifest = getManifestFromInstalled(args[1])
@@ -387,10 +348,15 @@ elseif (mode == "uninstall") then
         os.exit(1)
     end
 
+    printf("Uninstalling : %s", args[1])
+
     --make the values the keys for easier test later
     local configFiles = {}
-    for _, file in pairs(manifest.configFiles) do
-        configFiles[file] = true
+    if (manifest.configFiles) then
+        for _, file in pairs(manifest.configFiles) do
+            configFiles[file] = true
+            require("event").onError(file)
+        end
     end
 
     local fileListFile = assert(io.open(f("/etc/pm/info/%s.files", args[1])))
