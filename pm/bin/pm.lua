@@ -1,7 +1,6 @@
 local shell         = require("shell")
 local filesystem    = require("filesystem")
---local tar           = require("tar")
-local tar           = dofile("/usr/lib/tar.lua")
+local tar           = require("tar")
 local uuid          = require("uuid")
 local os            = require("os")
 local io            = require("io")
@@ -291,12 +290,21 @@ elseif (mode == "install") then
         end
     end
 
+    local installedFiles = {}
+    if (isInstalled(manifest.package)) then
+        local installedFileListFile = assert(io.open(f("/etc/pm/info/%s.files", manifest.package)))
+        for file in installedFileListFile:lines() do
+            installedFiles[file] = true
+        end
+        installedFileListFile:close()
+    end
+
     --check that no file not from the package get overwriten
     for _, header in pairs(assert(tar.list(args[1]))) do
-        if (header.name:match("^/DATA/") and header.typeflag == "file") then
-            local destination = header.name:sub(#("/DATA/"))
-            --TODO : ignore config files
-            if (filesystem.exists(destination)) then
+        if (header.name:match("^DATA/") and header.typeflag == "file") then
+            require("event").onError(header.name)
+            local destination = header.name:sub(#("DATA/"))
+            if (not installedFiles[destination] and (filesystem.exists(destination) and not configFiles[destination])) then
                 printf("File already exists %s", destination)
                 os.exit(1)
             end
@@ -307,6 +315,8 @@ elseif (mode == "install") then
     if (isInstalled(manifest.package)) then
         shell.execute(f("pm uninstall %q --no-dependencies-check", args[1]))
     end
+
+    printf("Installing : %s", manifest.package)
 
     --extract the files in the correct path
     local extracted, reason = extractPackage(args[1])
