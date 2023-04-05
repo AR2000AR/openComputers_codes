@@ -3,29 +3,33 @@ from slpp import slpp as lua
 import tarfile
 import sys
 import getopt
-import pprint
 import os
 import tempfile
 import shutil
 import pathlib
 import re
 
-PACKAGE_DIR = os.getcwd()+"/package/"
-pathlib.Path(PACKAGE_DIR).mkdir(
-    parents=True, exist_ok=True)
+RED = '\33[31m'
+RESET = '\33[0m'
 
-opts, args = getopt.getopt(sys.argv[1:], '', '')
 
-raw = ""
-with open(args[0], 'r') as file:
-    raw = file.read()
+def printError(msg):
+    print(f"{RED}{msg}{RESET}", file=sys.stderr)
 
-data = lua.decode(raw)
 
-for packageName, packageInfo in data.items():
+def printUsage():
+    print(
+        f"{sys.argv[0]} [-p|--programs <file>] [-d|--destination <path>] [*packageName]")
+    print("\t-p|--programs <file> : oppm's programs.cfg file. Default is \"./programs.cfg\"")
+    print("\t-d|--destination <path> : path to output the pacakges. Default is \"./packages/\"")
+
+
+def makePackage(packageInfo, source=None, outputDirectory='./packages/'):
     with tempfile.TemporaryDirectory(prefix="packager.") as tmpDir:
         os.mkdir(tmpDir+"/CONTROL/")
         os.mkdir(tmpDir+"/DATA/")
+        if not source:
+            source = os.getcwd()
 
         # build the manifest
         manifest = {}
@@ -48,10 +52,8 @@ for packageName, packageInfo in data.items():
         if "dependencies" in packageInfo:
             for dep in packageInfo["dependencies"]:
                 if not "dependencies" in manifest:
-                    manifest["dependencies"] = []
-                depDic = {}
-                depDic[dep] = "0"
-                manifest["dependencies"].append(depDic)
+                    manifest["dependencies"] = {}
+                manifest["dependencies"][dep] = "0"
 
         # copy the required files
         if "files" in packageInfo:
@@ -65,12 +67,14 @@ for packageName, packageInfo in data.items():
 
                 prefix = fileInfo[0]
                 filePath = pathlib.Path(*pathlib.Path(fileInfo).parts[1:])
+                filePath = pathlib.Path(source, filePath)
                 if (prefix == "?"):  # add it to the config file list
                     if not "configFiles" in manifest:
                         manifest["configFiles"] = []
-                    manifest["configFiles"].append(destination)
+                    configFile = pathlib.Path(
+                        *pathlib.Path(fileInfo).parts[2:])
+                    manifest["configFiles"].append("/"+str(configFile))
 
-                print(f"{filePath} -> {destination}")
                 destination = tmpDir+"/DATA"+destination
 
                 if (prefix == ":"):
@@ -84,6 +88,44 @@ for packageName, packageInfo in data.items():
             file.write(lua.encode(manifest))
 
         version = manifest["version"]
-        with tarfile.open(f"{PACKAGE_DIR}{packageName}_({version}).tar", 'w') as tar:
+        with tarfile.open(pathlib.Path(outputDirectory, f"{packageName}_({version}).tar"), 'w') as tar:
             tar.add(tmpDir+"/CONTROL", arcname="CONTROL")
             tar.add(tmpDir+'/DATA/', arcname="DATA")
+
+
+if __name__ == '__main__':
+    try:
+        opts, args = getopt.gnu_getopt(
+            sys.argv[1:], 'hp:', ['programs=', 'destination='])
+    except getopt.GetoptError as e:
+        printError(e.msg)
+        exit(1)
+
+    outputDirectory = pathlib.Path(os.getcwd(), "packages/").absolute()
+    packageInfoFile = pathlib.Path(os.getcwd(), "programs.cfg").absolute()
+
+    for option, value in opts:
+        if option in ("-h", "--help"):
+            printUsage()
+            exit(0)
+        elif option in ("-p", "--programs"):
+            packageInfoFile = pathlib.Path(value).absolute()
+        elif option in ("-d", "--destination"):
+            outputDirectory = pathlib.Path(value).absolute()
+
+    pathlib.Path(outputDirectory).mkdir(
+        parents=True, exist_ok=True)
+
+    if not os.path.isfile(packageInfoFile):
+        printError(f"{packageInfoFile} not found")
+        exit(1)
+
+    raw = None
+    with open(packageInfoFile, 'r') as file:
+        raw = file.read()
+
+    data = lua.decode(raw)
+
+    for packageName, packageInfo in data.items():
+        if len(args) == 0 or packageName in args:
+            makePackage(packageInfo, outputDirectory=outputDirectory)
