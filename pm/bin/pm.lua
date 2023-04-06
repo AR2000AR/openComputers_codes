@@ -302,7 +302,6 @@ elseif (mode == "install") then
     --check that no file not from the package get overwriten
     for _, header in pairs(assert(tar.list(args[1]))) do
         if (header.name:match("^DATA/") and header.typeflag == "file") then
-            require("event").onError(header.name)
             local destination = header.name:sub(#("DATA/"))
             if (not installedFiles[destination] and (filesystem.exists(destination) and not configFiles[destination])) then
                 printf("File already exists %s", destination)
@@ -313,7 +312,8 @@ elseif (mode == "install") then
 
     --uninstall old version. It's easier than to check wich file need to be deleted
     if (isInstalled(manifest.package)) then
-        shell.execute(f("pm uninstall %q --no-dependencies-check", args[1]))
+        print("Unistalling currently installed version")
+        shell.execute(f("pm uninstall %q --no-dependencies-check", manifest.package))
     end
 
     printf("Installing : %s", manifest.package)
@@ -352,10 +352,13 @@ elseif (mode == "uninstall") then
     local manifest = getManifestFromInstalled(args[1])
 
     --check dep
-    local cantUninstall, dep = checkDependant(args[1])
-    if (not opts["no-dependencies-check"] and cantUninstall) then
-        printf("Cannot uninstall %s. One or more package (%s) depend on it.", args[1], dep)
-        os.exit(1)
+
+    if (not opts["no-dependencies-check"]) then
+        local cantUninstall, dep = checkDependant(args[1])
+        if (cantUninstall) then
+            printf("Cannot uninstall %s. One or more package (%s) depend on it.", args[1], dep)
+            os.exit(1)
+        end
     end
 
     printf("Uninstalling : %s", args[1])
@@ -365,7 +368,6 @@ elseif (mode == "uninstall") then
     if (manifest.configFiles) then
         for _, file in pairs(manifest.configFiles) do
             configFiles[file] = true
-            require("event").onError(file)
         end
     end
 
