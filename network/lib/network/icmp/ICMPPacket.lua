@@ -71,22 +71,15 @@ end
 
 --#endregion
 
+local PACK_FORMAT = "I1I1xxI4s"
+
 function ICMPPacket:pack()
-    return string.format("%.2x%.2x%.8x%s", self._type, self._code, self._param, self._payload)
+    return string.pack(PACK_FORMAT, self._type, self._code, self._param, self._payload)
 end
 
 ---@return ICMPPacket
 function ICMPPacket.unpack(val)
-    local o = "%x%x"
-    local patern = string.format("(%s)(%s)(%s)(%s)", o, o, o:rep(4), ".*")
-    local a, b, c, d = val:match(patern)
-    a = tonumber(a, 16);
-    assert(a)
-    b = tonumber(b, 16);
-    assert(b)
-    c = tonumber(c, 16);
-    assert(c)
-    return ICMPPacket(a, b, c, d)
+    return ICMPPacket(string.unpack(PACK_FORMAT, val))
 end
 
 return ICMPPacket

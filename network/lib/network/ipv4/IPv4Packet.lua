@@ -237,54 +237,29 @@ function IPv4Packet:getFragments(maxFragmentSize)
     return fragments
 end
 
+local PACK_FORMAT = "xI1I1I2I1I1I2I1I1xxI4I4s"
+
 function IPv4Packet:pack()
-    return string.format("%.2x%.2x%.4x%.4x%.2x%.4x%.2x%.2x%.8x%.8x%s",
-                         self:getDscp(), self:getEcn(), self:getLen(), self:getId(), self:getFlags(),
-                         self:getFragmentOffset(), self:getTtl(), self:getProtocol(),
-                         self:getSrc(), self:getDst(), self:getPayload())
+    return string.pack(PACK_FORMAT, self:getDscp(), self:getEcn(), self:getLen(), self:getId(), self:getFlags(), self:getFragmentOffset(), self:getTtl(), self:getProtocol(), self:getSrc(), self:getDst(), self:getPayload())
 end
 
 ---@param val string
 ---@return IPv4Packet
 function IPv4Packet.unpack(val)
     checkArg(1, val, 'string')
-    local o = "%x%x"
-    local patern = string.format("(%s)(%s)(%s)(%s)(%s)(%s)(%s)(%s)(%s)(%s)(%s)",
-                                 o,        --dscp
-                                 o,        --ecn
-                                 o:rep(2), --len
-                                 o:rep(2), --id
-                                 o,        --flags
-                                 o:rep(2), --fragmentOffset
-                                 o,        --ttl
-                                 o,        --protocol
-                                 o:rep(4), --src
-                                 o:rep(4), --dst
-                                 ".*"      --payload
-    )
-    local dscp, ecn, len, id, flags, fragmentOffset, ttl, protocol, src, dst, payload = val:match(patern)
 
-    dscp = tonumber(dscp, 16)
-    ecn = tonumber(ecn, 16)
-    len = tonumber(len, 16)
-    id = tonumber(id, 16)
-    flags = tonumber(flags, 16)
-    fragmentOffset = tonumber(fragmentOffset, 16)
-    ttl = tonumber(ttl, 16)
-    protocol = tonumber(protocol, 16)
-    src = tonumber(src, 16)
-    dst = tonumber(dst, 16)
-
-    assert(type(dscp) == "number");
-    assert(type(ecn) == "number");
-    assert(type(len) == "number");
-    assert(type(id) == "number");
-    assert(type(flags) == "number");
-    assert(type(fragmentOffset) == "number");
-    assert(type(ttl) == "number");
-    assert(type(protocol) == "number");
-    assert(type(src) == "number");
-    assert(type(dst) == "number")
+    local dscp, ecn, len, id, flags, fragmentOffset, ttl, protocol, src, dst, payload = string.unpack(PACK_FORMAT, val)
+    ---@cast dscp number
+    ---@cast ecn number
+    ---@cast len number
+    ---@cast id number
+    ---@cast flags number
+    ---@cast fragmentOffset number
+    ---@cast ttl number
+    ---@cast protocol number
+    ---@cast src number
+    ---@cast dst number
+    ---@cast payload string
 
     local packet = IPv4Packet(src, dst, payload, protocol)
     packet:setDscp(dscp)

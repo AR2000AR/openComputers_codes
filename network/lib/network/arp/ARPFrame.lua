@@ -53,23 +53,17 @@ setmetatable(ARPFrame, {
     end
 })
 
+local PACK_FORMAT = "I2I2xxI2sI4sI4"
+
 ---@return string
 function ARPFrame:pack()
-    return string.format("%x\0%x\0%x\0%s\0%s\0%s\0%s", self:getHtype(), self:getPtype(), self:getOper(), self:getSha(), self:getSpa(), self:getTha(), self:getTpa())
+    return string.pack(PACK_FORMAT, self:getHtype(), self:getPtype(), self:getOper(), self:getSha(), self:getSpa(), self:getTha(), self:getTpa())
 end
 
 ---@param arpString string
 ---@return ARPFrame
 function ARPFrame.unpack(arpString)
-    local htype, ptype, oper, sha, spa, tha, tpa = arpString:match("^(%x+)\0(%x+)\0(%x+)\0([^\0]+)\0([^\0]+)\0([^\0]+)\0([^\0]+)$")
-    htype = tonumber(htype, 16)
-    ptype = tonumber(ptype, 16)
-    oper = tonumber(oper, 16)
-    if (tonumber(sha)) then sha = tonumber(sha) end
-    if (tonumber(spa)) then spa = tonumber(spa) end
-    if (tonumber(tha)) then tha = tonumber(tha) end
-    if (tonumber(tpa)) then tpa = tonumber(tpa) end
-    return ARPFrame(htype, ptype, oper, sha, spa, tha, tpa)
+    return ARPFrame(string.unpack(PACK_FORMAT, arpString))
 end
 
 --#region getter/setter

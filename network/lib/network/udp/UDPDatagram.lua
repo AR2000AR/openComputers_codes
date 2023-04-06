@@ -56,21 +56,19 @@ function UDPDatagram:setPayload(value)
     self._payload = value
 end
 
+local PACK_FORMAT = "I2I2xxxxs"
+
 ---Prepare the packet for the next layer
 ---@return string
 function UDPDatagram:pack()
-    return string.format("%.4x%.4x%s", self:getSrcPort(), self:getDstPort(), self:getPayload())
+    return string.pack(PACK_FORMAT, self:getSrcPort(), self:getDstPort(), self:getPayload())
 end
 
 ---Get a udp packet from the string
 ---@param value string
 ---@return UDPDatagram
 function UDPDatagram.unpack(value)
-    local o = "%x%x"
-    local src, dst, payload = value:match(string.format("(%s)(%s)(%s)", o:rep(2), o:rep(2), ".*"))
-    src = tonumber(src, 16)
-    dst = tonumber(dst, 16)
-    return UDPDatagram(src, dst, payload)
+    return UDPDatagram(string.unpack(PACK_FORMAT, value))
 end
 
 return UDPDatagram
