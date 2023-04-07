@@ -1,23 +1,9 @@
-local shell         = require("shell")
-local filesystem    = require("filesystem")
-local tar           = require("tar")
-local uuid          = require("uuid")
-local os            = require("os")
-local io            = require("io")
-local serialization = require("serialization")
-
-
----@class manifest
----@field package string
----@field dependencies table
----@field configFiles table
----@field name string
----@field version string
----@field description string
----@field authors string
----@field note string
----@field hidden string
----@field repo string
+local shell        = require("shell")
+local filesystem   = require("filesystem")
+local tar          = require("tar")
+local os           = require("os")
+local io           = require("io")
+local pm           = require("pm")
 
 local RM_BLACKLIST = {
     ["/bin/"] = true,
@@ -34,9 +20,9 @@ local RM_BLACKLIST = {
     ["/usr/bin/"] = true,
 }
 
-local args, opts = shell.parse(...)
+local args, opts   = shell.parse(...)
 
-local f = string.format
+local f            = string.format
 
 local function printf(...)
     print(f(...))
@@ -56,49 +42,6 @@ local function printHelp()
     printf("\t--allow-same-version : allow a package of the same version to be used for to update the installed version")
 end
 
-local function cleanup(path)
-    filesystem.remove(path)
-end
-
----@return manifest
-local function getManifestFromInstalled(package)
-    local file = assert(io.open(f("/etc/pm/info/%s.manifest", package)))
-    ---@type manifest
-    local currentManifest = serialization.unserialize(file:read("a"))
-    file:close()
-    return currentManifest
-end
-
----Get the manifest from the package
----@param packagePath string
----@return manifest? manifest
----@return string? reason
----@return string? parserError
-local function getManifestFromPackage(packagePath)
-    checkArg(1, packagePath, "string")
-    packagePath = filesystem.canonical(packagePath)
-    local tmpPath = "/tmp/pm/"
-    if (not filesystem.exists(packagePath)) then return nil, "Invalid path" end
-    filesystem.makeDirectory("/tmp/pm/")
-    repeat
-        tmpPath = "/tmp/pm/" .. uuid.next()
-    until not filesystem.isDirectory(tmpPath)
-    filesystem.makeDirectory(tmpPath)
-    local ok, reason = tar.extract(packagePath, tmpPath, true, "CONTROL/manifest", nil, "CONTROL/")
-    local filepath = tmpPath .. "/manifest"
-
-    if (not filepath) then
-        return nil, f("Invalid package format")
-    end
-    local manifestFile = assert(io.open(filepath, "r"))
-    local manifest
-    manifest, reason = serialization.unserialize(manifestFile:read("a"))
-    if (not manifest) then
-        return nil, f("Invalid package manifest. Could not parse"), reason
-    end
-    cleanup(tmpPath)
-    return manifest
-end
 
 ---Extract the package tar and return the extracted path
 ---@param packagePath string
@@ -111,45 +54,6 @@ local function extractPackage(packagePath)
     return tar.extract(packagePath, "/", false, "DATA/", nil, "DATA/")
 end
 
----get the list of installed packages
----@param includeNonPurged? boolean
----@return table<string,manifest>
-local function getInstalled(includeNonPurged)
-    checkArg(1, includeNonPurged, 'boolean', 'nil')
-    local prefix = "%.files$"
-    if (includeNonPurged) then prefix = "%.manifest$" end
-    local installed = {}
-    for file in filesystem.list("/etc/pm/info/") do
-        local pacakgeName = file:match("(.+)" .. prefix)
-        if (pacakgeName) then
-            installed[pacakgeName] = getManifestFromInstalled(pacakgeName)
-        end
-    end
-    return installed
-end
-
----@param package string
----@return boolean installed, boolean notPurged
-local function isInstalled(package)
-    local installed = filesystem.exists(f("/etc/pm/info/%s.files", package))
-    local notPurged = filesystem.exists(f("/etc/pm/info/%s.manifest", package))
-    return installed and notPurged, notPurged
-end
-
----check if a install package depend of the package
----@return boolean,string?
-local function checkDependant(pacakge)
-    printf("Checking for package dependant of %s", pacakge)
-    for pkg, manifest in pairs(getInstalled(false)) do
-        ---@cast pkg string
-        ---@cast manifest manifest
-        if (manifest.dependencies and manifest.dependencies[pacakge]) then
-            return true, pkg
-        end
-    end
-    return false
-end
-
 local function rm(...)
     local cmd = f("rm -f %s", table.concat({...}, " "))
     if (opts["dry-run"]) then
@@ -160,7 +64,7 @@ local function rm(...)
 end
 
 local function rmdir(...)
-    local cmd = f("rmdir %s", table.concat({...}, " "))
+    local cmd = f("rmdir -q %s", table.concat({...}, " "))
     if (opts["dry-run"]) then
         print(cmd)
     else
@@ -187,14 +91,14 @@ if (mode == "info") then
     if (args[1]:match("%.tar$")) then
         args[1] = shell.resolve(args[1])
         local r, rr
-        manifest, r, rr = getManifestFromPackage(args[1])
+        manifest, r, rr = pm.getManifestFromPackage(args[1])
         if (not manifest) then
             printf("Error : %s, %s", r, rr or "")
             os.exit(1)
         end
     else
-        if (isInstalled(args[1])) then
-            manifest = getManifestFromInstalled(args[1])
+        if (pm.isInstalled(args[1])) then
+            manifest = pm.getManifestFromInstalled(args[1])
         else
             printf("Could not find package named %q", args[1])
             os.exit(1)
@@ -214,9 +118,9 @@ if (mode == "info") then
     end
     os.exit(0)
 elseif (mode == "list-installed") then
-    for name, manifest in pairs(getInstalled(opts["include-removed"])) do
+    for name, manifest in pairs(pm.getInstalled(opts["include-removed"])) do
         if (opts["include-removed"]) then
-            local installed, removed = isInstalled(name)
+            local installed, removed = pm.isInstalled(name)
             local label = "installed"
             if (not installed and removed) then label = "config remaining" end
             printf("%s (%s) [%s]", name, manifest.version, label)
@@ -229,15 +133,15 @@ elseif (mode == "install") then
     args[1] = shell.resolve(args[1])
 
     --get the manifest from the package
-    local manifest, r, rr = getManifestFromPackage(args[1])
+    local manifest, r, rr = pm.getManifestFromPackage(args[1])
     if (not manifest) then
         printf("Invalid package")
         os.exit(1)
     end
 
     --check if the package is already installed
-    if (isInstalled(manifest.package)) then
-        local currentManifest = getManifestFromInstalled(manifest.package)
+    if (pm.isInstalled(manifest.package)) then
+        local currentManifest = pm.getManifestFromInstalled(manifest.package)
         if (manifest.version == "oppm" or currentManifest.version == "oppm") then
             --do nothing. We force reinstallation for oppm since there is no version number
         elseif (manifest.version == currentManifest.version and not opts["allow-same-version"]) then
@@ -252,13 +156,13 @@ elseif (mode == "install") then
     --check the pacakge's dependencies
     if (manifest.dependencies) then
         for dep, version in pairs(manifest.dependencies) do
-            if (not isInstalled(dep)) then
+            if (not pm.isInstalled(dep)) then
                 printf("Missing dependencie : %s (%s)", dep, version)
                 os.exit(1)
             end
             local compType = version:match("^[<>=]") or ">"
             version = version:match("%d.*$")
-            local installedVersion = getManifestFromInstalled(dep).version
+            local installedVersion = pm.getManifestFromInstalled(dep).version
             if (installedVersion == "oppm") then
                 printf("Warning : %s is using a oppm version. Cannot determine real installed version", dep)
             else
@@ -291,7 +195,7 @@ elseif (mode == "install") then
     end
 
     local installedFiles = {}
-    if (isInstalled(manifest.package)) then
+    if (pm.isInstalled(manifest.package)) then
         local installedFileListFile = assert(io.open(f("/etc/pm/info/%s.files", manifest.package)))
         for file in installedFileListFile:lines() do
             installedFiles[file] = true
@@ -311,7 +215,7 @@ elseif (mode == "install") then
     end
 
     --uninstall old version. It's easier than to check wich file need to be deleted
-    if (isInstalled(manifest.package)) then
+    if (pm.isInstalled(manifest.package)) then
         print("Unistalling currently installed version")
         shell.execute(f("pm uninstall %q --no-dependencies-check", manifest.package))
     end
@@ -344,17 +248,17 @@ elseif (mode == "install") then
     --cleanup(extracted)
 elseif (mode == "uninstall") then
     --check if the package exists
-    if (not isInstalled(args[1])) then
+    if (not pm.isInstalled(args[1])) then
         printf("Package %q is not installed", args[1])
         os.exit(0)
     end
 
-    local manifest = getManifestFromInstalled(args[1])
+    local manifest = pm.getManifestFromInstalled(args[1])
 
     --check dep
 
     if (not opts["no-dependencies-check"]) then
-        local cantUninstall, dep = checkDependant(args[1])
+        local cantUninstall, dep = pm.checkDependant(args[1])
         if (cantUninstall) then
             printf("Cannot uninstall %s. One or more package (%s) depend on it.", args[1], dep)
             os.exit(1)

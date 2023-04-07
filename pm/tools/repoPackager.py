@@ -53,7 +53,7 @@ def makePackage(packageInfo, source=None, outputDirectory='./packages/'):
             for dep in packageInfo["dependencies"]:
                 if not "dependencies" in manifest:
                     manifest["dependencies"] = {}
-                manifest["dependencies"][dep] = "0"
+                manifest["dependencies"][dep] = "oppm"
 
         # copy the required files
         if "files" in packageInfo:
@@ -91,6 +91,8 @@ def makePackage(packageInfo, source=None, outputDirectory='./packages/'):
         with tarfile.open(pathlib.Path(outputDirectory, f"{packageName}_({version}).tar"), 'w') as tar:
             tar.add(tmpDir+"/CONTROL", arcname="CONTROL")
             tar.add(tmpDir+'/DATA/', arcname="DATA")
+        manifest["archiveName"] = f"{packageName}_({version}).tar"
+        return manifest
 
 
 if __name__ == '__main__':
@@ -126,6 +128,12 @@ if __name__ == '__main__':
 
     data = lua.decode(raw)
 
+    repoManifest = {}
     for packageName, packageInfo in data.items():
         if len(args) == 0 or packageName in args:
-            makePackage(packageInfo, outputDirectory=outputDirectory)
+            packageManifest = makePackage(
+                packageInfo, outputDirectory=outputDirectory)
+            repoManifest[packageManifest["package"]] = packageManifest
+
+    with open(pathlib.Path(outputDirectory, "manifest"), "w") as repoManifestFile:
+        repoManifestFile.write(lua.encode(repoManifest))
