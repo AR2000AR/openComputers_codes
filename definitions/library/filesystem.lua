@@ -158,7 +158,7 @@ local file
 ---Important*: it is generally recommended to use io.open instead of this function, to get a buffered wrapper for the file stream.\
 ---When opening files directly via the file system API you will get a file stream, a table with four functions. These functions are thin wrappers to the file system proxy's callbacks, which also means that read/write operations are not buffered, and can therefore be slow when reading few bytes often. You'll usually want to use io.open instead.
 ---@param path string
----@param mode string
+---@param mode readmode
 ---@return FileHandler|nil fileHandler, string|nil reason
 function filesystem.open(path, mode)
 end
