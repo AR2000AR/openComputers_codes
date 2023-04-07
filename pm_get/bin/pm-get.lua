@@ -55,35 +55,6 @@ local function getSources()
     return sources
 end
 
-local function update()
-    local repos = getSources()
-    local manifests = {}
-    for _, repoURL in pairs(repos) do
-        printf("Found repository : %s", repoURL)
-        local request = internet.request(repoURL .. "/manifest")
-        local ready, pcalled = false, nil
-        repeat
-            pcalled, ready = pcall(request.finishConnect, request)
-        until pcalled == false or ready == true
-        if (not pcalled) then
-            printferr("Could not get manifest from %s", repoURL)
-        end
-        local data = ""
-        repeat
-            local read = request.read()
-            if (read) then data = data .. read end
-        until not read
-        request.close()
-        pcalled, data = pcall(serialization.unserialize, data)
-        if (pcalled == false) then
-            printferr("Invalid manifest for %s", repoURL)
-        else
-            manifests[repoURL] = data
-        end
-    end
-    io.open(REPO_MANIFEST_CACHE, "w"):write(serialization.serialize(manifests)):close()
-end
-
 ---@return table<string,table<string,manifest>>
 local function getRepoList()
     if (not reposRuntimeCache) then
@@ -248,6 +219,47 @@ local function install(package, markAuto, buildDepTree)
     return code
 end
 
+local function update()
+    local repos = getSources()
+    local manifests = {}
+    for _, repoURL in pairs(repos) do
+        printf("Found repository : %s", repoURL)
+        local request = internet.request(repoURL .. "/manifest")
+        local ready, pcalled = false, nil
+        repeat
+            pcalled, ready = pcall(request.finishConnect, request)
+        until pcalled == false or ready == true
+        if (not pcalled) then
+            printferr("Could not get manifest from %s", repoURL)
+        end
+        local data = ""
+        repeat
+            local read = request.read()
+            if (read) then data = data .. read end
+        until not read
+        request.close()
+        pcalled, data = pcall(serialization.unserialize, data)
+        if (pcalled == false) then
+            printferr("Invalid manifest for %s", repoURL)
+        else
+            manifests[repoURL] = data
+        end
+    end
+    io.open(REPO_MANIFEST_CACHE, "w"):write(serialization.serialize(manifests)):close()
+end
+
+local function printHelp()
+    printf("pm-get [opts] <mode> [args]")
+    printf("mode :")
+    printf("\tinstall <packageFile>")
+    printf("\tuninstall <packageName>")
+    printf("\tinfo <packageName>|<packageFile>")
+    printf("\tlist")
+    printf("opts :")
+    printf("\t--autoremove : also remove dependencies non longer required")
+    printf("\t--purge : purge removed packages")
+end
+
 --=============================================================================
 
 if (component.isAvailable("internet")) then
@@ -320,9 +332,11 @@ elseif (mode == "uninstall") then
     end
     --TODO : ask for confirmation
     --uninstallation
-    shell.execute(f("pm uninstall %s", args[1]))
+    local options = ""
+    if (opts.purge) then options = options .. " --purge" end
+    shell.execute(f("pm uninstall %s %s", options, args[1]))
     for _, dep in pairs(oldDep) do
-        shell.execute(f("pm uninstall %s", dep))
+        shell.execute(f("pm uninstall %s %s", options, dep))
     end
     markManual(args[1])
 elseif (mode == "autoremove") then
@@ -336,10 +350,12 @@ elseif (mode == "autoremove") then
     end
     --TODO : ask for confirmation
     --uninstallation
+    local options = ""
+    if (opts.purge) then options = options .. " --purge" end
     for _, dep in pairs(oldDep) do
-        shell.execute(f("pm uninstall %s", dep))
-        markManual(dep)
+        shell.execute(f("pm uninstall %s %s", options, dep))
     end
+    markManual(args[1])
 elseif (mode == "upgrade") then
     local installed = pm.getInstalled(false)
     local toUpgrade = {}
@@ -357,4 +373,8 @@ elseif (mode == "upgrade") then
     for _, pkg in pairs(toUpgrade) do
         install(pkg, false)
     end
+else
+    printHelp()
+    os.exit(0)
 end
+os.exit(0)
