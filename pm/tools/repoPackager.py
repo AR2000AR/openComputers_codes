@@ -88,10 +88,11 @@ def makePackage(packageInfo, source=None, outputDirectory='./packages/'):
             file.write(lua.encode(manifest))
 
         version = manifest["version"]
-        with tarfile.open(pathlib.Path(outputDirectory, f"{packageName}_({version}).tar"), 'w') as tar:
+        # manifest["archiveName"] = f"{packageName}_({version}).tar"
+        manifest["archiveName"] = f"{packageName}.tar"
+        with tarfile.open(pathlib.Path(outputDirectory, manifest["archiveName"]), 'w') as tar:
             tar.add(tmpDir+"/CONTROL", arcname="CONTROL")
             tar.add(tmpDir+'/DATA/', arcname="DATA")
-        manifest["archiveName"] = f"{packageName}_({version}).tar"
         return manifest
 
 

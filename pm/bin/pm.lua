@@ -145,10 +145,10 @@ elseif (mode == "install") then
         if (manifest.version == "oppm" or currentManifest.version == "oppm") then
             --do nothing. We force reinstallation for oppm since there is no version number
         elseif (manifest.version == currentManifest.version and not opts["allow-same-version"]) then
-            print("Already installed")
+            printf("Package %q is already installed", manifest.package)
             os.exit(0)
-        elseif (compareVersion(currentManifest.version, manifest.version)) then --downgrade
-            print("Cannot downgrade package")
+        elseif (compareVersion(currentManifest.version, manifest.version) and not opts["allow-same-version"]) then --downgrade
+            printf("Cannot downgrade package %q", manifest.package)
             os.exit(1)
         end
     end

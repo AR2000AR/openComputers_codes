@@ -114,12 +114,12 @@ end
 ---@return string? data, string? reason
 local function wget(url)
     local request = internet.request(url)
-    local pcalled, ready
+    local ready, reason
     repeat
-        pcalled, ready = pcall(request.finishConnect, request)
-    until pcalled == false or ready == true
-    if (pcalled == false) then
-        return nil, "Could not connect to " .. url
+        ready, reason = request.finishConnect()
+    until ready or reason
+    if (not ready) then
+        return nil, reason
     end
     local data = ""
     repeat
@@ -225,12 +225,12 @@ local function update()
     for _, repoURL in pairs(repos) do
         printf("Found repository : %s", repoURL)
         local request = internet.request(repoURL .. "/manifest")
-        local ready, pcalled = false, nil
+        local ready, reason
         repeat
-            pcalled, ready = pcall(request.finishConnect, request)
-        until pcalled == false or ready == true
-        if (not pcalled) then
-            printferr("Could not get manifest from %s", repoURL)
+            ready, reason = request.finishConnect()
+        until ready or reason
+        if (not ready) then
+            printferr("Could not get manifest from %s\ns", repoURL, reason)
         end
         local data = ""
         repeat
@@ -238,6 +238,7 @@ local function update()
             if (read) then data = data .. read end
         until not read
         request.close()
+        local pcalled
         pcalled, data = pcall(serialization.unserialize, data)
         if (pcalled == false) then
             printferr("Invalid manifest for %s", repoURL)
