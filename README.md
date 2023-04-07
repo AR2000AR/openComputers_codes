@@ -22,11 +22,35 @@ $ instgen AR2000AR/openComputers_codes <floppy path>
 With the floppy in the machine run `install`. No internet card is required.
 
 ---
+## Network
+Yes, yes, I know. Yet a other network stack. Why use it when [minitel](https://github.com/ShadowKatStudios/OC-Minitel/tree/master/) or [network](https://github.com/OpenPrograms/Magik6k-Programs/tree/master/network) are a thing. No reason really, except that my version called `osinetwork` is close the the reals RFCs. It implement Ethernet, ARP, ICMP, IPV4, and UDP.
+
+### [osinetwork](network/)
+The main package. It provide the network stack and surrounding utilities. Provide a `socket` library using the same interface as `luasocket`
+
+### [dns_common](dns_common/)
+Common files for dns resolution
+
+### [dns_server](dns_server/)
+DNS server as a rc daemon.
+
+### [nslookup](nslookup/)
+Command line tool for dns resolution
+
+---
+## PM Package manager
+`oppm` is good. No denying it. But it has it's limitations. The main one for me : requiring a github repository (ironic I know).\
+To fix this issue, I created a package format using tar as container.
+
+### [pm](pm/)
+The package manager. Install, uninstall and keep track of installed packages.
+
+---
 ## Banking system
 The bank is made of 2 main part : the server and a client. The client can be an ATM or a app to manage accounts.
 
-### Main apps
-#### [bank_server](bank_server/)
+## Main apps
+### [bank_server](bank_server/)
 The main server hosting every files needed for the system to work.
 The opp package provide tools to help setting up clients who need the secret
 
@@ -42,12 +66,13 @@ Let users create a bank account and create a new debit card.
 ### [vending](vending/)
 A automatic vending machine. Install it on a normal computer with a transposer. Accept coins ([libCoin](libCoin)) items and debit card ([libCB](libCB)/[bank_api](bank_api)).
 
-### Library and API
 
-#### [bank_api](bank_api/)
+## Library and API
+
+### [bank_api](bank_api/)
 Enable the programs to make requests to the server.
 
-#### [libCB](libCB/)
+### [libCB](libCB/)
 Read and write debit card on an unmanaged floppy.
 **new** Debit card can be a magnetic card from [open security](https://www.curseforge.com/minecraft/mc-mods/opensecurity)
 
@@ -87,7 +112,7 @@ Let you mount a "decrypted" version of the disk for easy file manipulation.
 ## Additional library
 
 ### [libClass](libClass/)
-add object oriented programing to lua.
+add object oriented programming to lua.
 
 ### [libGUI](libGUI/)
 draw graphical element on screen. Use a widget system based on libClass.

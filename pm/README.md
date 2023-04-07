@@ -7,7 +7,7 @@ Package manager for OpenOS. Use tar archive as package container
 ## Usage
 
 **Install a package :**\
-`pm install [--dry-run] package.tar`\
+`pm install [--dry-run] [--allow-same-version] package.tar`\
 **Uninstall a package**\
 `pm uninstall [--purge] [--dry-run] pakageName`\
 **List installed packages :**\
@@ -69,6 +69,9 @@ Hide the package from package managers's install candidate list
 URL to the source code
 
 ## Packaging a application
+### Manually
 - Create a folder with the same file structure as describe above
 - Write the package manifest's file
 - Create a tar archive with the tool of your choice. For example, while being the the folder, do `tar -c -f ../mypackage.tar *`
+### From a cloned oppm repo
+- Call the [repoPackager.py](tools/repoPackager.py) from the terminal while in the repository. If the default settings don't fit your need, call it with the `-h` option to see what can be changed.
