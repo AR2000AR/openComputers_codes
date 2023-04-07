@@ -294,7 +294,7 @@ end
 
 local run = true
 local event_interrupted = event.listen("interrupted", function()
-end)
+end) --[[@as number]]
 
 --main
 while (run) do
