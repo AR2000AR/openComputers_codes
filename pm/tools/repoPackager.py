@@ -24,6 +24,11 @@ def printUsage():
     print("\t-d|--destination <path> : path to output the pacakges. Default is \"./packages/\"")
 
 
+def removeMetadata(tarObject):
+    tarObject.mtime = 0
+    return tarObject
+
+
 def makePackage(packageInfo, source=None, outputDirectory='./packages/'):
     with tempfile.TemporaryDirectory(prefix="packager.") as tmpDir:
         os.mkdir(tmpDir+"/CONTROL/")
@@ -91,8 +96,9 @@ def makePackage(packageInfo, source=None, outputDirectory='./packages/'):
         # manifest["archiveName"] = f"{packageName}_({version}).tar"
         manifest["archiveName"] = f"{packageName}.tar"
         with tarfile.open(pathlib.Path(outputDirectory, manifest["archiveName"]), 'w') as tar:
-            tar.add(tmpDir+"/CONTROL", arcname="CONTROL")
-            tar.add(tmpDir+'/DATA/', arcname="DATA")
+            tar.add(tmpDir+"/CONTROL", arcname="CONTROL",
+                    filter=removeMetadata)
+            tar.add(tmpDir+'/DATA/', arcname="DATA", filter=removeMetadata)
         return manifest
 
 
