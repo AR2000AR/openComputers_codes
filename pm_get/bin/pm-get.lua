@@ -14,7 +14,7 @@ local CONFIG_DIR          = "/etc/pm/"       --share the config directory with t
 local SOURCE_FILE         = CONFIG_DIR .. "sources.list"
 local SOURCE_DIR          = SOURCE_FILE .. ".d/"
 local REPO_MANIFEST_CACHE = CONFIG_DIR .. "manifests.cache"
-local AUTO_INSTALLED      = CONFIG_DIR .. "automaticlyInstalled"
+local AUTO_INSTALLED      = CONFIG_DIR .. "autoInstalled"
 
 --=============================================================================
 
@@ -270,6 +270,7 @@ local function printHelp()
     printf("\tuninstall <packageName>")
     printf("\tinfo <packageName>|<packageFile>")
     printf("\tlist")
+    printf("\tsources list|add [new source url]")
     printf("opts :")
     printf("\t--autoremove : also remove dependencies non longer required")
     printf("\t--purge : purge removed packages")
