@@ -12,7 +12,7 @@ local internet
 local DOWNLOAD_DIR        = "/home/.pm-get/" --can't use /tmp as some archive can be bigger than the tmpfs
 local CONFIG_DIR          = "/etc/pm/"       --share the config directory with the rest of the package manager
 local SOURCE_FILE         = CONFIG_DIR .. "sources.list"
-local SOURCE_DIR          = CONFIG_DIR .. SOURCE_FILE .. ".d/"
+local SOURCE_DIR          = SOURCE_FILE .. ".d/"
 local REPO_MANIFEST_CACHE = CONFIG_DIR .. "manifests.cache"
 local AUTO_INSTALLED      = CONFIG_DIR .. "automaticlyInstalled"
 
@@ -40,23 +40,35 @@ local function getSources()
     if (filesystem.exists(SOURCE_FILE) and not filesystem.isDirectory(SOURCE_FILE)) then
         file = assert(io.open(SOURCE_FILE))
         for url in file:lines() do
-            table.insert(sources, url)
+            if (not url:sub(1, 1) ~= "#") then
+                table.insert(sources, url)
+            end
         end
         file:close()
     end
-    if (not filesystem.isDirectory(SOURCE_DIR)) then return sources end
-    for fileName in filesystem.list(SOURCE_DIR) do
-        file = assert(io.open(SOURCE_DIR .. fileName))
-        for url in file:lines() do
-            table.insert(sources, url)
+    if (filesystem.isDirectory(SOURCE_DIR)) then
+        for fileName in filesystem.list(SOURCE_DIR) do
+            if (fileName:match("%.list")) then
+                file = assert(io.open(SOURCE_DIR .. fileName))
+                for url in file:lines() do
+                    if (not url:sub(1, 1) ~= "#") then
+                        table.insert(sources, 1, url)
+                    end
+                end
+                file:close()
+            end
         end
-        file:close()
+    end
+    for i, url in pairs(sources) do
+        if (url:match("^https://github.com/")) then
+            sources[i] = url:gsub("https://github.com/", "https://raw.githubusercontent.com/"):gsub("/tree/", "/"):gsub("/blob/", "/")
+        end
     end
     return sources
 end
 
 ---@return table<string,table<string,manifest>>
-local function getRepoList()
+local function getPackageList()
     if (not reposRuntimeCache) then
         if (not filesystem.exists(REPO_MANIFEST_CACHE)) then
             printferr("No data. Run `pm-get upddate` or add repositorys")
@@ -74,7 +86,7 @@ end
 ---@param targetRepo? string
 ---@return manifest? manifest, string? originRepo
 local function getPacket(name, targetRepo)
-    for repoName, repo in pairs(getRepoList()) do
+    for repoName, repo in pairs(getPackageList()) do
         if (not targetRepo or repoName == targetRepo) then
             if (repo[name]) then
                 return repo[name], repoName
@@ -223,7 +235,6 @@ local function update()
     local repos = getSources()
     local manifests = {}
     for _, repoURL in pairs(repos) do
-        printf("Found repository : %s", repoURL)
         local request = internet.request(repoURL .. "/manifest")
         local ready, reason
         repeat
@@ -231,19 +242,22 @@ local function update()
         until ready or reason
         if (not ready) then
             printferr("Could not get manifest from %s\ns", repoURL, reason)
-        end
-        local data = ""
-        repeat
-            local read = request.read()
-            if (read) then data = data .. read end
-        until not read
-        request.close()
-        local pcalled
-        pcalled, data = pcall(serialization.unserialize, data)
-        if (pcalled == false) then
-            printferr("Invalid manifest for %s", repoURL)
+            request.close()
         else
-            manifests[repoURL] = data
+            printf("Found repository : %s", repoURL)
+            local data = ""
+            repeat
+                local read = request.read()
+                if (read) then data = data .. read end
+            until not read
+            request.close()
+            local pcalled
+            pcalled, data = pcall(serialization.unserialize, data)
+            if (pcalled == false) then
+                printferr("Invalid manifest for %s", repoURL)
+            else
+                manifests[repoURL] = data
+            end
         end
     end
     io.open(REPO_MANIFEST_CACHE, "w"):write(serialization.serialize(manifests)):close()
@@ -287,7 +301,7 @@ if (mode == "update") then
     update()
 elseif (mode == "list") then
     args[1] = args[1] or ".*"
-    for repoName, repo in pairs(getRepoList()) do
+    for repoName, repo in pairs(getPackageList()) do
         for package, manifest in pairs(repo) do
             if (package:match("^" .. args[1])) then
                 printf("%s (%s)", package, manifest.version)
@@ -373,6 +387,19 @@ elseif (mode == "upgrade") then
     end
     for _, pkg in pairs(toUpgrade) do
         install(pkg, false)
+    end
+elseif (mode == "sources") then
+    if (args[1] == "list") then
+        local sources = getSources()
+        for _, s in pairs(sources) do
+            print(s)
+        end
+    elseif (args[1] == "add" and args[2]) then
+        --TODO check if exists
+        filesystem.makeDirectory(SOURCE_DIR)
+        assert(io.open(SOURCE_DIR .. "/custom.list", "a")):write(args[2] .. "\n"):close()
+    else
+        print("pm-get sources add|list")
     end
 else
     printHelp()

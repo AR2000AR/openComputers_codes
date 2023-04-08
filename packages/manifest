@@ -1,0 +1,340 @@
+{
+	["bank_api"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "bank_api",
+		["version"] = "oppm",
+		["name"] = "Bank API",
+		["repo"] = "tree/master/bank_api",
+		["description"] = "API used to send request to the bank server",
+		["note"] = "You will need to set the server address",
+		["authors"] = "AR2000AR",
+		["archiveName"] = "bank_api.tar"
+	},
+	["libcb"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "libcb",
+		["version"] = "oppm",
+		["name"] = "libCB",
+		["repo"] = "tree/master/libCB",
+		["description"] = "library used to read and write CB",
+		["note"] = "CB are unmanaged floppies",
+		["authors"] = "AR2000AR",
+		["archiveName"] = "libcb.tar"
+	},
+	["bank_dev_tools"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "bank_dev_tools",
+		["version"] = "oppm",
+		["name"] = "bank_dev_tools",
+		["repo"] = "tree/master/bank_dev_tools",
+		["description"] = "collection of tools used to help in the bank software development",
+		["note"] = "DEV ONLY",
+		["authors"] = "AR2000AR",
+		["archiveName"] = "bank_dev_tools.tar"
+	},
+	["bank_server"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "bank_server",
+		["version"] = "oppm",
+		["name"] = "Bank server",
+		["repo"] = "tree/master/bank_server",
+		["description"] = "The bank server service",
+		["note"] = "enable it with the rc command",
+		["authors"] = "AR2000AR",
+		["dependencies"] = 	{
+			["libcb"] = "oppm"
+		},
+		["archiveName"] = "bank_server.tar"
+	},
+	["libgui"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "libgui",
+		["version"] = "oppm",
+		["name"] = "libGUI",
+		["repo"] = "tree/master/libGUI",
+		["description"] = "library used to create gui \n The library can load \"pam\" images",
+		["note"] = "transparency in pam image isn't fully supported. Only fully transparent pixel are recognized as such",
+		["authors"] = "AR2000AR",
+		["dependencies"] = 	{
+			["libclass"] = "oppm"
+		},
+		["archiveName"] = "libgui.tar"
+	},
+	["libgui_extra"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "libgui_extra",
+		["version"] = "oppm",
+		["name"] = "libGUI-extra",
+		["repo"] = "tree/master/libGUI-extra",
+		["description"] = "more widgets for the libGUI",
+		["authors"] = "AR2000AR, thofi",
+		["dependencies"] = 	{
+			["libgui"] = "oppm"
+		},
+		["archiveName"] = "libgui_extra.tar"
+	},
+	["bank_client"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "bank_client",
+		["version"] = "oppm",
+		["name"] = "bank client app",
+		["repo"] = "tree/master/bank_client",
+		["description"] = "The client app for the banker",
+		["note"] = "WIP",
+		["authors"] = "AR2000AR, thofi",
+		["dependencies"] = 	{
+			["libgui"] = "oppm",
+			["libgui_extra"] = "oppm",
+			["bank_api"] = "oppm",
+			["libcb"] = "oppm"
+		},
+		["archiveName"] = "bank_client.tar"
+	},
+	["item_id_catcher"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "item_id_catcher",
+		["version"] = "oppm",
+		["name"] = "itemIdCatcher",
+		["repo"] = "tree/master/itemIdCatcher",
+		["description"] = "Write id of item in the chest on the top to a file",
+		["note"] = "item are moved to a other chest",
+		["authors"] = "AR2000AR",
+		["archiveName"] = "item_id_catcher.tar"
+	},
+	["libclass"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "libclass",
+		["version"] = "oppm",
+		["name"] = "libClass",
+		["repo"] = "tree/master/libClass",
+		["description"] = "Class library for lua",
+		["authors"] = "AR2000AR",
+		["archiveName"] = "libclass.tar"
+	},
+	["libcoin"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "libcoin",
+		["version"] = "oppm",
+		["name"] = "libCoin",
+		["repo"] = "tree/master/libCoin",
+		["description"] = "small library used to moved coins from ordinarycoins from one chest to a other",
+		["authors"] = "AR2000AR",
+		["archiveName"] = "libcoin.tar"
+	},
+	["bank_atm"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "bank_atm",
+		["version"] = "oppm",
+		["name"] = "bank atm",
+		["repo"] = "tree/master/bank_atm",
+		["description"] = "atm that work with my bank server",
+		["authors"] = "AR200AR",
+		["dependencies"] = 	{
+			["libgui"] = "oppm",
+			["bank_api"] = "oppm",
+			["libcb"] = "oppm",
+			["libcoin"] = "oppm",
+			["libgui_extra"] = "oppm"
+		},
+		["archiveName"] = "bank_atm.tar"
+	},
+	["door_ctrl"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "door_ctrl",
+		["version"] = "oppm",
+		["name"] = "Door controller",
+		["repo"] = "tree/master/doorCtrl",
+		["description"] = "Controll your doors with multiple redstone io block",
+		["authors"] = "AR2000AR",
+		["dependencies"] = 	{
+			["libgui"] = "oppm",
+			["libclass"] = "oppm"
+		},
+		["configFiles"] = 	{
+			"/etc/doorCtrl.conf"
+		},
+		["archiveName"] = "door_ctrl.tar"
+	},
+	["autocrafter"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "autocrafter",
+		["version"] = "oppm",
+		["name"] = "AutoCrafter",
+		["repo"] = "tree/master/autocrafter",
+		["description"] = "User a robot linked via a linked card to craft item from a inventory",
+		["authors"] = "AR200AR",
+		["archiveName"] = "autocrafter.tar"
+	},
+	["stargate"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "stargate",
+		["version"] = "oppm",
+		["name"] = "Stargate Ctl",
+		["repo"] = "tree/master/stargate_crl",
+		["description"] = "GUI to controll stargates from SGCraft",
+		["authors"] = "AR2000AR",
+		["archiveName"] = "stargate.tar"
+	},
+	["vending"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "vending",
+		["version"] = "oppm",
+		["name"] = "Vending",
+		["repo"] = "tree/master/vending",
+		["description"] = "Vending machine program compatible with libCoin and bank_api",
+		["authors"] = "AR2000AR",
+		["dependencies"] = 	{
+			["libCoin"] = "oppm",
+			["bank_api"] = "oppm"
+		},
+		["archiveName"] = "vending.tar"
+	},
+	["bank_account_maker"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "bank_account_maker",
+		["version"] = "oppm",
+		["name"] = "Account maker",
+		["repo"] = "tree/master/account_maker",
+		["description"] = "Machine to create one account per player and dispense a credit card",
+		["authors"] = "AR2000AR",
+		["dependencies"] = 	{
+			["bank_api"] = "oppm"
+		},
+		["archiveName"] = "bank_account_maker.tar"
+	},
+	["lnfsc"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "lnfsc",
+		["version"] = "oppm",
+		["name"] = "Lua Network File System Client",
+		["repo"] = "tree/master/lnfs",
+		["description"] = "Let you mount a files ystem hosted by a other computer using lnfss and use it as if it was a local file system",
+		["authors"] = "AR2000AR",
+		["archiveName"] = "lnfsc.tar"
+	},
+	["lnfss"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "lnfss",
+		["version"] = "oppm",
+		["name"] = "Lua Network File System Server",
+		["repo"] = "tree/master/lnfs",
+		["description"] = "Share your local file system with other computers. Root folder is configurable in rc.cfg",
+		["authors"] = "AR2000AR",
+		["archiveName"] = "lnfss.tar"
+	},
+	["instgen"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "instgen",
+		["version"] = "oppm",
+		["name"] = "Repo installer",
+		["repo"] = "tree/master/repo-installer",
+		["description"] = "A set of tools for making installable floppies for OpenComputers from OPPM repositories.",
+		["authors"] = "Izaya, AR2000AR",
+		["archiveName"] = "instgen.tar"
+	},
+	["crypttool"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "crypttool",
+		["version"] = "oppm",
+		["name"] = "CryptTool",
+		["repo"] = "tree/master/crypttol",
+		["description"] = "Remount a filesystem and store everything as encrypted data. Use managed (default) floppy or HDD",
+		["authors"] = "AR2000AR",
+		["archiveName"] = "crypttool.tar"
+	},
+	["osinetwork"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "osinetwork",
+		["version"] = "oppm",
+		["name"] = "OSI Network stack",
+		["repo"] = "tree/master/network",
+		["description"] = "A close to official rfc emulation of the OSI layers for OpenOS. Include Ethernet, ARP, ICMP, UDP. Also provide a luasocket libe librairy",
+		["note"] = "Are provided : ping, ifup, ifdown, arp, nc, netstat. Any one of theses tools may be moved to a separate package at any time",
+		["authors"] = "AR2000AR",
+		["configFiles"] = 	{
+			"/etc/network/interfaces"
+		},
+		["archiveName"] = "osinetwork.tar"
+	},
+	["dns_common"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "dns_common",
+		["version"] = "oppm",
+		["name"] = "DNS common files",
+		["repo"] = "tree/master/dns_common",
+		["description"] = "basic files used by the dns server as well as the resolver library",
+		["authors"] = "AR2000AR",
+		["dependencies"] = 	{
+			["osinetwork"] = "oppm"
+		},
+		["configFiles"] = 	{
+			"/etc/resolv.conf"
+		},
+		["archiveName"] = "dns_common.tar"
+	},
+	["dns_server"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "dns_server",
+		["version"] = "oppm",
+		["name"] = "DNS server daemon",
+		["repo"] = "tree/master/dns_server",
+		["description"] = "this package provide the dns server",
+		["authors"] = "AR2000AR",
+		["dependencies"] = 	{
+			["dns_common"] = "oppm"
+		},
+		["archiveName"] = "dns_server.tar"
+	},
+	["nslookup"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "nslookup",
+		["version"] = "oppm",
+		["name"] = "nslookup",
+		["repo"] = "tree/master/nslookup",
+		["description"] = "cmd line tool to querry a name server",
+		["authors"] = "AR2000AR",
+		["dependencies"] = 	{
+			["dns_common"] = "oppm"
+		},
+		["archiveName"] = "nslookup.tar"
+	},
+	["libtar"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "libtar",
+		["version"] = "1.1.0",
+		["name"] = "libtar",
+		["repo"] = "tree/master/tar",
+		["description"] = "Librairy to extract and list the content of tar archive",
+		["authors"] = "AR2000AR, luarock",
+		["archiveName"] = "libtar.tar"
+	},
+	["pm"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "pm",
+		["version"] = "1.2.2",
+		["name"] = "pm Package Manager",
+		["repo"] = "tree/master/pm",
+		["description"] = "Package manager for OpenOS",
+		["authors"] = "AR2000AR",
+		["dependencies"] = 	{
+			["libtar"] = "oppm"
+		},
+		["archiveName"] = "pm.tar"
+	},
+	["pm_get"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "pm_get",
+		["version"] = "1.2.0",
+		["name"] = "pm get",
+		["repo"] = "tree/master/pm",
+		["description"] = "Download and install package for pm",
+		["authors"] = "AR2000AR",
+		["dependencies"] = 	{
+			["pm"] = "oppm"
+		},
+		["configFiles"] = 	{
+			"/etc/pm/sources.list"
+		},
+		["archiveName"] = "pm_get.tar"
+	}
+}

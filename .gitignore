@@ -4,3 +4,4 @@ updateFiles.bat
 libGUI/libGUI/widget/Keypad.lua
 /misc/
 /pm/testpackages
+/packages/.prop
