@@ -48,7 +48,7 @@ local function getSources()
     end
     if (filesystem.isDirectory(SOURCE_DIR)) then
         for fileName in filesystem.list(SOURCE_DIR) do
-            if (fileName:match("%.list")) then
+            if (fileName:match("%.list$")) then
                 file = assert(io.open(SOURCE_DIR .. fileName))
                 for url in file:lines() do
                     if (not url:sub(1, 1) ~= "#") then
@@ -284,14 +284,16 @@ else
     printferr("Need a internet card")
 end
 
-do
-    local tokeep = {}
-    for pkg in io.lines(AUTO_INSTALLED) do
-        if (pm.isInstalled(pkg)) then table.insert(tokeep, pkg) end
+if (filesystem.exists(AUTO_INSTALLED)) then
+    do
+        local tokeep = {}
+        for pkg in io.lines(AUTO_INSTALLED) do
+            if (pm.isInstalled(pkg)) then table.insert(tokeep, pkg) end
+        end
+        local file = assert(io.open(AUTO_INSTALLED, 'w'))
+        for _, pkg in pairs(tokeep) do file:write(f("%s\n", pkg)) end
+        file:close()
     end
-    local file = assert(io.open(AUTO_INSTALLED, 'w'))
-    for _, pkg in pairs(tokeep) do file:write(f("%s\n", pkg)) end
-    file:close()
 end
 
 local args, opts = shell.parse(...)
