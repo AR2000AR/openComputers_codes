@@ -230,8 +230,10 @@ local function handleMessage(packet, fromIP, fromPort)
 
     if (config.recursion and dnsMessage.header:getFlags():getRD()) then --recursion requested
         --TODO recurse
+        dnsResponse.header:getFlags():setRCODE(dns.RCODE.NIMPL)
     elseif (not config.recursion and dnsMessage.header:getFlags():getRD()) then
         --TODO error : cannot recurse
+        dnsResponse.header:getFlags():setRCODE(dns.RCODE.NIMPL)
     else
         for i, question in pairs(dnsMessage.questions) do
             local answer, authoritative, additional, nxdomain = answerQuestion(question)

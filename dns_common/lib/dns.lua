@@ -34,6 +34,8 @@ DNSHeaderFlags.RCODE = {
     FORMERR  = 1,
     SERVFAIL = 2,
     NXDOMAIN = 3,
+    NIMPL    = 4,
+    REFUSED  = 5
 }
 
 ---@return DNSHeaderFlags
