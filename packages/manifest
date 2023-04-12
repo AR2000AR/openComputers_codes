@@ -2,18 +2,24 @@
 	["bank_api"] = {
 		["manifestVersion"] = "1.0",
 		["package"] = "bank_api",
-		["version"] = "oppm",
+		["version"] = "1.1.0",
 		["name"] = "Bank API",
 		["repo"] = "tree/master/bank_api",
 		["description"] = "API used to send request to the bank server",
 		["note"] = "You will need to set the server address",
 		["authors"] = "AR2000AR",
+		["dependencies"] = 	{
+			["osinetwork"] = "oppm"
+		},
+		["configFiles"] = 	{
+			"/etc/bank/api/api.conf"
+		},
 		["archiveName"] = "bank_api.tar"
 	},
 	["libcb"] = {
 		["manifestVersion"] = "1.0",
 		["package"] = "libcb",
-		["version"] = "oppm",
+		["version"] = "2.0.0",
 		["name"] = "libCB",
 		["repo"] = "tree/master/libCB",
 		["description"] = "library used to read and write CB",
@@ -24,7 +30,7 @@
 	["bank_dev_tools"] = {
 		["manifestVersion"] = "1.0",
 		["package"] = "bank_dev_tools",
-		["version"] = "oppm",
+		["version"] = "1.0.0",
 		["name"] = "bank_dev_tools",
 		["repo"] = "tree/master/bank_dev_tools",
 		["description"] = "collection of tools used to help in the bank software development",
@@ -35,14 +41,15 @@
 	["bank_server"] = {
 		["manifestVersion"] = "1.0",
 		["package"] = "bank_server",
-		["version"] = "oppm",
+		["version"] = "1.1.0",
 		["name"] = "Bank server",
 		["repo"] = "tree/master/bank_server",
 		["description"] = "The bank server service",
 		["note"] = "enable it with the rc command",
 		["authors"] = "AR2000AR",
 		["dependencies"] = 	{
-			["libcb"] = "oppm"
+			["libcb"] = "oppm",
+			["osinetwork"] = "oppm"
 		},
 		["archiveName"] = "bank_server.tar"
 	},
@@ -76,7 +83,7 @@
 	["bank_client"] = {
 		["manifestVersion"] = "1.0",
 		["package"] = "bank_client",
-		["version"] = "oppm",
+		["version"] = "1.2.0",
 		["name"] = "bank client app",
 		["repo"] = "tree/master/bank_client",
 		["description"] = "The client app for the banker",
@@ -114,7 +121,7 @@
 	["libcoin"] = {
 		["manifestVersion"] = "1.0",
 		["package"] = "libcoin",
-		["version"] = "oppm",
+		["version"] = "1.0.0",
 		["name"] = "libCoin",
 		["repo"] = "tree/master/libCoin",
 		["description"] = "small library used to moved coins from ordinarycoins from one chest to a other",
@@ -124,7 +131,7 @@
 	["bank_atm"] = {
 		["manifestVersion"] = "1.0",
 		["package"] = "bank_atm",
-		["version"] = "oppm",
+		["version"] = "1.1.0",
 		["name"] = "bank atm",
 		["repo"] = "tree/master/bank_atm",
 		["description"] = "atm that work with my bank server",
@@ -245,7 +252,7 @@
 	["osinetwork"] = {
 		["manifestVersion"] = "1.0",
 		["package"] = "osinetwork",
-		["version"] = "oppm",
+		["version"] = "1.0.2",
 		["name"] = "OSI Network stack",
 		["repo"] = "tree/master/network",
 		["description"] = "A close to official rfc emulation of the OSI layers for OpenOS. Include Ethernet, ARP, ICMP, UDP. Also provide a luasocket libe librairy",
@@ -259,7 +266,7 @@
 	["dns_common"] = {
 		["manifestVersion"] = "1.0",
 		["package"] = "dns_common",
-		["version"] = "oppm",
+		["version"] = "1.0.1",
 		["name"] = "DNS common files",
 		["repo"] = "tree/master/dns_common",
 		["description"] = "basic files used by the dns server as well as the resolver library",
@@ -288,7 +295,7 @@
 	["nslookup"] = {
 		["manifestVersion"] = "1.0",
 		["package"] = "nslookup",
-		["version"] = "oppm",
+		["version"] = "1.0.0",
 		["name"] = "nslookup",
 		["repo"] = "tree/master/nslookup",
 		["description"] = "cmd line tool to querry a name server",
