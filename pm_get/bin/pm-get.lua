@@ -383,7 +383,7 @@ elseif (mode == "upgrade") then
             table.insert(toUpgrade, pkg)
         else
             local remoteManifest = getPacket(pkg)
-            if (remoteManifest and compareVersion(remoteManifest.version, manifest.version)) then
+            if (remoteManifest and (remoteManifest.version == "oppm" or compareVersion(remoteManifest.version, manifest.version))) then
                 table.insert(toUpgrade, pkg)
             end
         end
