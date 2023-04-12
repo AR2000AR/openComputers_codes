@@ -269,9 +269,6 @@ function IPv4Packet.unpack(val)
     packet:setFlags(flags)
     packet:setFragmentOffset(fragmentOffset)
     packet:setTtl(ttl)
-    packet:setProtocol(protocol)
-    packet:setSrc(src)
-    packet:setDst(dst)
 
     return packet
 end
