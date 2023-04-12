@@ -143,6 +143,9 @@ function IPv4Router:send(packet)
     packet:setTtl(packet:getTtl() - 1)
     --TODO : icmp error if ttl 0
     local route = self:getRoute(packet:getDst())
+    if (packet:getSrc() == 0) then
+        packet:setSrc(route.interface:getAddr())
+    end
     if (route.gateway == route.interface:getAddr()) then
         route.interface:send(packet)
     else
