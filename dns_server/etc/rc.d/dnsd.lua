@@ -266,7 +266,10 @@ local function listenSocket(listenedSocket)
     while true do
         local read = table.pack(listenedSocket:receivefrom())
         if (read.n == 3) then
-            pcall(handleMessage, table.unpack(read))
+            local sucess, msg = pcall(handleMessage, table.unpack(read))
+            if (sucess == false) then
+                require("event").onError(msg)
+            end
         end
         os.sleep()
     end
