@@ -10,48 +10,34 @@ local fs = require("filesystem")
 local config = {secret = "", timeout = 5, bank_addr = ""}
 
 local args, opts = shell.parse(...)
-if (#args ~= 1 or opts["h"]) then
-  print("generateClientSecret [-n] clientName")
+if (#args < 1 or #args > 3 or opts["h"]) then
+  print("generateClientSecret [-n] [clientAddress] clientName [serverAddress]")
   print("\t -n : do not generate secret")
   os.exit(1)
 end
 
---get the local (server) address
-local localModemAdd = component.modem.address
-print("Server address : " .. localModemAdd)
 
 if (not opts["n"]) then
-  --get the future client address
-  local clientModemAdd = localModemAdd
-  while (clientModemAdd == localModemAdd) do
-    print("Replace the network card with the client one")
-    event.pull(10, "component_available")
-    clientModemAdd = component.modem.address
-    if (clientModemAdd == localModemAdd) then
-      print("Error : same network card")
-      term.write("Cancel [y/N]")
-      local userInput = term.read()
-      if (userInput == "y\n" or userInput == "Y\n") then
-        os.exit(1)
-      end
-    end
-  end
-  print("Client address : " .. clientModemAdd)
+  local clientAdd = table.remove(args, 1)
+  print("Client address : " .. clientAdd)
 
-  shell.execute("generateClientSecret " .. clientModemAdd .. " " .. args[1] .. ".secret")
-  local secretFile = io.open(args[1] .. ".secret", "r")
-  assert(secretFile, string.format("Could not open file : %s.secret", args[1]))
+  local secretFileName = string.format("/tmp/%s.secret", args[1])
+  shell.execute(string.format("generateClientSecret %q %q", clientAdd, secretFileName))
+
+  local secretFile = io.open(secretFileName, "r")
+  assert(secretFile, string.format("Could not open file : %s", secretFileName))
   local secretString = secretFile:read("*a")
   secretFile:close()
 
-  local path = args[1] .. ".secret"
-  if (not fs.exists(path)) then path = shell.resolve(path) end
-  fs.remove(path)
+  fs.remove(secretFileName)
 
   config.secret = secretString
 end
 
-config.bank_addr = localModemAdd
+--get the local (server) address
+local srvAd = args[2] or "bank.mc"
+print("Server address : " .. srvAd)
+config.bank_addr = srvAd
 
 local apiConfigFile = io.open(args[1] .. ".conf", "w")
 assert(apiConfigFile, string.format("Could not open file : %s.conf", args[1]))

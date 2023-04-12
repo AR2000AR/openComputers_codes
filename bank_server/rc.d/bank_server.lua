@@ -3,28 +3,21 @@
 --=====================================
 --IMPORT standard lib------------------
 local dataCard = require("component").data
-local modem = require("component").modem
+local thread = require("thread")
 local event = require("event")
 local fs = require("filesystem")
-local os = require("os")
 local io = require("io")
-local uuid = require("uuid")
 local serialization = require("serialization")
 local uuid = require("uuid")
 --IMPORT custom lib--------------------
 local cb = require("libCB")
+local socket = require("socket")
 --=====================================
 --INIT constants-----------------------
 local CONF_DIR = "/etc/bank/server/"
 local CONF_FILE_NAME = "conf.cfg"
 local SERVER_PORT = 351
 local AES_IV = dataCard.md5("bank")
-
---INIT config default values
-local keyFile = CONF_DIR .. "key" --default value
-local aesKeyFile = CONF_DIR .. "aes" --default value
-local accountDir = "/srv/bank/account/" --default value
-local verbose = false --change it in rc.cfg
 --protocole commands constants
 local PROTOCOLE_GET_CREDIT = "GET_CREDIT"
 local PROTOCOLE_MAKE_TRANSACTION = "MAKE_TRANSACTION"
@@ -40,19 +33,35 @@ local PROTOCOLE_ERROR_AMOUNT = 4
 local PROTOCOLE_DENIED = 4
 local PROTOCOLE_ERROR_RECEIVING_ACCOUNT = 5
 local PROTOCOLE_ERROR_UNKNOWN = 999
+--INIT config default values
+local keyFile = CONF_DIR .. "key"       --default value
+local aesKeyFile = CONF_DIR .. "aes"    --default value
+local accountDir = "/srv/bank/account/" --default value
+local verbose = false                   --change it in rc.cfg
+--INIT global variable
+---@type UDPSocket
+local serverSocket
+---@type thread
+local listenerThread
 ---------------------------------------
 
 local function log(msg)
   if (verbose) then io.open("/tmp/bank_server.log", "a"):write("\n" .. msg):flush():close() end
 end
 
-local function sendMsg(add, status, command, msg) --serialize and send msg to the client
+---Send a message
+---@param add string destination address
+---@param port number destination port
+---@param status any response status code
+---@param command any request command
+---@param msg? any response additional info
+local function sendMsg(add, port, status, command, msg) --serialize and send msg to the client
   msg = serialization.serialize(msg)
-  modem.send(add, SERVER_PORT, status, command, msg)
+  serverSocket:sendto(serialization.serialize(table.pack(status, command, msg)), add, port)
 end
 
--- return a key for later use with the data component
--- @param public:boolean
+---return a key for later use with the data component
+---@param public boolean
 -- @return public or private key for this server
 local function getKey(public)
   log("-> getKey")
@@ -81,7 +90,7 @@ local function getAES()
 end
 
 -- return a given account
--- @param uuid:string
+---@param accountUUID string
 -- @return {solde,uuid} or PROTOCOLE_NO_ACCOUNT or PROTOCOLE_ERROR_ACCOUNT
 local function loadAccount(accountUUID)
   log("-> loadAccount")
@@ -92,9 +101,9 @@ local function loadAccount(accountUUID)
     local rawData = file:read("*a") --read the entire file
     file:close()
     rawData = dataCard.decode64(rawData)
-    local clearData = dataCard.decrypt(rawData, getAES(), AES_IV) --decrypt the data
+    local clearData = dataCard.decrypt(rawData, getAES(), AES_IV)                                            --decrypt the data
     log("clear data : " .. clearData)
-    clearData = serialization.unserialize(clearData) --get the table form the decrypted string
+    clearData = serialization.unserialize(clearData)                                                         --get the table form the decrypted string
     if (dataCard.ecdsa(clearData.solde .. accountUUID, getKey(true), dataCard.decode64(clearData.sig))) then --check the data signature to prevent manual edition of the file
       log("<- loadAccount sig ok")
       return clearData;
@@ -109,27 +118,27 @@ local function loadAccount(accountUUID)
 end
 
 -- write the account file
--- @param accountUUID:string
--- @param solde:int
+---@param accountUUID string
+---@param solde number
 local function writeAccount(accountUUID, solde)
   log("-> writeAccount")
   local account = {solde = solde, uuid = accountUUID}
   account.sig = dataCard.encode64(dataCard.ecdsa(solde .. accountUUID, getKey(false)) --[[@as string]]) --encode sig to make saving it easier
-  local fileContent = serialization.serialize(account) --convert the table into a string
-  fileContent = dataCard.encrypt(fileContent, getAES(), AES_IV) --encrypt the data
-  fileContent = dataCard.encode64(fileContent) --encode the encrypted data to make saving and reading it easier
-  io.open(accountDir .. accountUUID, "w"):write(fileContent):close() --save the data
+  local fileContent = serialization.serialize(account)                                                  --convert the table into a string
+  fileContent = dataCard.encrypt(fileContent, getAES(), AES_IV)                                         --encrypt the data
+  fileContent = dataCard.encode64(fileContent)                                                          --encode the encrypted data to make saving and reading it easier
+  io.open(accountDir .. accountUUID, "w"):write(fileContent):close()                                    --save the data
   log("<- writeAccount ")
 end
 
 -- handle account edition (check if the account exists and add amount to it's solde)
--- @param uuid:string
--- @param amount:ini
+---@param accountUUID string
+---@param amount number
 -- @return boolean
 local function editAccount(accountUUID, amount)
   local account = loadAccount(accountUUID)
   if (account == PROTOCOLE_NO_ACCOUNT or account == PROTOCOLE_ERROR_ACCOUNT) then --check for errors with the account
-    return false --give up
+    return false                                                                  --give up
   else
     writeAccount(account.uuid, account.solde + amount)
     return true
@@ -137,41 +146,43 @@ local function editAccount(accountUUID, amount)
 end
 
 -- handle account creation
--- @param address:string
--- @param from:string
--- @param to:string
--- @param amount:int
-local function handlerMakeTransaction(address, from, to, amount)
+---@param address string
+---@param port number
+---@param from string
+---@param to string
+---@param amount string|number --TODO : check that type
+local function handlerMakeTransaction(address, port, from, to, amount)
   log("-> handlerMakeTransaction")
-  amount = tonumber(amount)
+  amount = assert(tonumber(amount))
   local fromAccount = loadAccount(from)
   if (fromAccount == PROTOCOLE_NO_ACCOUNT or fromAccount == PROTOCOLE_ERROR_ACCOUNT) then --check for errors with the first account
-    sendMsg(address, fromAccount, PROTOCOLE_MAKE_TRANSACTION)
+    sendMsg(address, port, fromAccount, PROTOCOLE_MAKE_TRANSACTION)
   else
     if (fromAccount.solde >= amount) then
       local toAccount = loadAccount(to)
       if (toAccount == PROTOCOLE_NO_ACCOUNT or toAccount == PROTOCOLE_ERROR_ACCOUNT) then --check for errors with the second account
-        sendMsg(address, PROTOCOLE_ERROR_RECEIVING_ACCOUNT, PROTOCOLE_MAKE_TRANSACTION)
+        sendMsg(address, port, PROTOCOLE_ERROR_RECEIVING_ACCOUNT, PROTOCOLE_MAKE_TRANSACTION)
       else
         ---@diagnostic disable-next-line:param-type-mismatch
-        if (editAccount(fromAccount.uuid, ( -1 * math.abs(amount))) and editAccount(toAccount.uuid, (math.abs(amount)))) then
-          sendMsg(address, PROTOCOLE_OK, PROTOCOLE_MAKE_TRANSACTION)
+        if (editAccount(fromAccount.uuid, (-1 * math.abs(amount))) and editAccount(toAccount.uuid, (math.abs(amount)))) then
+          sendMsg(address, port, PROTOCOLE_OK, PROTOCOLE_MAKE_TRANSACTION)
         else
-          sendMsg(address, PROTOCOLE_ERROR_UNKNOWN, PROTOCOLE_MAKE_TRANSACTION)
+          sendMsg(address, port, PROTOCOLE_ERROR_UNKNOWN, PROTOCOLE_MAKE_TRANSACTION)
         end
       end
     else
       log("secret error")
-      sendMsg(address, PROTOCOLE_ERROR_AMOUNT, PROTOCOLE_MAKE_TRANSACTION)
+      sendMsg(address, port, PROTOCOLE_ERROR_AMOUNT, PROTOCOLE_MAKE_TRANSACTION)
     end
   end
   log("<- handlerMakeTransaction")
 end
 
 -- handle account creation
--- @param address:string
--- @param secret:string
-local function handlerCreateAccount(address, secret)
+---@param address string
+---@param port number
+---@param secret string
+local function handlerCreateAccount(address, port, secret)
   log("-> handlerCreateAccount")
   if (dataCard.ecdsa(address, getKey(true), secret)) then --check if the client have the write to call this command
     local newUUID
@@ -179,87 +190,105 @@ local function handlerCreateAccount(address, secret)
       newUUID = uuid.next()
     until not fs.exists(accountDir .. newUUID)
     writeAccount(newUUID, 0)
-    sendMsg(address, PROTOCOLE_OK, PROTOCOLE_NEW_ACCOUNT, {uuid = newUUID})
+    sendMsg(address, port, PROTOCOLE_OK, PROTOCOLE_NEW_ACCOUNT, {uuid = newUUID})
   else
     log("secret error")
-    sendMsg(address, PROTOCOLE_DENIED, PROTOCOLE_NEW_ACCOUNT)
+    sendMsg(address, port, PROTOCOLE_DENIED, PROTOCOLE_NEW_ACCOUNT)
   end
   log("<- handlerCreateAccount")
 end
 
 -- handle the PROTOCOLE_GET_CREDIT messages
--- @param address:string
--- @param cbData:table (cbData)
-local function handlerGetCredit(address, cbData)
+---@param address string
+---@param port number
+---@param cbData table (cbData)
+local function handlerGetCredit(address, port, cbData)
   log("-> handlerGetCredit")
   local account = loadAccount(cbData.uuid)
   if (account == PROTOCOLE_NO_ACCOUNT or account == PROTOCOLE_ERROR_ACCOUNT) then
-    sendMsg(address, account, PROTOCOLE_GET_CREDIT, {solde = 0}) --error
+    sendMsg(address, port, account, PROTOCOLE_GET_CREDIT, {solde = 0})                  --error
   else
-    sendMsg(address, PROTOCOLE_OK, PROTOCOLE_GET_CREDIT, {solde = account.solde}) --ok
+    sendMsg(address, port, PROTOCOLE_OK, PROTOCOLE_GET_CREDIT, {solde = account.solde}) --ok
   end
   log("<- handlerGetCredit")
 end
 
-local function hanlerMakeCreditCard(address, secret, targetUUID, cbUUID)
+---Create a credit card data
+---@param address string
+---@param port number
+---@param secret string
+---@param targetUUID string
+---@param cbUUID string
+local function handlerMakeCreditCard(address, port, secret, targetUUID, cbUUID)
   log("-> hanlerMakeCreditCard")
   if (dataCard.ecdsa(address, getKey(true), secret)) then --check if the client have the write to call this command
     local account = loadAccount(targetUUID)
     log("account " .. serialization.serialize(account, true))
     if (account == PROTOCOLE_NO_ACCOUNT or account == PROTOCOLE_ERROR_ACCOUNT) then -- check if the account exists
       log("error " .. account)
-      sendMsg(address, account, PROTOCOLE_NEW_CB) --error
+      sendMsg(address, port, account, PROTOCOLE_NEW_CB)                             --error
     else
       log("-> cb.createNew")
       local rawCBdata, pin = cb.createNew(targetUUID, cbUUID, getKey(false))
       log("<- cb.createNew")
       log("rawCBdata : " .. serialization.serialize(rawCBdata, true))
-      sendMsg(address, PROTOCOLE_OK, PROTOCOLE_NEW_CB, {pin = pin, rawCBdata = rawCBdata}) --ok
+      sendMsg(address, port, PROTOCOLE_OK, PROTOCOLE_NEW_CB, {pin = pin, rawCBdata = rawCBdata}) --ok
     end
   else
-    sendMsg(address, PROTOCOLE_DENIED, PROTOCOLE_NEW_CB) --error
+    sendMsg(address, port, PROTOCOLE_DENIED, PROTOCOLE_NEW_CB) --error
   end
   log("<- hanlerMakeCreditCard")
 end
 
-local function handlerEditBalance(address, secret, targetUUID, amount)
+---Edit a account balance
+---@param address string
+---@param port number
+---@param secret string
+---@param targetUUID string
+---@param amount number
+local function handlerEditBalance(address, port, secret, targetUUID, amount)
   log("-> hanglerEditBalance")
   if (dataCard.ecdsa(address, getKey(true), secret)) then --check if the client have the write to call this command
     local account = loadAccount(targetUUID)
     log("account " .. serialization.serialize(account, true))
     if (account == PROTOCOLE_NO_ACCOUNT or account == PROTOCOLE_ERROR_ACCOUNT) then -- check if the account exists
       log("error " .. account)
-      sendMsg(address, account, PROTOCOLE_EDIT) --error
+      sendMsg(address, port, account, PROTOCOLE_EDIT)                               --error
     else
       if (amount < 0) then
         if (account.solde < math.abs(amount)) then
-          sendMsg(address, PROTOCOLE_ERROR_AMOUNT, PROTOCOLE_EDIT)
+          sendMsg(address, port, PROTOCOLE_ERROR_AMOUNT, PROTOCOLE_EDIT)
         else
           if (editAccount(account.uuid, amount)) then
-            sendMsg(address, PROTOCOLE_OK, PROTOCOLE_EDIT)
+            sendMsg(address, port, PROTOCOLE_OK, PROTOCOLE_EDIT)
           else
-            sendMsg(address, PROTOCOLE_ERROR_UNKNOWN, PROTOCOLE_EDIT)
+            sendMsg(address, port, PROTOCOLE_ERROR_UNKNOWN, PROTOCOLE_EDIT)
           end
         end
       else
         if (editAccount(account.uuid, amount)) then
-          sendMsg(address, PROTOCOLE_OK, PROTOCOLE_EDIT)
+          sendMsg(address, port, PROTOCOLE_OK, PROTOCOLE_EDIT)
         else
-          sendMsg(address, PROTOCOLE_ERROR_UNKNOWN, PROTOCOLE_EDIT)
+          sendMsg(address, port, PROTOCOLE_ERROR_UNKNOWN, PROTOCOLE_EDIT)
         end
       end
     end
   else
     log("secret error")
-    sendMsg(address, PROTOCOLE_DENIED, PROTOCOLE_EDIT)
+    sendMsg(address, port, PROTOCOLE_DENIED, PROTOCOLE_EDIT)
   end
   log("<- hanglerEditBalance")
 end
 
 -- main function
-local function listener(sig, local_add, remote_add, port, dist, command, arg)
-  if (sig ~= "modem_message") then return end --check the signal type
-  if (port ~= SERVER_PORT) then return end --check if the port is the correct one
+---@param datagram string
+---@param remote_add string
+---@param remote_port number
+local function messageHandler(datagram, remote_add, remote_port)
+  checkArg(1, datagram, 'string')
+  checkArg(2, remote_add, 'string')
+  checkArg(3, remote_port, 'number')
+  local command, arg = table.unpack(serialization.unserialize(datagram))
   if (not command or not arg) then return end --check if a parameter is missing
 
   log("==> " .. remote_add .. " " .. command .. " " .. arg)
@@ -268,7 +297,7 @@ local function listener(sig, local_add, remote_add, port, dist, command, arg)
   if (command == PROTOCOLE_GET_CREDIT) then
     log(arg.cbData.uuid .. arg.cbData.cbUUID)
     if (cb.checkCBdata(arg.cbData, getKey(true))) then
-      handlerGetCredit(remote_add, arg.cbData)
+      handlerGetCredit(remote_add, remote_port, arg.cbData)
     else
       log("PROTOCOLE_GET_CREDIT : error cb")
       sendMsg(remote_add, PROTOCOLE_ERROR_CB, PROTOCOLE_GET_CREDIT)
@@ -276,21 +305,21 @@ local function listener(sig, local_add, remote_add, port, dist, command, arg)
     -------------------------------------
   elseif (command == PROTOCOLE_MAKE_TRANSACTION) then
     if (cb.checkCBdata(arg.cbData, getKey(true))) then
-      handlerMakeTransaction(remote_add, arg.cbData.uuid, arg.dst, arg.amount)
+      handlerMakeTransaction(remote_add, remote_port, arg.cbData.uuid, arg.dst, arg.amount)
     else
       log("PROTOCOLE_MAKE_TRANSACTION : error cb")
       sendMsg(remote_add, PROTOCOLE_ERROR_CB, command)
     end
     -------------------------------------
   elseif (command == PROTOCOLE_NEW_ACCOUNT) then
-    handlerCreateAccount(remote_add, arg.secret)
+    handlerCreateAccount(remote_add, remote_port, arg.secret)
     -------------------------------------
   elseif (command == PROTOCOLE_NEW_CB) then
-    hanlerMakeCreditCard(remote_add, arg.secret, arg.uuid, arg.cbUUID)
+    handlerMakeCreditCard(remote_add, remote_port, arg.secret, arg.uuid, arg.cbUUID)
     -------------------------------------
   elseif (command == PROTOCOLE_EDIT) then
     if (cb.checkCBdata(arg.cbData, getKey(true))) then
-      handlerEditBalance(remote_add, arg.secret, arg.cbData.uuid, arg.amount)
+      handlerEditBalance(remote_add, remote_port, arg.secret, arg.cbData.uuid, arg.amount)
     else
       log("PROTOCOLE_EDIT : error cb")
       sendMsg(remote_add, PROTOCOLE_ERROR_CB, command)
@@ -301,6 +330,21 @@ local function listener(sig, local_add, remote_add, port, dist, command, arg)
   end
 end
 
+---@param listenedSocket UDPSocket
+local function listenSocket(listenedSocket)
+  checkArg(1, listenedSocket, 'table')
+  while true do
+    local datagram, fromAddress, fromPort = listenedSocket:receivefrom()
+    if (datagram) then
+      local success, error = pcall(messageHandler, datagram, fromAddress, fromPort)
+      if (success == false) then
+        event.onError(error) --TODO : log in srv log file
+      end
+    end
+    os.sleep()
+  end
+end
+--=============================================================================
 ---@diagnostic disable-next-line: lowercase-global
 function start(msg) --start the service
   if (args == "verbose") then
@@ -337,12 +381,17 @@ function start(msg) --start the service
     io.open(keyFile .. ".priv", "w"):write(dataCard.encode64(priv.serialize())):close()
   end
 
-  event.listen("modem_message", listener) --register the listener for modem_message
-  modem.open(SERVER_PORT)
+
+  serverSocket = socket.udp()
+  serverSocket:setsockname("*", SERVER_PORT)
+  listenerThread = thread.create(listenSocket, serverSocket)
+  listenerThread:detach()
+  --event.listen("modem_message", messageHandler) --register the listener for modem_message
 end
 
 ---@diagnostic disable-next-line: lowercase-global
 function stop()
-  event.ignore("modem_message", listener) --delete the listener
-  modem.close(SERVER_PORT)
+  event.ignore("modem_message", messageHandler) --delete the listener
+  listenerThread:kill()
+  serverSocket:close()
 end

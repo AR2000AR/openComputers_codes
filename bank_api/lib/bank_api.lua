@@ -6,27 +6,28 @@ local event = require("event")
 local serialization = require("serialization")
 local io = require("io")
 local fs = require("filesystem")
+local socket = require("socket")
 --INIT CONST
 local BANK_PORT = 351
 local CONF_DIR = "/etc/bank/api/"
 local CONF_FILE_NAME = CONF_DIR .. "api.conf"
 local MODEM_TIMEDOUT = -1
 --INIT COMPONENT
-local modem = require("component").modem
 local data = require("component").data
 --INIT VAR
 
 if (not fs.exists(CONF_FILE_NAME)) then
+  fs.makeDirectory(CONF_DIR)
   local file = io.open(CONF_FILE_NAME, "w")
   assert(file, string.format("Something went really wrong when openning : %s", CONF_FILE_NAME))
-  file:write(serialization.serialize({bank_addr = "00000000-0000-0000-0000-000000000000", timeout = 5, secret = ""}))
+  file:write(serialization.serialize({bank_addr = "bank.mc", timeout = 5, secret = ""}))
   file:close()
 end
 local confFile = io.open(CONF_FILE_NAME, "r")
 assert(confFile, string.format("Something went really wrong when openning : %s", CONF_FILE_NAME))
 local config = serialization.unserialize(confFile:read("*a"))
 confFile:close()
-config.bank_addr = config.bank_addr or "00000000-0000-0000-0000-000000000000" --fetched from conf file
+config.bank_addr = config.bank_addr or "bank.mc" --fetched from conf file
 config.timeout = config.timeout or 5
 config.secret = data.decode64(config.secret) or ""
 
@@ -72,28 +73,24 @@ bank.STATUS = {
   UNKNOWN                 = PROTOCOLE.STATUS.ERROR_UNKNOWN
 }
 --=====================================
----recive a message from the modem component.
----@return ProtocoleStatus status, ProtocoleCommand command, table message
-local function reciveMessage()
-  ---@type unknown,unknown,string,number,unknown,ProtocoleStatus,ProtocoleCommand,string
-  local _, _, from, port, _, status, command, message = event.pull(config.timeout, "modem_message")
-  if (not status) then status = MODEM_TIMEDOUT end
-  --make sure no nil value is returned
-  if (not command) then command = PROTOCOLE.COMMAND.NONE end
-  if (not message) then message = "" end
-  return status, command, serialization.unserialize(message)
-end
 
 ---send a request to the server
 ---@param requestType string
 ---@param requestData table
 ---@return ProtocoleStatus status,string command ,table message
 local function sendRequest(requestType, requestData) --format and send a request to the server
-  modem.open(BANK_PORT)
-  modem.send(config.bank_addr, BANK_PORT, requestType, serialization.serialize(requestData))
-  local status, command, message = reciveMessage()
-  modem.close(BANK_PORT)
-  return status, command, message
+  local clientSocket = socket.udp()
+  clientSocket:setpeername(assert(socket.dns.toip(config.bank_addr)), BANK_PORT)
+  clientSocket:settimeout(config.timeout)
+  clientSocket:send(serialization.serialize(table.pack(requestType, serialization.serialize(requestData))))
+  local response = clientSocket:recieve()
+  clientSocket:close()
+  if (response) then
+    local status, command, message = table.unpack(serialization.unserialize(response))
+    return status, command, serialization.unserialize(message)
+  else
+    return MODEM_TIMEDOUT, PROTOCOLE.COMMAND.NONE, {""}
+  end
 end
 
 ---get the account solde

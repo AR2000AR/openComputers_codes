@@ -9,7 +9,7 @@ local CONF_FILE_NAME = "conf.cfg"
 local keyFile = CONF_DIR .. "key" --default value
 
 local function help()
-  print("generateClientSecret uuid [file]")
+  print("generateClientSecret address [file]")
 end
 
 local function getKey(public)
