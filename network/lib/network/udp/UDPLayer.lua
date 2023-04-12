@@ -244,7 +244,7 @@ function UDPLayer:send(from, to, payload)
     checkArg(1, from, 'number')
     checkArg(2, to, 'number')
     checkArg(3, payload, 'table')
-    network.router:send(IPv4Packet(from, to, payload))
+    network.router:send(IPv4Packet(from, to, payload, self.layerType))
 end
 
 function UDPLayer:getAddr() return self._layer:getAddr() end

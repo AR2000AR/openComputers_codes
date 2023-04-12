@@ -101,7 +101,7 @@ function UDPSocket:sendto(datagram, ip, port)
     return 1
 end
 
----@param address number
+---@param address string
 ---@param port number
 ---@overload fun(self,address:string)
 ---@return number? success, string? reason
