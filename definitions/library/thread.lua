@@ -6,22 +6,22 @@ local thread = {}
 ---Starts a new thread executing the function `thread_proc` and returns its thread handle, see Thread Handle API. This method takes an optional `...` which is passed to `thread_proc`. The runtime of the thread continues autonomously.
 ---@param thread_proc function
 ---@param ... any
----@return Thread
+---@return thread
 function thread.create(thread_proc, ...)
 end
 
 ---Waits for the array of `threads` to complete. This blocking call can return in `timeout` seconds if provided. Returns success and an error message on failure. A thread is “completed” under multiple conditions, see `t:join()` for details.
----@param threads table<Thread>
+---@param threads table<thread>
 ---@param timeout? number
 function thread.waitForAll(threads, timeout)
 end
 
 --Returns the current thread `t` object. The init process does not represent a thread and nothing is returned from this method if called from the init process and not inside any thread.
----@return Thread? t
+---@return thread? t
 function thread.current()
 end
 
----@class Thread
+---@class thread
 local t = {}
 
 
@@ -59,7 +59,7 @@ function t:attach(level)
 end
 
 ---Detaches a thread from its parent if it has one. Returns nil and an error message if no action was taken, otherwise returns self (handy if you want to create and detach a thread in one line). A detached thread will continue to run until the computer is shutdown or rebooted, or the thread dies.
----@return Thread,string
+---@return thread,string
 function t:detach()
 end
 
