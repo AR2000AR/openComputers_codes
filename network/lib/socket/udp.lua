@@ -159,7 +159,7 @@ end
 
 function UDPSocket:settimeout(value)
     checkArg(1, value, 'number')
-    self._timeout = value
+    self._timeout = value * 100
 end
 
 ---Handle the payload recived by UDPLayer
