@@ -56,7 +56,7 @@
 	["libgui"] = {
 		["manifestVersion"] = "1.0",
 		["package"] = "libgui",
-		["version"] = "oppm",
+		["version"] = "1.0.0",
 		["name"] = "libGUI",
 		["repo"] = "tree/master/libGUI",
 		["description"] = "library used to create gui \n The library can load \"pam\" images",
@@ -70,7 +70,7 @@
 	["libgui_extra"] = {
 		["manifestVersion"] = "1.0",
 		["package"] = "libgui_extra",
-		["version"] = "oppm",
+		["version"] = "1.0.0",
 		["name"] = "libGUI-extra",
 		["repo"] = "tree/master/libGUI-extra",
 		["description"] = "more widgets for the libGUI",
@@ -100,7 +100,7 @@
 	["item_id_catcher"] = {
 		["manifestVersion"] = "1.0",
 		["package"] = "item_id_catcher",
-		["version"] = "oppm",
+		["version"] = "1.0.0",
 		["name"] = "itemIdCatcher",
 		["repo"] = "tree/master/itemIdCatcher",
 		["description"] = "Write id of item in the chest on the top to a file",
@@ -111,7 +111,7 @@
 	["libclass"] = {
 		["manifestVersion"] = "1.0",
 		["package"] = "libclass",
-		["version"] = "oppm",
+		["version"] = "1.0.0",
 		["name"] = "libClass",
 		["repo"] = "tree/master/libClass",
 		["description"] = "Class library for lua",
@@ -148,7 +148,7 @@
 	["door_ctrl"] = {
 		["manifestVersion"] = "1.0",
 		["package"] = "door_ctrl",
-		["version"] = "oppm",
+		["version"] = "1.0.0",
 		["name"] = "Door controller",
 		["repo"] = "tree/master/doorCtrl",
 		["description"] = "Controll your doors with multiple redstone io block",
@@ -165,7 +165,7 @@
 	["autocrafter"] = {
 		["manifestVersion"] = "1.0",
 		["package"] = "autocrafter",
-		["version"] = "oppm",
+		["version"] = "1.0.0",
 		["name"] = "AutoCrafter",
 		["repo"] = "tree/master/autocrafter",
 		["description"] = "User a robot linked via a linked card to craft item from a inventory",
@@ -175,7 +175,7 @@
 	["stargate"] = {
 		["manifestVersion"] = "1.0",
 		["package"] = "stargate",
-		["version"] = "oppm",
+		["version"] = "1.0.0",
 		["name"] = "Stargate Ctl",
 		["repo"] = "tree/master/stargate_crl",
 		["description"] = "GUI to controll stargates from SGCraft",
@@ -185,7 +185,7 @@
 	["vending"] = {
 		["manifestVersion"] = "1.0",
 		["package"] = "vending",
-		["version"] = "oppm",
+		["version"] = "1.0.0",
 		["name"] = "Vending",
 		["repo"] = "tree/master/vending",
 		["description"] = "Vending machine program compatible with libCoin and bank_api",
@@ -199,7 +199,7 @@
 	["bank_account_maker"] = {
 		["manifestVersion"] = "1.0",
 		["package"] = "bank_account_maker",
-		["version"] = "oppm",
+		["version"] = "1.0.0",
 		["name"] = "Account maker",
 		["repo"] = "tree/master/account_maker",
 		["description"] = "Machine to create one account per player and dispense a credit card",
@@ -212,7 +212,7 @@
 	["lnfsc"] = {
 		["manifestVersion"] = "1.0",
 		["package"] = "lnfsc",
-		["version"] = "oppm",
+		["version"] = "1.0.0",
 		["name"] = "Lua Network File System Client",
 		["repo"] = "tree/master/lnfs",
 		["description"] = "Let you mount a files ystem hosted by a other computer using lnfss and use it as if it was a local file system",
@@ -222,7 +222,7 @@
 	["lnfss"] = {
 		["manifestVersion"] = "1.0",
 		["package"] = "lnfss",
-		["version"] = "oppm",
+		["version"] = "1.0.0",
 		["name"] = "Lua Network File System Server",
 		["repo"] = "tree/master/lnfs",
 		["description"] = "Share your local file system with other computers. Root folder is configurable in rc.cfg",
@@ -232,7 +232,7 @@
 	["instgen"] = {
 		["manifestVersion"] = "1.0",
 		["package"] = "instgen",
-		["version"] = "oppm",
+		["version"] = "1.0.0",
 		["name"] = "Repo installer",
 		["repo"] = "tree/master/repo-installer",
 		["description"] = "A set of tools for making installable floppies for OpenComputers from OPPM repositories.",
@@ -242,7 +242,7 @@
 	["crypttool"] = {
 		["manifestVersion"] = "1.0",
 		["package"] = "crypttool",
-		["version"] = "oppm",
+		["version"] = "1.0.0",
 		["name"] = "CryptTool",
 		["repo"] = "tree/master/crypttol",
 		["description"] = "Remount a filesystem and store everything as encrypted data. Use managed (default) floppy or HDD",
@@ -318,7 +318,7 @@
 	["pm"] = {
 		["manifestVersion"] = "1.0",
 		["package"] = "pm",
-		["version"] = "1.2.2",
+		["version"] = "1.2.3",
 		["name"] = "pm Package Manager",
 		["repo"] = "tree/master/pm",
 		["description"] = "Package manager for OpenOS",
@@ -331,7 +331,7 @@
 	["pm_get"] = {
 		["manifestVersion"] = "1.0",
 		["package"] = "pm_get",
-		["version"] = "1.2.2",
+		["version"] = "1.3.0",
 		["name"] = "pm get",
 		["repo"] = "tree/master/pm",
 		["description"] = "Download and install package for pm",
