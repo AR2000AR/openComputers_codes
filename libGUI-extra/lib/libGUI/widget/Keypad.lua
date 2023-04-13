@@ -11,7 +11,7 @@ function Keypad.setHeight(self, height) return nil end
 
 function Keypad.setSize(self, width, height) return nil end
 
-function Keypad.getWidth(self) return 9 end --fixed
+function Keypad.getWidth(self) return 9 end   --fixed
 
 function Keypad.getHeight(self) return 11 end --fixed
 
@@ -46,9 +46,9 @@ function Keypad.setValidateCallback(self, fct) if (type(fct) == "function") then
 
 function Keypad.enable(self, enable)
   self.private.enabled = enable
-  if (self.private.event ~= -1) then --if a event listener is present
-    event.cancel(self.private.event) --cancel the event listener
-    self.private.event = -1 --set event to -1 (no listener)
+  if (self.private.event ~= -1) then                  --if a event listener is present
+    event.cancel(self.private.event --[[@as number]]) --cancel the event listener
+    self.private.event = -1                           --set event to -1 (no listener)
   end
   if (enable) then
     self.private.event = event.listen("key_down", function(...) self:onKeyboard(...) end) --register a new event listerner
@@ -56,9 +56,9 @@ function Keypad.enable(self, enable)
 end
 
 function Keypad.constructor(self, x, y, color, hide, maxInputLen)
-  self:setColor(color) --background color
-  self:enable(true) --Keypad.enable register the keyboard event listener
-  self:hideInput(hide) --should the input be replaced with '*'
+  self:setColor(color)             --background color
+  self:enable(true)                --Keypad.enable register the keyboard event listener
+  self:hideInput(hide)             --should the input be replaced with '*'
   self:setMaxInputLen(maxInputLen) --max input length
 end
 
@@ -97,12 +97,12 @@ function Keypad.private.screenHandler(self, eventName, ScreenUUID, x, y, button,
   x = (x - self:getX()) / 2
   y = (y - self:getY() - 1) / 2
 
-  if (x >= 1 and x <= 3 and y >= 1 and y <= 4) then --keys[y][x] might be null if the event is not on  a key
-    if (keys[y][x] == 'X') then --if X got pressed
+  if (x >= 1 and x <= 3 and y >= 1 and y <= 4) then                     --keys[y][x] might be null if the event is not on  a key
+    if (keys[y][x] == 'X') then                                         --if X got pressed
       self.private.input = self:getInput():sub(1, #self:getInput() - 1) --remove the last char from the input
-    elseif (keys[y][x] == 'V') then --if V got pressed
+    elseif (keys[y][x] == 'V') then                                     --if V got pressed
       self.private.validateCallback(self)
-    else --a number got pressed
+    else                                                                --a number got pressed
       self.private.input = self.private.input .. (keys[y][x])
     end
   end
@@ -111,12 +111,12 @@ end
 
 function Keypad.private.callback(self, ...) --could have been named onKeyboard
   self.private.screenHandler(self, ...)
-  self.private.drawInput(self) --redraw the text field
+  self.private.drawInput(self)              --redraw the text field
 end
 
 function Keypad.private.drawInput(self)
-  if (not self:isVisible()) then return nil end --do nothing if the widget is not visible
-  local oldBgColor = gpu.setBackground(0) --change the background color and save the old one to restore it later
+  if (not self:isVisible()) then return nil end  --do nothing if the widget is not visible
+  local oldBgColor = gpu.setBackground(0)        --change the background color and save the old one to restore it later
   local oldFgColor = gpu.setForeground(0xffffff) --change the foreground color and save the old one to restore it later
 
   --draw the text field
@@ -124,12 +124,12 @@ function Keypad.private.drawInput(self)
   gpu.fill(self:getX() + 1, self:getY() + 1, self:getWidth() - 2, 1, " ")
 
   --fill the text field
-  local displayText = self:getInput():sub( -1 * (self:getWidth() - 2))
+  local displayText = self:getInput():sub(-1 * (self:getWidth() - 2))
   if (self:isInputHidden()) then
-    displayText = displayText:gsub('.', '*') --replace each char with '*'
+    displayText = displayText:gsub('.', '*')                          --replace each char with '*'
   end
-  if (#self:getInput() > self:getWidth() - 2) then --if the input if longer than the text field
-    displayText = "<" .. displayText:sub( -1 * (self:getWidth() - 3)) --replace the first character of the displayed text with "<" to indicate a trucated string
+  if (#self:getInput() > self:getWidth() - 2) then                    --if the input if longer than the text field
+    displayText = "<" .. displayText:sub(-1 * (self:getWidth() - 3))  --replace the first character of the displayed text with "<" to indicate a trucated string
   end
 
   gpu.set(self:getX() + 1, self:getY() + 1, displayText)
@@ -139,10 +139,10 @@ function Keypad.private.drawInput(self)
 end
 
 function Keypad.draw(self)
-  if (not self:isVisible()) then return nil end --do nothing if the widget is not visible
+  if (not self:isVisible()) then return nil end                              --do nothing if the widget is not visible
 
-  local oldBgColor = gpu.setBackground(self:getColor()) --change the background color and save the old one to restore it later
-  local oldFgColor = gpu.setForeground(0xffffff) --change the foreground color and save the old one to restore it later
+  local oldBgColor = gpu.setBackground(self:getColor())                      --change the background color and save the old one to restore it later
+  local oldFgColor = gpu.setForeground(0xffffff)                             --change the foreground color and save the old one to restore it later
   gpu.fill(self:getX(), self:getY(), self:getWidth(), self:getHeight(), " ") --draw background
 
   --draw the text field

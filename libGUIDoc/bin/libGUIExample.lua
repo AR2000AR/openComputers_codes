@@ -37,4 +37,4 @@ while (run) do
     os.sleep()
 end
 --stop processing touch events
-event.cancel(touchEvent)
+event.cancel(touchEvent --[[@as number]])

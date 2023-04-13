@@ -32,7 +32,7 @@ function Input.setValue(self, text) self:setText(text) end
 
 function Input.private.onKeyDown(self, eventName, component, char, key, player)
     if (not eventName == "key_down") then return end
-    if (char == 8) then --backspace
+    if (char == 8) then      --backspace
         self:setText(string.sub(self:getValue(), 0, -2))
     elseif (char == 13) then --return
         event.cancel(self.private.keyDownEvent)
@@ -49,9 +49,9 @@ function Input.private.callback(self, eventName, uuid, x, y, button, playerName)
         self.private.keyDownEvent = event.listen("key_down", function(...) self.private.onKeyDown(self, ...) end)
         self.private.touchEvent = event.listen("touch", function(eventName, uuid, x, y, button, playerName)
             if (not self:collide(x, y)) then
-                if (self.private.keyDownEvent) then event.cancel(self.private.keyDownEvent) end
+                if (self.private.keyDownEvent) then event.cancel(self.private.keyDownEvent --[[@as number]]) end
                 self.private.keyDownEvent = nil
-                if (self.private.touchEvent) then event.cancel(self.private.touchEvent) end
+                if (self.private.touchEvent) then event.cancel(self.private.touchEvent --[[@as number]]) end
                 self.private.touchEvent = nil
             end
         end)
