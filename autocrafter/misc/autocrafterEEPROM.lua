@@ -11,7 +11,7 @@ while true do
         crafterAD = component.list("crafting")()
         if (crafterAD) then crafter = component.proxy(crafterAD) end
         if (gpuAD and screenAD) then
-            gpu = component.proxy(component.list("gpu")())
+            gpu = assert(component.proxy(component.list("gpu")()))
             gpu.bind(screenAD)
             gpu.set(1, 1, "GPU OK ")
             if (tunnel) then gpu.set(1, 2, "tunnel OK ") else gpu.set(1, 2, "tunnel ERR") end

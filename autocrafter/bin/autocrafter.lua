@@ -62,7 +62,7 @@ local function loadRecipe(recipePatern, sideStorage, sideRobot)
                 else
                     return itemID
                 end
-            end --not enough ressources
+            end                                                                           --not enough ressources
             transposer.transferItem(sideStorage, sideRobot, 1, itemSlot, craftingGrid[i]) --put
         end
     end
@@ -78,6 +78,12 @@ local function craft(...)
 end
 
 --recursive function. Craft a item and it's missing ressouces
+---@param recipes table
+---@param labels table
+---@param itemName string
+---@param sideStorage number
+---@param sideRobot number
+---@return unknown
 local function craftItem(recipes, labels, itemName, sideStorage, sideRobot)
     print("Crafing " .. (labels[itemName] or itemName))
     local name = itemName:match("^[^/]+")
@@ -90,6 +96,8 @@ local function craftItem(recipes, labels, itemName, sideStorage, sideRobot)
             emptyCrafter(sideStorage, sideRobot)
             return crafted
         else
+            ---loadRecipe returned a missing ingredient
+            ---@cast loaded string
             local loadedName = loaded:match("^[^/]+")
             local loadedDamage = tonumber(loaded:match("%d+$"))
             if (recipes[loadedName]) then
