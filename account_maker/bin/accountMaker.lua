@@ -249,7 +249,7 @@ if (config.masterAccountCBdata == "") then
         repeat
             try = try + 1
             io.write("Enter pin : ")
-            pin = term.read(nil, nil, "*")
+            pin = term.read({pwchar = "*"})
             pin = pin:gsub("\n", "")
         until (pin or try >= 3)
         local cb = libCB.getCB(encryptedData, pin)
