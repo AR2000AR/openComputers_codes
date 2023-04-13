@@ -398,7 +398,8 @@ elseif (mode == "upgrade") then
             if (manifest.dependencies) then
                 for dep, ver in pairs(manifest.dependencies) do
                     local remoteManifest = getPacket(dep) --TODO : add target repo
-                    if (remoteManifest and (remoteManifest.version == "oppm" or compareVersion(remoteManifest.version, manifest.version) or opts["allow-same-version"])) then
+                    local localManifest = pm.getManifestFromInstalled(dep)
+                    if (remoteManifest and (remoteManifest.version == "oppm" or compareVersion(remoteManifest.version, localManifest.version) or opts["allow-same-version"])) then
                         table.insert(toUpgrade, dep)
                     end
                 end
