@@ -66,6 +66,7 @@ local function readPassword()
         event.cancel(event_keyboard)
         return false
     end)
+    ---@type number
     event_keyboard = event.listen("key_down", function(self, uuid, char, code, player)
         if (char == 8) then
             password = string.sub(password, 1, -2)
