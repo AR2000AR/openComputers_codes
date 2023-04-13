@@ -185,7 +185,7 @@ end
 
 local function showNumericalKeypad()
   keypad:clearInput()
-  keypad:setMaxInputLen( -1)
+  keypad:setMaxInputLen(-1)
   keypad:setVisible(true)
   keypad:enable(true)
   keypad:hideInput(false)
@@ -231,7 +231,7 @@ end
 -- =============================================================================
 local function init()
   --look for the input chest
-  while (transposer.getInventoryName(STORAGE) == nil) do
+  while (transposer.getInventoryName(STORAGE) == nil or transposer.getInventoryName(STORAGE):match("^opencomputers:")) do
     STORAGE = STORAGE + 1
     if (STORAGE == 6) then
       print("Need 2 chest")
@@ -240,7 +240,7 @@ local function init()
   end
   --look for the output chest
   if (STORAGE == EXTERIOR) then EXTERIOR = EXTERIOR + 1 end
-  while (transposer.getInventoryName(EXTERIOR) == nil) do
+  while (transposer.getInventoryName(EXTERIOR) == nil or transposer.getInventoryName(EXTERIOR):match("^opencomputers:")) do
     EXTERIOR = EXTERIOR + 1
     if (EXTERIOR == STORAGE) then EXTERIOR = EXTERIOR + 1 end
     if (EXTERIOR == 6) then
