@@ -5,8 +5,8 @@ local tar           = require("tar")
 
 ---@class manifest
 ---@field package string
----@field dependencies table
----@field configFiles table
+---@field dependencies table<string,string>
+---@field configFiles table<number,string>
 ---@field name string
 ---@field version string
 ---@field description string

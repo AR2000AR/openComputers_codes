@@ -50,7 +50,7 @@ local function extractPackage(packagePath)
     checkArg(1, packagePath, "string")
     if (opts["dry-run"]) then return true, nil end
     packagePath = filesystem.canonical(packagePath)
-    printf("extracting : %s", packagePath)
+    printf("Extracting : %s", packagePath)
     return tar.extract(packagePath, "/", false, "DATA/", nil, "DATA/")
 end
 
@@ -210,24 +210,30 @@ elseif (mode == "install") then
         if (header.name:match("^DATA/") and header.typeflag == "file") then
             local destination = header.name:sub(#("DATA/"))
             if (not installedFiles[destination] and (filesystem.exists(destination) and not configFiles[destination])) then
-                printf("File already exists %s", destination)
+                printf("\27[37mFile already exists %s\27[m", destination)
                 os.exit(1)
             end
         end
     end
 
-    --uninstall old version. It's easier than to check wich file need to be deleted
     if (pm.isInstalled(manifest.package)) then
-        print("Unistalling currently installed version")
-        shell.execute(f("pm uninstall %q --no-dependencies-check", manifest.package))
+        local currentManifest = pm.getManifestFromInstalled(manifest.package)
+        printf("Installing %s (%s) over %s (%s)", manifest.package, manifest.version, currentManifest.package, currentManifest.version)
+    else
+        printf("Installing : %s (%s)", manifest.package, manifest.version)
     end
 
-    printf("Installing : %s", manifest.package)
+    --uninstall old version. It's easier than to check wich file need to be deleted
+    if (pm.isInstalled(manifest.package)) then
+        --print("Unistalling currently installed version")
+        shell.execute(f("pm uninstall %q --no-dependencies-check", manifest.package))
+    end
 
     --extract the files in the correct path
     local extracted, reason = extractPackage(args[1])
     if (not extracted) then
         printf("\27[37m%s\27[m", reason or "Unkown error")
+        --TODO : revert installation
         os.exit(1)
     end
 
