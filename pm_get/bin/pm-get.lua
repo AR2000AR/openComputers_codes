@@ -17,11 +17,22 @@ local REPO_MANIFEST_CACHE = CONFIG_DIR .. "manifests.cache"
 local AUTO_INSTALLED      = CONFIG_DIR .. "autoInstalled"
 
 --=============================================================================
+---@type table<string>,table<progOpts>
+local args, opts          = shell.parse(...)
+local mode                = table.remove(args, 1)
+--=============================================================================
 
 local reposRuntimeCache
 
 --=============================================================================
 
+---@alias progOpts
+---| 'autoremove'
+---| 'purge'
+---| 'allow-same-version'
+
+
+--=============================================================================
 
 local f = string.format
 
@@ -223,7 +234,11 @@ local function install(package, markAuto, buildDepTree)
         os.exit(1)
     end
     io.open(f("%s/%s", DOWNLOAD_DIR, targetManifest.archiveName), "w"):write(data):close()
-    local _, code = shell.execute(f("pm install %s", f("%s/%s", DOWNLOAD_DIR, targetManifest.archiveName)))
+    local pmOptions = ""
+    if (opts["allow-same-version"]) then
+        pmOptions = "--allow-same-version"
+    end
+    local _, code = shell.execute(f("pm install %s %s", pmOptions, f("%s/%s", DOWNLOAD_DIR, targetManifest.archiveName)))
     filesystem.remove(f("%s/%s", DOWNLOAD_DIR, targetManifest.archiveName))
     if (markAuto) then
         io.open(AUTO_INSTALLED, "a"):write(targetManifest.package):close()
@@ -274,6 +289,7 @@ local function printHelp()
     printf("opts :")
     printf("\t--autoremove : also remove dependencies non longer required")
     printf("\t--purge : purge removed packages")
+    printf("\t--allow-same-version : allow the same package version to be installed over the currently installed one")
 end
 
 --=============================================================================
@@ -284,6 +300,7 @@ else
     printferr("Need a internet card")
 end
 
+--Remove uninstalled files from autoInstalled file
 if (filesystem.exists(AUTO_INSTALLED)) then
     do
         local tokeep = {}
@@ -295,9 +312,6 @@ if (filesystem.exists(AUTO_INSTALLED)) then
         file:close()
     end
 end
-
-local args, opts = shell.parse(...)
-local mode = table.remove(args, 1)
 
 if (mode == "update") then
     print("Updating repository cache")
@@ -377,14 +391,29 @@ elseif (mode == "autoremove") then
 elseif (mode == "upgrade") then
     local installed = pm.getInstalled(false)
     local toUpgrade = {}
-    for pkg, manifest in pairs(installed) do
-        if (manifest.version == "oppm") then
-            printf("Found oppm version for %q.", pkg)
-            table.insert(toUpgrade, pkg)
-        else
-            local remoteManifest = getPacket(pkg)
-            if (remoteManifest and (remoteManifest.version == "oppm" or compareVersion(remoteManifest.version, manifest.version))) then
+    if (args[1]) then
+        if (pm.isInstalled(args[1])) then
+            table.insert(toUpgrade, args[1])
+            local manifest = assert(pm.getManifestFromInstalled(args[1]))
+            if (manifest.dependencies) then
+                for dep, ver in pairs(manifest.dependencies) do
+                    local remoteManifest = getPacket(dep) --TODO : add target repo
+                    if (remoteManifest and (remoteManifest.version == "oppm" or compareVersion(remoteManifest.version, manifest.version) or opts["allow-same-version"])) then
+                        table.insert(toUpgrade, dep)
+                    end
+                end
+            end
+        end
+    else
+        for pkg, manifest in pairs(installed) do
+            if (manifest.version == "oppm") then
+                printf("Found oppm version for %q.", pkg)
                 table.insert(toUpgrade, pkg)
+            else
+                local remoteManifest = getPacket(pkg)
+                if (remoteManifest and (remoteManifest.version == "oppm" or compareVersion(remoteManifest.version, manifest.version))) then
+                    table.insert(toUpgrade, pkg)
+                end
             end
         end
     end
