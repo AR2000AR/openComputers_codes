@@ -2,7 +2,7 @@
 
 ---@param idx number
 ---@param var any
----@vararg 'string' | 'table' | 'number' | 'boolean' | 'userdata' | 'nil'
+---@vararg 'string' | 'table' | 'number' | 'boolean' | 'userdata' | 'nil' | 'function'
 function checkArg(idx, var, ...)
 end
 
