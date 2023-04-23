@@ -1,3 +1,11 @@
+local function call(self, ...)
+    local new = rawget(self, 'new')
+    if (new) then return self:new(...) end
+    local o = self.parent(...)
+    return setmetatable(o, {__index = self})
+end
+
+
 ---@class Object
 ---@field parent Object the parent class
 local Object = {}
@@ -20,9 +28,7 @@ end
 
 setmetatable(Object, {
     isClass = true,
-    __call = function(self, ...)
-        return self:new(...)
-    end,
+    __call = call
 }
 )
 --=============================================================================
@@ -36,9 +42,7 @@ local function class(parent)
 
     local mt = {
         isClass = true,
-        __call = function(self, ...)
-            return self:new(...)
-        end,
+        __call = call,
         __index = parent,
     }
     return setmetatable({parent = parent}, mt)
