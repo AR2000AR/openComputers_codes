@@ -1,6 +1,3 @@
-local function defaultCallback()
-end
-
 ---@class Widget:Object
 ---@field private _parentFrame Frame
 ---@field private _position Position
@@ -13,6 +10,9 @@ end
 ---@operator call:Widget
 ---@overload fun(parent:Frame,x:number,y:number):Widget
 local Widget = require("libClass2")()
+
+function Widget:defaultCallback()
+end
 
 ---@param parent Frame
 ---@param x number
@@ -44,13 +44,12 @@ function Widget:getParent() return self._parentFrame end
 ---Set the Widget's position.
 ---@param x number
 ---@param y number
----@return Position
----@overload fun(self:Widget,position:Position):Position
----@overload fun(self:Widget):Position
+---@return number x, number y
+---@overload fun(self:Widget):x:number,y:number
 function Widget:position(x, y)
     checkArg(1, x, 'number', 'table', 'nil')
     checkArg(2, y, 'number', 'nil')
-    local oldPos = {x = self:x(), y = self:y()}
+    local oldPosX, oldPosY = self:x(), self:y()
     if (type(x) == 'number') then
         self:x(x)
         self:y(y)
@@ -58,7 +57,7 @@ function Widget:position(x, y)
         checkArg(2, y, 'nil')
         self._position = x
     end
-    return oldPos
+    return oldPosX, oldPosY
 end
 
 ---Set the x position. Return the old x position or the current one if no x is provided
@@ -82,11 +81,9 @@ function Widget:y(y)
 end
 
 ---Get the absolute Widget's position on screen.
----@return Position
----@overload fun(self:Widget,position:Position):Position
----@overload fun(self:Widget):Position
+---@return number x,number y
 function Widget:absPosition()
-    return {x = self:absX(), y = self:absY()}
+    return self:absX(), self:absY()
 end
 
 ---Get the absolute x position on screen.
@@ -143,21 +140,17 @@ end
 ---Set the Widget's size.
 ---@param width number
 ---@param height number
----@return Size
----@overload fun(self:Widget,size:Size):Size
----@overload fun(self:Widget):Size
+---@return number x,number y
+---@overload fun(self:Widget):x:number,y:number
 function Widget:size(width, height)
-    checkArg(1, width, 'number', 'table', 'nil')
+    checkArg(1, width, 'number', 'nil')
     checkArg(2, height, 'number', 'nil')
-    local oldPos = {width = self:width(), height = self:height()}
+    local oldW, oldH = self:width(), self:height()
     if (type(width) == 'number') then
         self:width(width)
         self:height(height)
-    elseif (type(width) == 'table') then
-        checkArg(2, height, 'nil')
-        self._size = width
     end
-    return oldPos
+    return oldW, oldH
 end
 
 ---If value is provided, set if the container is visible and return the old value.\
@@ -195,7 +188,7 @@ end
 ---@return function,any ...
 function Widget:callback(callback, ...)
     checkArg(1, callback, 'function', 'nil')
-    local oldCallback = self._callback or defaultCallback
+    local oldCallback = self._callback or self.defaultCallback
     local oldArgs = self._callbackArgs or {}
     if (callback) then
         self._callback = callback

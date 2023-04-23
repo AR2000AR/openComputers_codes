@@ -8,7 +8,8 @@
 
 ---@class yaowbgllib
 local yaowbgl = {
-    widget = require('yaowbgl.widget')
+    widget = require('yaowbgl.widget'),
+    ImageFile = require("yaowbgl.ImageFile")
 }
 
 return yaowbgl

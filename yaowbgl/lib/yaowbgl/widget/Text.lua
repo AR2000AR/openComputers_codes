@@ -8,8 +8,7 @@ local text = require("text")
 ---@field private _foregroundColor number
 ---@field private _maxWidth number
 ---@field private _maxHeight number
----@overload fun(parent:Frame,position:Position,nil:nil,text:string,foregroundColor:number)
----@overload fun(parent:Frame,x:number,y:number,text:string,foregroundColor:number)
+---@overload fun(parent:Frame,x:number,y:number,text:string,foregroundColor:number):Text
 ---@operator call:Text
 local Text = require('libClass2')(require("yaowbgl.widget.Widget"))
 
@@ -18,7 +17,6 @@ local Text = require('libClass2')(require("yaowbgl.widget.Widget"))
 ---@param y number
 ---@param text string
 ---@param foregroundColor number
----@overload fun(self:Text,parent:Frame,position:Position,nil:nil,text:string,foregroundColor:number)
 ---@return Text
 function Text:new(parent, x, y, text, foregroundColor)
     local o = self.parent(parent, x, y)
@@ -98,7 +96,7 @@ end
 function Text:minWidth(value)
     checkArg(1, value, 'number', 'nil')
     local oldValue = self._minWidth or 0
-    if (value and value < self:maxWidth()) then error("minWidth cannot be larger than maxWidth", 2) end
+    if (value and value > self:maxWidth()) then error("minWidth cannot be larger than maxWidth", 2) end
     if (value) then self._minWidth = value end
     return oldValue
 end
@@ -108,7 +106,7 @@ end
 function Text:minHeight(value)
     checkArg(1, value, 'number', 'nil')
     local oldValue = self._minHeight or 0
-    if (value and value < self:maxHeight()) then error("minHeight cannot be larger than maxHeight", 2) end
+    if (value and value > self:maxHeight()) then error("minHeight cannot be larger than maxHeight", 2) end
     if (value) then self._minHeight = value end
     return oldValue
 end
@@ -151,11 +149,6 @@ function Text:width()
         end
     end
     return math.min(math.max(self:minWidth(), maxTextWidth), self:maxWidth())
-end
-
----@return Size
-function Text:size()
-    return {width = self:width(), height = self:height()}
 end
 
 function Text:draw()
