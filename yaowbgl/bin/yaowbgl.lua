@@ -39,33 +39,52 @@ rectangle:callback(
         end
         self:draw()
     end)
-local text = yaowbgl.widget.Text(rootFrame, 3, 5, "", 0x00ff00)
+
+
+local text = yaowbgl.widget.Text(rootFrame, 1, 4, "", 0x00ff00)
 text:maxWidth(rootFrame:width() - (text:x() - 1))
 --text:maxHeight(2)
+text:backgroundColor(0x7f7f7f)
 
-local textBg = yaowbgl.widget.Rectangle(rootFrame, 0, 0, 0, 0, 0x7f7f7f)
-textBg:position(text:position())
-textBg:size(text:size())
-textBg:z(text:z() - 1)
-
-local img = yaowbgl.widget.Image(superRoot, 15, 5, "/home/vortex.pam")
+local imgFrame = yaowbgl.widget.Frame(superRoot, 49, 5)
+local img = yaowbgl.widget.Image(imgFrame, 1, 1, "/home/vortex.pam")
+local img2 = yaowbgl.widget.Image(imgFrame, 1, 1, "/home/sg00.pam")
+img2:z(img:z() + 1)
+imgFrame:size(img:size())
+imgFrame:backgroundColor(0xffffff)
 local input = yaowbgl.widget.TextInput(superRoot, 3, 20, "", 0xffffff)
 input:minSize(30, 1)
+input:multilines(true)
+input:backgroundColor(0)
 local r2 = yaowbgl.widget.Rectangle(superRoot, input:x(), input:y(), input:width(), input:height(), 0)
 r2:z(input:z() - 1)
 
-local function refreshSize()
-    text:text(MSG:sub(1, #text:text() + 1))
-    textBg:size(text:size())
-    r2:size(input:size())
-end
+
+local list = yaowbgl.widget.WidgetList(superRoot, 30, 3)
+list:size(20, 6)
+list:backgroundColor(0xffffff)
+local t1 = yaowbgl.widget.Text(list, 0, 0, "test1", 0)
+t1:size(20, 1)
+t1:center(true)
+local t2 = yaowbgl.widget.Text(list, 0, 0, "test2", 0)
+t2:size(20, 1)
+t2:center(true)
+local t3 = yaowbgl.widget.Text(list, 0, 0, "test3", 0)
+t3:size(20, 1)
+t3:center(true)
+local t4 = yaowbgl.widget.Text(list, 0, 0, "test4", 0)
+t4:size(20, 1)
+t4:center(true)
+local t5 = yaowbgl.widget.Text(list, 0, 0, "test5", 0)
+t5:size(20, 1)
+t5:center(true)
 
 local function animate()
     superRoot:draw()
-    if (#text:text() == #MSG) then
+    text:text(MSG:sub(1, #(text:text()) + 1))
+    if (#(text:text()) == #MSG) then
         return false
     end
-    refreshSize()
     os.sleep(3 / #MSG)
     return true
 end
@@ -76,9 +95,10 @@ require("event").listen("interrupted", function()
     run = false;
     return false
 end)
+superRoot:draw()
+img:visible(false)
 while run do
-    os.sleep()
-    refreshSize()
+    os.sleep(0.1)
     superRoot:draw()
 end
 term.clear()

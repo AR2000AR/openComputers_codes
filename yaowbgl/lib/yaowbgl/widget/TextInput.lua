@@ -1,4 +1,5 @@
 local event = require("event")
+local text = require("text")
 local class = require("libClass2")
 local Text = require("yaowbgl.widget.Text")
 
@@ -20,11 +21,10 @@ function TextInput:placeholder(value)
 end
 
 function TextInput:_onKeyDown(eventName, component, char, key, player)
-    print("key", eventName, string.char(char))
     if (eventName ~= "key_down") then return end
-    if (char == 8) then      --backspace
+    if (char == 8) then                                --backspace
         self:text(string.sub(self:text(), 0, -2))
-    elseif (char == 13) then --return
+    elseif (char == 13 and not self:multilines()) then --return
         event.cancel(self._keyDownEvent)
         self._keyDownEvent = nil
         event.cancel(self._touchEvent)
@@ -43,7 +43,6 @@ function TextInput:defaultCallback(_, eventName, uuid, x, y, button, playerName)
     --DEBUG
     if (eventName ~= "touch") then return end
     if (not self._keyDownEvent) then
-        print("reg")
         self._keyDownEvent = event.listen("key_down", function(...) self:_onKeyDown(...) end) --[[@as number]]
         self._touchEvent = event.listen("touch", function(eventName, uuid, x, y, button, playerName)
             if (not self:checkCollision(x, y)) then
@@ -53,6 +52,26 @@ function TextInput:defaultCallback(_, eventName, uuid, x, y, button, playerName)
                 self._touchEvent = nil
             end
         end) --[[@as number]]
+    end
+end
+
+---@param value? boolean
+---@return boolean
+function TextInput:multilines(value)
+    checkArg(1, value, 'boolean', 'nil')
+    local oldValue = self._multilines or false
+    if (value ~= nil) then self._multilines = value end
+    return oldValue
+end
+
+function TextInput:cursorPos()
+    local y = self:absY()
+    for line in text.wrappedLines(self:text(), self:maxWidth(), self:maxWidth()) do
+        ---@cast line string
+        if ((y - self:absY()) + 1 <= self:maxHeight()) then
+            local x = self:absX() + #line
+        end
+        y = y + 1
     end
 end
 

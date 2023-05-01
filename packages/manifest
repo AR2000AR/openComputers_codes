@@ -180,6 +180,9 @@
 		["repo"] = "tree/master/stargate_crl",
 		["description"] = "GUI to controll stargates from SGCraft",
 		["authors"] = "AR2000AR",
+		["dependencies"] = 	{
+			["libgui"] = "oppm"
+		},
 		["archiveName"] = "stargate.tar"
 	},
 	["vending"] = {
@@ -343,5 +346,41 @@
 			"/etc/pm/sources.list"
 		},
 		["archiveName"] = "pm_get.tar"
+	},
+	["libclass2"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "libclass2",
+		["version"] = "1.0.0",
+		["name"] = "libClass2",
+		["repo"] = "tree/master/libclass",
+		["description"] = "A new and improved version of libclass, with cleaner syntax for cleaner code",
+		["authors"] = "AR2000AR",
+		["archiveName"] = "libclass2.tar"
+	},
+	["yaowbgl"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "yaowbgl",
+		["version"] = "1.1.0",
+		["name"] = "Yet A Other Widget Based Graphical Library",
+		["repo"] = "tree/master/yaowbgl",
+		["description"] = "New version of libgui, but using libclass2 and cleaner code and interface.",
+		["authors"] = "AR2000AR",
+		["dependencies"] = 	{
+			["libclass2"] = "oppm"
+		},
+		["archiveName"] = "yaowbgl.tar"
+	},
+	["stargate2"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "stargate2",
+		["version"] = "oppm",
+		["name"] = "Stargate Ctl",
+		["repo"] = "tree/master/stargate_crl",
+		["description"] = "GUI to controll stargates from SGCraft",
+		["authors"] = "AR2000AR",
+		["dependencies"] = 	{
+			["yaowbgl"] = "oppm"
+		},
+		["archiveName"] = "stargate2.tar"
 	}
 }

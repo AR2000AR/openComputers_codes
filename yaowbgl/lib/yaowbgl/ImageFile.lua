@@ -166,6 +166,7 @@ end
 ---@param y number
 ---@return number
 ---@overload fun(self:ImageFile,x:number):table<number,number>
+---@overload fun(self:ImageFile,x:nil,y:number):table<number,number>
 function ImageFile:pixel(x, y)
     checkArg(1, x, 'number', 'nil')
     checkArg(2, y, 'number', 'nil')
@@ -176,6 +177,12 @@ function ImageFile:pixel(x, y)
             return self._pixel[x][y]
         end
         return deepcopy(self._pixel[x])
+    elseif (not x and y) then
+        local row = {}
+        for i, pixs in pairs(self._pixel) do
+            table.insert(row, pixs[y])
+        end
+        return row
     else
         return deepcopy(self._pixel)
     end

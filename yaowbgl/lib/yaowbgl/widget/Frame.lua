@@ -7,13 +7,12 @@ local event = require("event")
 ---@class Frame:Widget
 ---@field parent Widget
 ---@field private _parentFrame? Frame Inherited from Widget, but made optional
----@field private _childs table<number,Widget|Frame>
+---@field protected _childs table<number,Widget|Frame>
 ---@field private _listeners table
 ---@operator call:Frame
----@overload fun(parent:Frame,x:number,y:number):Frame
 ---@overload fun():Frame
 ---@overload fun(parent:Frame):Frame
----@overload fun(parent:Frame,position:Position):Frame
+---@overload fun(parent:Frame,x:number,y:number):Frame
 local Frame = require("libClass2")(Widget)
 
 ---@param parentFrame Frame
@@ -86,7 +85,9 @@ function Frame:backgroundColor(value)
 end
 
 function Frame:propagateEvent(eName, screenAddress, x, y, ...)
+    if (not self:enabled()) then return end
     for _, w in pairs(self._childs) do
+        os.sleep()
         if (w:checkCollision(x, y)) then
             if (w:instanceOf(Frame)) then
                 ---@cast w Frame
@@ -104,11 +105,14 @@ function Frame:draw()
     --init frame buffer
     local defaultBuffer = gpu.getActiveBuffer()
     local sucess, newBuffer = pcall(gpu.allocateBuffer, gpu.getResolution())
+    --local sucess, newBuffer = nil, nil
     if (sucess ~= false) then
-        gpu.setActiveBuffer(newBuffer)
+        defaultBuffer = gpu.setActiveBuffer(newBuffer)
     end
+
     if (newBuffer and newBuffer ~= defaultBuffer) then
-        gpu.bitblt(newBuffer, self:x(), self:y(), self:width(), self:height(), defaultBuffer, self:x(), self:y())
+        --copy the old buffer in the new buffer for transparancy effect
+        gpu.bitblt(newBuffer, self:absX(), self:absY(), self:width(), self:height(), defaultBuffer, self:absY(), self:absX())
     end
 
     --clean background
@@ -118,14 +122,26 @@ function Frame:draw()
         gpu.fill(self:absX(), self:absY(), self:width(), self:height(), " ")
         gpu.setBackground(oldBG)
     end
+
+    --sort widgets by z
+    local unsorted = false
+    for i, w in pairs(self._childs) do
+        if (i > 1) then
+            if (self._childs[i - 1]:z() > w:z()) then
+                unsorted = true
+                break
+            end
+        end
+    end
+    if (unsorted) then table.sort(self._childs, function(a, b) return a:z() < b:z() end) end
+
     --draw widgets
-    table.sort(self._childs, function(a, b) return a:z() < b:z() end)
     for _, element in pairs(self._childs) do
         element:draw()
     end
     --restore buffer
     if (newBuffer and newBuffer ~= defaultBuffer) then
-        gpu.bitblt(defaultBuffer, self:x(), self:y(), self:width(), self:height(), newBuffer, self:x(), self:y())
+        gpu.bitblt(defaultBuffer, self:absX(), self:absY(), self:width(), self:height(), newBuffer, self:absY(), self:absX())
         gpu.setActiveBuffer(defaultBuffer)
         gpu.freeBuffer(newBuffer)
     end

@@ -3,6 +3,8 @@ local class     = require("libClass2")
 local Widget    = require("yaowbgl.widget.Widget")
 local ImageFile = require("yaowbgl.ImageFile")
 
+local HALF_CHAR = "▀"
+
 
 ---@class Image:Widget
 ---@field private _imageData ImageFile
@@ -27,26 +29,63 @@ function Image:new(parent, x, y, img)
     return o
 end
 
+---@return number
+function Image:width(value)
+    return self._imageData:width()
+end
+
+---@return number
+function Image:height(value)
+    return math.ceil(self._imageData:height() / 2)
+end
+
+---@param value? ImageFile
+---@return ImageFile
+function Image:imageData(value)
+    checkArg(1, value, 'table', 'nil')
+    local oldValue = self._imageData
+    if (value ~= nil) then self._imageData = value end
+    return oldValue
+end
+
 function Image:draw()
+    if (not self:visible()) then return end
     local bg, fg = gpu.getBackground(), gpu.getForeground()
-    local pixelFg, pixelBg
-    for x = 1, self._imageData:width() do
-        for y = 1, math.floor(self._imageData:height()) do
-            if (y % 2 == 1) then
-                pixelFg = self._imageData:pixel(x, y)
-                if (pixelFg == "nil") then _, _, pixelFg = gpu.get(self:x() + x - 1, self:y() + (y - 1) / 2) end
-                if (y + 1 <= self._imageData:height()) then
-                    pixelBg = self._imageData:pixel(x, y + 1)
-                    if (pixelBg == "nil") then _, _, pixelBg = gpu.get(self:x() + x - 1, self:y() + (y - 1) / 2) end
-                else
-                    _, _, pixelBg = gpu.get(self:x() + x - 1, self:y() + (y - 1) / 2)
-                end
-                gpu.setForeground(pixelFg)
-                gpu.setBackground(pixelBg)
-                gpu.set(self:x() + x - 1, self:y() + (y - 1) / 2, "▀")
-            end
+    --read pixels into a table with one cell per screen pixel
+    local pixels = {}
+    for pixY = 1, self._imageData:height(), 2 do
+        local row1 = self._imageData:pixel(nil, pixY) --[[@as table]]
+        local row2 = {}
+        if (pixY > self._imageData:height()) then
+            for i, _ in pairs(row1) do row2[i] = "nil" end
+        else
+            row2 = self._imageData:pixel(nil, pixY + 1) --[[@as table]]
+        end
+        for i, _ in pairs(row1) do
+            table.insert(pixels, {fg = row1[i] or 'nil', bg = row2[i] or 'nil'})
         end
     end
+    for i, v in pairs(pixels) do
+        if (v.bg ~= "nil" or v.fg ~= "nil") then
+            local x = (self:absX()) + ((i - 1) % self:width())
+            local y = self:absY() + math.floor((i - 1) / self:width())
+            if (v.fg == "nil") then
+                local c, cfg, cbg = gpu.get(x, y)
+                if (c == HALF_CHAR) then
+                    v.fg = cfg
+                else
+                    v.fg = cbg
+                end
+            end
+            if (v.bg == "nil") then
+                _, _, v.bg = gpu.get(x, y)
+            end
+            gpu.setForeground(v.fg)
+            gpu.setBackground(v.bg)
+            gpu.set(x, y, HALF_CHAR, false)
+        end
+    end
+
     gpu.setBackground(bg)
     gpu.setForeground(fg)
 end

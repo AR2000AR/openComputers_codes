@@ -131,35 +131,74 @@ function Text:minSize(minWidth, minHeight)
     return oldPos
 end
 
+---@param value? number
 ---@return number
-function Text:height()
+function Text:height(value)
     local lines = 0
     for line in text.wrappedLines(self:text(), self:maxWidth(), self:maxWidth()) do
         lines = lines + 1
     end
+    if (value ~= nil) then
+        self:minHeight(0)
+        self:maxHeight(math.huge)
+        self:minHeight(value)
+        self:maxHeight(value)
+    end
     return math.min(math.max(self:minHeight(), lines), self:maxHeight())
 end
 
+---@param value? number
 ---@return number
-function Text:width()
+function Text:width(value)
     local maxTextWidth = -1
     for line in text.wrappedLines(self:text(), self:maxWidth(), self:maxWidth()) do
         if (#line > maxTextWidth) then
             maxTextWidth = #line
         end
     end
+    if (value ~= nil) then
+        self:minWidth(0)
+        self:maxWidth(math.huge)
+        self:minWidth(value)
+        self:maxWidth(value)
+    end
     return math.min(math.max(self:minWidth(), maxTextWidth), self:maxWidth())
+end
+
+---@param value? number
+---@return number
+function Text:backgroundColor(value)
+    checkArg(1, value, 'number', 'nil')
+    local oldValue = self._backgroundColor or nil
+    if (value ~= nil) then self._backgroundColor = value end
+    return oldValue
+end
+
+---@param value? boolean
+---@return boolean
+function Text:center(value)
+    checkArg(1, value, 'boolean', 'nil')
+    local oldValue = self._center or false
+    if (value ~= nil) then self._center = value end
+    return oldValue
 end
 
 function Text:draw()
     if (not self:visible()) then return end
     local oldFgColor = gpu.setForeground(self:foregroundColor())
     local oldBgColor = gpu.getBackground()
+    if (self:backgroundColor()) then
+        gpu.setBackground(self:backgroundColor())
+        gpu.fill(self:absX(), self:absY(), self:width(), self:height(), " ")
+    end
     local y = self:absY()
     for line in text.wrappedLines(self:text(), self:maxWidth(), self:maxWidth()) do
         ---@cast line string
         if ((y - self:absY()) + 1 <= self:maxHeight()) then
             local x = self:absX()
+            if (self:center() and self:minWidth() == self:maxWidth()) then
+                x = x + (self:width() - #line) / 2
+            end
             for c in line:gmatch(".") do
                 local s, _, _, bg = pcall(gpu.get, x, y)
                 if (s ~= false) then
