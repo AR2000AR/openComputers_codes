@@ -2,6 +2,7 @@ local event = require("event")
 local text = require("text")
 local class = require("libClass2")
 local Text = require("yaowbgl.widget.Text")
+local gpu = require("component").gpu
 
 ---@class TextInput:Text
 ---@field private _keyDownEvent number
@@ -40,7 +41,6 @@ function TextInput:callback(callback, ...)
 end
 
 function TextInput:defaultCallback(_, eventName, uuid, x, y, button, playerName)
-    --DEBUG
     if (eventName ~= "touch") then return end
     if (not self._keyDownEvent) then
         self._keyDownEvent = event.listen("key_down", function(...) self:_onKeyDown(...) end) --[[@as number]]
@@ -73,6 +73,37 @@ function TextInput:cursorPos()
         end
         y = y + 1
     end
+end
+
+function TextInput:draw()
+    if (not self:visible()) then return end
+    local oldFgColor = gpu.setForeground(self:foregroundColor())
+    local oldBgColor = gpu.getBackground()
+    if (self:backgroundColor()) then
+        gpu.setBackground(self:backgroundColor())
+        gpu.fill(self:absX(), self:absY(), self:width(), self:height(), " ")
+    end
+    local y = self:absY()
+    for line in text.wrappedLines(self:text(), self:maxWidth(), self:maxWidth()) do
+        ---@cast line string
+        if ((y - self:absY()) + 1 <= self:maxHeight()) then
+            local x = self:absX()
+            if (self:center() and self:minWidth() == self:maxWidth()) then
+                x = x + (self:width() - #line) / 2
+            end
+            for c in line:gmatch(".") do
+                local s, _, _, bg = pcall(gpu.get, x, y)
+                if (s ~= false) then
+                    gpu.setBackground(bg)
+                    gpu.set(x, y, self:placeholder() or c)
+                    x = x + 1
+                end
+            end
+        end
+        y = y + 1
+    end
+    gpu.setForeground(oldFgColor)
+    gpu.setBackground(oldBgColor)
 end
 
 return TextInput

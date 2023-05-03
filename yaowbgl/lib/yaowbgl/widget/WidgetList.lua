@@ -8,7 +8,6 @@ local Frame = require("yaowbgl.widget.Frame")
 local WidgetList = require('libClass2')(Frame)
 
 function WidgetList:draw()
-    --TODO : Move widgets
     for i, w in ipairs(self._childs) do
         w:position(1, i)
     end
