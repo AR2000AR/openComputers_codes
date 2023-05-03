@@ -100,8 +100,8 @@ lnfs server. Configuration handled by /etc/rc.cfg. See `man lnfsd` or [lnfsd](ln
 ---
 ## Other programs
 
-### [stargate](stargate_ctl/)
-Graphical interface to control and monitor gates from [Stargate Network](https://www.curseforge.com/minecraft/mc-mods/stargate-network). Whitelist, blacklist, gate list, iris management and password. Fully configurable from the GUI
+### [stargate2](stargate_ctl2/)
+Graphical interface to control and monitor gates from [Stargate Network](https://www.curseforge.com/minecraft/mc-mods/stargate-network). Whitelist, blacklist, gate list, iris management and password. Fully configurable from the GUI.
 
 ### [doorCtrl](doorCtrl/)
 Control a number of redstone IO blocs with a single touchscreen. Easy to configure with `doorCtrl -c`
