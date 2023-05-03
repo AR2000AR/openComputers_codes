@@ -54,19 +54,19 @@ end
 
 ---When called with a file name, it opens the named file (in text mode), and sets its handle as the default input file. When called with a file handle, it simply sets this file handle as the default input file. When called without parameters, it returns the current default input file.\
 ---In case of errors this function raises the error, instead of returning an error code.
----@param file? file*
+---@param file? file*|string
 ---@return file*
 function io.input(file)
 end
 
 ---Similar to io.input, but operates over the default output file.
----@param file? file*
+---@param file? file*|string
 ---@return file*
 function io.output(file)
 end
 
 ---Similar to io.input, but operates over the default error file.
----@param file? file*
+---@param file? file*|string
 ---@return file*
 function io.error(file)
 end
