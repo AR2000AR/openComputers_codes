@@ -373,7 +373,7 @@
 	["stargate2"] = {
 		["manifestVersion"] = "1.0",
 		["package"] = "stargate2",
-		["version"] = "1.0.0",
+		["version"] = "1.0.1",
 		["name"] = "Stargate Ctl",
 		["repo"] = "tree/master/stargate_crl",
 		["description"] = "GUI to controll stargates from SGCraft",

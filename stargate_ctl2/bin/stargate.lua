@@ -242,6 +242,7 @@ end
 function RemoteGate.openIris()
     stargate.sendMessage("SGCONTROLLER", "IRIS", uiWidgets.passwordInput:text(), true)
     local eventName, gateComponentAddress, protocol, command, password, msg, reason = event.pull(3, "sgMessageReceived", nil, "SGCONTROLLER", "IRIS_A")
+    --TODO : handle remote iris offline
     updatePassword(password)
     if (not eventName) then return nil, "Timeout" end
     if (password == false) then return nil, "Invalid Password" end
@@ -381,12 +382,12 @@ local function gateNameButtonHandler(self, args, eventName, componentAddress, x,
             --restore the colors
             self:foregroundColor(THEME.FOREGROUND.GATE_LIST_NAME)
             self:backgroundColor(THEME.BACKGROUND.GATE_LIST_NAME)
-            if (not self:checkCollision(xx, yy)) then return end     --if not on this widget then do nothing
-            if (uiWidgets.renameInput:text() == "") then return end  --if no name is in the Input widget do nothing
-            gatesData[args.addr].name = uiWidgets.renameInput:text() --update the gate data
-            self:text(uiWidgets.renameInput:text())                  --update the widget text
-            uiWidgets.renameInput:text("Left click twice to rename") --reset input
-            saveGateList()                                           --save the new data
+            if (not self:checkCollision(xx, yy)) then return end      --if not on this widget then do nothing
+            if (uiWidgets.renameInput:text() == "") then return end   --if no name is in the Input widget do nothing
+            gatesData[args.addr].name = uiWidgets.renameInput:text()  --update the gate data
+            self:text(uiWidgets.renameInput:text())                   --update the widget text
+            uiWidgets.renameInput:text("Right click twice to rename") --reset input
+            saveGateList()                                            --save the new data
         end
     end
 end
