@@ -1,0 +1,88 @@
+local stargate = component.proxy(component.list('stargate')())
+if (not stargate) then error("No stargate") end
+---@cast stargate ComponentStargate
+
+local smartRemote = false
+local lastIrisCmd = ''
+local doOnce = false
+local cTime = math.huge
+
+local RemoteGate = {}
+
+function RemoteGate.closeIris()
+    stargate.sendMessage("SGCONTROLLER", "IRIS", "", false)
+    lastIrisCmd = 'close'
+end
+
+function RemoteGate.openIris()
+    stargate.sendMessage("SGCONTROLLER", "IRIS", "", true)
+    lastIrisCmd = 'open'
+end
+
+function RemoteGate.ping()
+    stargate.sendMessage("SGCONTROLLER", "PING", "" or "", "ping")
+end
+
+local function onMessageReceived(protocol, command, password, arg, reason)
+    if (not protocol == "SGCONTROLLER") then return end
+    if (command == "IRIS") then
+        if (arg == nil) then
+            stargate.sendMessage("SGCONTROLLER", "IRIS", true, stargate.irisState())
+        else
+            if (arg == true) then
+                stargate.sendMessage("SGCONTROLLER", "IRIS_A", true, stargate.openIris())
+            else
+                stargate.sendMessage("SGCONTROLLER", "IRIS_A", true, stargate.closeIris())
+            end
+        end
+    elseif (command == 'IRIS_A') then
+        if (arg == true and password == true) then
+            if (lastIrisCmd == 'open') then
+                stargate.openIris()
+                lastIrisCmd = ''
+            elseif (lastIrisCmd == 'close') then
+                stargate.closeIris()
+                lastIrisCmd = ''
+            end
+        end
+    elseif (command == "PING") then
+        if (arg == "ping") then
+            stargate.sendMessage("SGCONTROLLER", "PING", true, "pong")
+        elseif (arg == 'pong') then
+            smartRemote = true
+        end
+    end
+end
+
+while true do
+    if (stargate.stargateState() == 'Connected' and doOnce and (smartRemote or computer.uptime() >= cTime + 3)) then
+        local _, _, direction = stargate.stargateState()
+        if (direction == 'Outgoing') then
+            if (not smartRemote) then
+                stargate.openIris()
+            else
+                RemoteGate.openIris()
+            end
+        elseif (direction == 'Incoming' and not smartRemote) then
+            --open iris for dumb connections
+            stargate.openIris()
+        end
+        doOnce = false
+    end
+    local eventName, componentAddress, p1, p2, p3, p4, p5 = computer.pullSignal()
+    if (eventName == 'sgMessageReceived') then
+        onMessageReceived(p1, p2, p3, p4, p5)
+    elseif (eventName == 'sgStargateStateChange') then
+        if (p2 == 'Idle') then
+            stargate.closeIris()
+            smartRemote = false
+        elseif (p1 == 'Idle') then
+            stargate.openIris()
+            smartRemote = false
+        elseif (p1 == 'Connected') then
+            RemoteGate.ping()
+            doOnce = true
+            cTime = computer.uptime()
+        end
+    end
+end

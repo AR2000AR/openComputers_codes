@@ -373,14 +373,25 @@
 	["stargate2"] = {
 		["manifestVersion"] = "1.0",
 		["package"] = "stargate2",
-		["version"] = "1.0.2",
+		["version"] = "1.0.3",
 		["name"] = "Stargate Ctl",
-		["repo"] = "tree/master/stargate_crl",
+		["repo"] = "tree/master/stargate_crl2",
 		["description"] = "GUI to controll stargates from SGCraft",
 		["authors"] = "AR2000AR",
 		["dependencies"] = 	{
 			["yaowbgl"] = "oppm"
 		},
 		["archiveName"] = "stargate2.tar"
+	},
+	["stargate2_bios"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "stargate2_bios",
+		["version"] = "1.0.0",
+		["name"] = "Stargate Ctl BIOS",
+		["repo"] = "tree/master/stargate_crl2_bios",
+		["description"] = "A small BIOS compatible program to make a gate smart",
+		["note"] = "/usr/share/stargate/stargate.bios",
+		["authors"] = "AR2000AR",
+		["archiveName"] = "stargate2_bios.tar"
 	}
 }
