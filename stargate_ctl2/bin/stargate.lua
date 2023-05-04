@@ -826,7 +826,7 @@ passwordInput:placeholder("*")
 passwordInput:size(17, 1)
 passwordInput:backgroundColor(THEME.BACKGROUND.PASSWORD_INPUT.DEFAULT)
 uiWidgets.passwordInput = passwordInput
-local renameInput = yaowbgl.widget.TextInput(mainFrame, gateList:x(), gateList:y() + gateList:height(), "Left click twice to rename", THEME.FOREGROUND.RENAME_INPUT)
+local renameInput = yaowbgl.widget.TextInput(mainFrame, gateList:x(), gateList:y() + gateList:height(), "Right click twice to rename", THEME.FOREGROUND.RENAME_INPUT)
 renameInput:size(gateList:width(), 1)
 renameInput:backgroundColor(THEME.BACKGROUND.RENAME_INPUT)
 uiWidgets.renameInput = renameInput
