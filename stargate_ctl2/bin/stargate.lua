@@ -242,10 +242,10 @@ end
 function RemoteGate.openIris()
     stargate.sendMessage("SGCONTROLLER", "IRIS", uiWidgets.passwordInput:text(), true)
     local eventName, gateComponentAddress, protocol, command, password, msg, reason = event.pull(3, "sgMessageReceived", nil, "SGCONTROLLER", "IRIS_A")
-    --TODO : handle remote iris offline
     updatePassword(password)
     if (not eventName) then return nil, "Timeout" end
     if (password == false) then return nil, "Invalid Password" end
+    if (reason == 'missingIris') then msg = true end
     return msg, reason
 end
 
