@@ -373,7 +373,7 @@
 	["stargate2"] = {
 		["manifestVersion"] = "1.0",
 		["package"] = "stargate2",
-		["version"] = "1.0.3",
+		["version"] = "1.1.0",
 		["name"] = "Stargate Ctl",
 		["repo"] = "tree/master/stargate_crl2",
 		["description"] = "GUI to controll stargates from SGCraft",
@@ -386,7 +386,7 @@
 	["stargate2_bios"] = {
 		["manifestVersion"] = "1.0",
 		["package"] = "stargate2_bios",
-		["version"] = "1.0.0",
+		["version"] = "1.1.0",
 		["name"] = "Stargate Ctl BIOS",
 		["repo"] = "tree/master/stargate_crl2_bios",
 		["description"] = "A small BIOS compatible program to make a gate smart",

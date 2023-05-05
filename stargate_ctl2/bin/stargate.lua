@@ -127,6 +127,7 @@ local config         = {
     dropNotAllowed = false
 }
 local smartRemote    = false
+local irisStateGoal  = 'Offline' ---@type irisState
 --#endregion
 
 --#region pre init check
@@ -223,6 +224,18 @@ local function updatePassword(password)
     end
 end
 
+local function openIris()
+    local sucess, reason = stargate.openIris()
+    if (sucess) then irisStateGoal = 'Open' end
+    return sucess, reason
+end
+
+local function closeIris()
+    local sucess, reason = stargate.closeIris()
+    if (sucess) then irisStateGoal = 'Closed' end
+    return sucess, reason
+end
+
 --#endregion
 
 --#region remoteGate
@@ -306,7 +319,7 @@ end
 local function irisButtonHandler(self, args, eventName, componentAddress, x, y, button, player)
     if (eventName ~= 'touch') then return end
     if (stargate.stargateState() == "Dialling" or stargate.stargateState() == "Opening") then
-        stargate.closeIris()
+        closeIris()
         return
     end
     if (button ~= 0) then return end
@@ -315,24 +328,24 @@ local function irisButtonHandler(self, args, eventName, componentAddress, x, y, 
     if (currentIrisState == "Closed" or currentIrisState == "Closing") then
         if (smartRemote) then
             if (RemoteGate.openIris()) then
-                stargate.openIris()
+                openIris()
                 uiWidgets.infoText:text("Iris : remote allowed it")
             else
                 uiWidgets.infoText:text("Iris error : other side doesn't allow it")
             end
         else
-            stargate.openIris()
+            openIris()
         end
     else
         if (smartRemote) then
             if (RemoteGate.closeIris()) then
-                stargate.closeIris()
+                closeIris()
                 uiWidgets.infoText:text("Iris : remote allowed it")
             else
                 uiWidgets.infoText:text("Iris error : other side doesn't allow it")
             end
         else
-            stargate.closeIris()
+            closeIris()
         end
     end
 end
@@ -593,7 +606,7 @@ end
 ---@param fromState stargateState
 local function onStargateStateChange(eventName, componentAddress, toState, fromState)
     if (fromState == "Idle") then
-        stargate.closeIris()
+        closeIris()
         uiWidgets.dialButton:foregroundColor(THEME.FOREGROUND.DIAL_BUTTON.CONNECTED)
         uiWidgets.dialButton:backgroundColor(THEME.BACKGROUND.DIAL_BUTTON.CONNECTED)
         uiWidgets.dialButton:text("DISCONNECT")
@@ -639,14 +652,14 @@ local function onStargateStateChange(eventName, componentAddress, toState, fromS
         if (direction == 'Outgoing') then
             if (allowedGate(stargate.remoteAddress())) then
                 if (not smartRemote) then
-                    stargate.openIris()
+                    openIris()
                 elseif (RemoteGate.openIris()) then
-                    stargate.openIris()
+                    openIris()
                 end
             end
         elseif (direction == 'Incoming' and not smartRemote) then
             --open iris for dumb connections
-            if (allowedGate(stargate.remoteAddress())) then stargate.openIris() end
+            if (allowedGate(stargate.remoteAddress())) then openIris() end
         end
     elseif (toState == "Idle") then
         uiWidgets.dialButton:foregroundColor(THEME.FOREGROUND.DIAL_BUTTON.DEFAULT)
@@ -658,7 +671,7 @@ local function onStargateStateChange(eventName, componentAddress, toState, fromS
         uiWidgets.passwordInput:foregroundColor(THEME.FOREGROUND.PASSWORD_INPUT.DEFAULT)
         uiWidgets.passwordInput:backgroundColor(THEME.BACKGROUND.PASSWORD_INPUT.DEFAULT)
         uiWidgets.gateLayer:imageData(yaowbgl.ImageFile(GATE_STATE[0]))
-        stargate.openIris()
+        openIris()
         uiWidgets.vortexLayer:visible(false)
         smartRemote = false
         uiWidgets.infoText:text("Idle")
@@ -672,18 +685,34 @@ end
 local function onIrisStateChange(eventName, componentAddress, toState, fromState)
     uiWidgets.irisLayer:visible(true)
     if (toState == "Closed") then
+        if (irisStateGoal ~= 'Closed') then
+            openIris()
+            return
+        end
         uiWidgets.irisLayer:imageData(yaowbgl.ImageFile(IRIS_STATE[3]))
         uiWidgets.irisButton:foregroundColor(THEME.FOREGROUND.IRIS_BUTTON.CLOSE)
         uiWidgets.irisButton:backgroundColor(THEME.BACKGROUND.IRIS_BUTTON.CLOSE)
     elseif (toState == "Opening") then
+        if (irisStateGoal ~= 'Open') then
+            closeIris()
+            return
+        end
         uiWidgets.irisLayer:imageData(yaowbgl.ImageFile(IRIS_STATE[2]))
         uiWidgets.irisButton:foregroundColor(THEME.FOREGROUND.IRIS_BUTTON.MOVING)
         uiWidgets.irisButton:backgroundColor(THEME.BACKGROUND.IRIS_BUTTON.MOVING)
     elseif (toState == "Open") then
+        if (irisStateGoal ~= 'Open') then
+            closeIris()
+            return
+        end
         uiWidgets.irisLayer:imageData(yaowbgl.ImageFile(IRIS_STATE[1]))
         uiWidgets.irisButton:foregroundColor(THEME.FOREGROUND.IRIS_BUTTON.OPEN)
         uiWidgets.irisButton:backgroundColor(THEME.BACKGROUND.IRIS_BUTTON.OPEN)
     elseif (toState == "Closing") then
+        if (irisStateGoal ~= 'Closed') then
+            openIris()
+            return
+        end
         uiWidgets.irisLayer:imageData(yaowbgl.ImageFile(IRIS_STATE[2]))
         uiWidgets.irisButton:foregroundColor(THEME.FOREGROUND.IRIS_BUTTON.MOVING)
         uiWidgets.irisButton:backgroundColor(THEME.BACKGROUND.IRIS_BUTTON.MOVING)
@@ -708,9 +737,9 @@ local function onMessageReceived(eventName, componentAddress, protocol, command,
         elseif (RemoteGate.authorized(password) or arg == false) then
             --TODO : add lockdown
             if (arg == true) then
-                stargate.sendMessage("SGCONTROLLER", "IRIS_A", true, stargate.openIris())
+                stargate.sendMessage("SGCONTROLLER", "IRIS_A", true, openIris())
             else
-                stargate.sendMessage("SGCONTROLLER", "IRIS_A", true, stargate.closeIris())
+                stargate.sendMessage("SGCONTROLLER", "IRIS_A", true, closeIris())
             end
         else
             stargate.sendMessage("SGCONTROLLER", "IRIS_A", false, false, 'invalid password')
@@ -881,7 +910,7 @@ configCloseButton:callback(closeConfigFrame)
 
 --#region MAIN
 stargate.disconnect()
-stargate.openIris()
+openIris()
 table.insert(eventHandlers, event.listen("interrupted", closeApp))
 table.insert(eventHandlers, event.listen("sgStargateStateChange", onStargateStateChange))
 table.insert(eventHandlers, event.listen("sgIrisStateChange", onIrisStateChange))
@@ -906,7 +935,7 @@ while run do
 end
 --exit
 stargate.disconnect()
-stargate.openIris()
+openIris()
 rootFrame:closeListeners()
 gpu.setResolution(table.unpack(oldRes))
 for _, listenerId in pairs(eventHandlers) do
