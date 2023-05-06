@@ -1,36 +1,34 @@
 --local UDPSocket   = require("network.udp.UDPSocket")
-local UDPDatagram = require("network.udp.UDPDatagram")
-local IPv4Packet  = require("network.ipv4.IPv4Packet")
-local ipv4Address = require("network.ipv4.address")
-local network     = require("network")
+local UDPDatagram  = require("network.udp.UDPDatagram")
+local IPv4Packet   = require("network.ipv4.IPv4Packet")
+local ipv4Address  = require("network.ipv4.address")
+local NetworkLayer = require('network.abstract.NetworkLayer')
+local network      = require("network")
+local class        = require("libClass2")
 
 
----@class UDPLayer : OSITransportLayer
+---@class UDPLayer : NetworkLayer
 ---@field private _sockets table<number,table<number,table<number,table<number,UDPSocket>>>>
----@field private _layer OSINetworkLayer
+---@field private _layer NetworkLayer
 ---@operator call:UDPLayer
 ---@overload fun(layer:IPv4Layer):UDPLayer
-local UDPLayer = {}
+local UDPLayer = class(NetworkLayer)
 UDPLayer.layerType = require("network.ipv4").PROTOCOLS.UDP
 
+---@param layer IPv4Layer
 ---@return UDPLayer
-setmetatable(UDPLayer, {
-    ---@param layer IPv4Layer
-    ---@return UDPLayer
-    __call = function(self, layer)
-        local o = {
-            _sockets = {},
-            _layer = layer
-        }
-        setmetatable(o, {__index = self})
-        layer:setLayer(o) --tell the IPv4Layer that we exists
-        return o
-    end
-})
+function UDPLayer:new(layer)
+    local o = self.parent()
+    setmetatable(o, {__index = self})
+    ---@cast o UDPLayer
+    o._sockets = {}
+    o:layer(layer) --tell the IPv4Layer that we exists
+    return o
+end
 
 function UDPLayer:payloadHandler(from, to, payload)
     local udpPacket = UDPDatagram.unpack(payload)
-    local socket = self:getSocket(to, udpPacket:getDstPort(), from, udpPacket:getSrcPort())
+    local socket = self:getSocket(to, udpPacket:dstPort(), from, udpPacket:srcPort())
     if (not socket) then
         return
     end
@@ -247,9 +245,9 @@ function UDPLayer:send(from, to, payload)
     network.router:send(IPv4Packet(from, to, payload, self.layerType))
 end
 
-function UDPLayer:getAddr() return self._layer:getAddr() end
+function UDPLayer:addr() return self:layer():addr() end
 
-function UDPLayer:getMTU() return self._layer:getMTU() - 8 end
+function UDPLayer:mtu() return self:layer():mtu() - 8 end
 
 ---add a socket to the internal list. Return false if could not be added (addrress / port already in use)
 ---@private

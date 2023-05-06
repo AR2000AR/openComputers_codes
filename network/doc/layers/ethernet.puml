@@ -13,10 +13,10 @@ package layers.ethernet {
         - _etype ethernetType
         - _payload string
         + EthernetFrame(src:string, dst:string, tag802_1Q:number, etype:ethernetType, payload:string)
-        + string getDst()
-        + setDst(dst:string)
+        + string dst()
+        + dst(dst:string)
         + string Src()
-        + setSrc(src:string)
+        + src(src:string)
         + number 802_1Q()
         + set802_1Q(tag:number)
         + number getEthernetType()

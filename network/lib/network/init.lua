@@ -1,5 +1,5 @@
 local component       = require("component")
-local routing         = require("routing")
+local IPv4Router      = require("network.ipv4.IPv4Router")
 
 ---@class InterfaceTypes
 ---@field ethernet EthernetInterface
@@ -16,7 +16,7 @@ networklib.internal   = {
 ---@type table<string,InterfaceTypes>
 networklib.interfaces = {}
 ---@type IPv4Router
-networklib.router     = routing.IPv4Router()
+networklib.router     = IPv4Router()
 
 ---Get the configured interfaces
 ---@param filter string

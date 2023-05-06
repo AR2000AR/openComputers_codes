@@ -59,11 +59,11 @@ end
 --init the interfaces during first import. Since the lib is imported in /boot/30_network.lua, it is done during system boot
 if (not network.internal.icmp) then
     network.internal.icmp = icmp.ICMPLayer(network.router)
-    network.router:setProtocol(network.internal.icmp)
+    network.router:higherLayer(network.internal.icmp.layerType, network.internal.icmp)
 end
 if (not network.interfaces.udp) then
     network.internal.udp = udp.UDPLayer(network.router)
-    network.router:setProtocol(network.internal.udp)
+    network.router:higherLayer(network.internal.udp.layerType, network.internal.udp)
 end
 --=============================================================================
 ---@class iInfo
@@ -314,7 +314,7 @@ function ifconfig.ifdown(iName)
 
     local relatedInterfaces = {}
     for interfaceName, interface in pairs(network.interfaces) do
-        if (interfaceName == iName or interfaceName == address or interface.ethernet:getAddr() == iName) then
+        if (interfaceName == iName or interfaceName == address or interface.ethernet:addr() == iName) then
             table.insert(relatedInterfaces, interfaceName)
         end
     end

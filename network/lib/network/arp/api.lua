@@ -74,7 +74,7 @@ function arpAPI.getAddress(interface, htype, ptype, pa, spa)
         return cache[ptype][pa][htype]
     end
     -- cache miss
-    local arpMessage = ARPFrame(htype, ptype, ARPFrame.OPERATION.REQUEST, interface:getAddr(), spa, ethernet.MAC_NIL, pa)
+    local arpMessage = ARPFrame(htype, ptype, ARPFrame.OPERATION.REQUEST, interface:addr(), spa, ethernet.MAC_NIL, pa)
     interface:send(ethernet.MAC_BROADCAST, arpMessage)
 
     local tpa = select(4, event.pull(1, "arp", htype, ptype, nil, pa))

@@ -90,7 +90,7 @@ event.listen("interrupted", function(...)
     return false
 end)
 --Main loop====================================================================
-print(string.format("Ping %s (%s) from %s with %d bytes of data.", args[1], ipv4Address.tostring(targetIP), ipv4Address.tostring(route.interface:getAddr()), opts.s))
+print(string.format("Ping %s (%s) from %s with %d bytes of data.", args[1], ipv4Address.tostring(targetIP), ipv4Address.tostring(route.interface:addr()), opts.s))
 ping()
 while run do
     os.sleep(0.1)

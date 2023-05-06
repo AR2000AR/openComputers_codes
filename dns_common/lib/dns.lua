@@ -554,7 +554,7 @@ local message = {}
 ---@return DNSMessage
 function message.parsePacket(packet)
     if (type(packet) == "table") then
-        packet = packet:getPayload()
+        packet = packet:payload()
     end
     ---@cast packet string
     local request = serialization.unserialize(packet)

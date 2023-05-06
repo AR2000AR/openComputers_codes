@@ -9,12 +9,12 @@ package layers.icmp {
         - _code icmpCode
         - _param number
         - _payload string
-        + icmpType getType()
-        + setType(val:icmpType)
-        + icmpCode getCode()
-        + setCode(val:icmpCode)
-        + number getParam()
-        + setParam(val:number)
+        + icmpType type()
+        + type(val:icmpType)
+        + icmpCode code()
+        + code(val:icmpCode)
+        + number param()
+        + param(val:number)
     }
     enum icmpCode {
         ECHO_REPLY.ECHO_REPLY : 0

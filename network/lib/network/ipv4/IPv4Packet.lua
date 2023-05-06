@@ -1,5 +1,7 @@
 local bit32    = require("bit32")
 local ethernet = require("network.ethernet")
+local Payload  = require("network.abstract.Payload")
+local class    = require("libClass2")
 
 
 ---@class IPv4Header
@@ -20,7 +22,6 @@ local ethernet = require("network.ethernet")
 ---@field protocol ipv4Protocol
 
 --=============================================================================
---#region IPv4Packet
 
 ---@class IPv4Packet : Payload
 ---@field private _header IPv4Header
@@ -28,179 +29,151 @@ local ethernet = require("network.ethernet")
 ---@operator call:IPv4Packet
 ---@overload fun(src:number,dst:number,paylaod:Payload):IPv4Packet
 ---@overload fun(src:number,dst:number,paylaod:string,protocol:ipv4Protocol):IPv4Packet
-local IPv4Packet       = {}
+local IPv4Packet       = class(Payload)
 IPv4Packet.payloadType = ethernet.TYPE.IPv6
 
-setmetatable(IPv4Packet, {
-    ---@param src number
-    ---@param dst number
-    ---@param payload Payload|string
-    ---@param protocole? ipv4Protocol
-    ---@return IPv4Packet
-    __call = function(self, src, dst, payload, protocole)
-        checkArg(1, src, 'number')
-        checkArg(2, dst, 'number')
-        checkArg(3, payload, 'string', 'table')
-        local o = {
-            ---@type IPv4Header
-            _header = {
-                dscp = 0,
-                ecn = 0,
-                len = 1,
-                id = 0,
-                flags = 0,
-                fragmentOffset = 0,
-                ttl = 64,
-                protocol = 1,
-                src = 0,
-                dst = 0,
-            },
-            _payload = ""
-        }
+---@param src number
+---@param dst number
+---@param payload Payload|string
+---@param protocole? ipv4Protocol
+---@return IPv4Packet
+function IPv4Packet:new(src, dst, payload, protocole)
+    checkArg(1, src, 'number')
+    checkArg(2, dst, 'number')
+    checkArg(3, payload, 'string', 'table')
+    local o = {
+        ---@type IPv4Header
+        _header = {
+            dscp = 0,
+            ecn = 0,
+            len = 1,
+            id = 0,
+            flags = 0,
+            fragmentOffset = 0,
+            ttl = 64,
+            protocol = 1,
+            src = 0,
+            dst = 0,
+        },
+        _payload = ""
+    }
 
-        setmetatable(o, {__index = self})
-        ---@cast o IPv4Packet
-        o:setSrc(src)
-        o:setDst(dst)
-        if (type(payload) == "string") then
-            checkArg(4, protocole, 'number')
-            ---@cast protocole - nil
-            o:setProtocol(protocole)
-            o:setPayload(payload)
-        else
-            o:setProtocol(payload.payloadType)
-            o:setPayload(payload:pack())
-        end
-
-        return o
+    setmetatable(o, {__index = self})
+    ---@cast o IPv4Packet
+    o:src(src)
+    o:dst(dst)
+    if (type(payload) == "string") then
+        checkArg(4, protocole, 'number')
+        ---@cast protocole - nil
+        o:protocol(protocole)
+        o:payload(payload)
+    else
+        o:protocol(payload.payloadType)
+        o:payload(payload:pack())
     end
-})
+
+    return o
+end
 
 --#region getter/setter
 
----Get the packet's payload
+---@param value? string
 ---@return string
-function IPv4Packet:getPayload()
-    return self._payload
+function IPv4Packet:payload(value)
+    checkArg(1, value, 'string', 'nil')
+    local oldValue = self._payload
+    if (value ~= nil) then self._payload = value end
+    return oldValue
 end
 
----Set the packet's payload
----@param val string
-function IPv4Packet:setPayload(val)
-    self._payload = val
-end
-
----Get the header's dscp value
+---@param value? number
 ---@return number
-function IPv4Packet:getDscp() return self._header.dscp end
-
----Set the header's dscp value
----@param val number
-function IPv4Packet:setDscp(val)
-    checkArg(1, val, "number")
-    self._header.dscp = val
+function IPv4Packet:dscp(value)
+    checkArg(1, value, 'number', 'nil')
+    local oldValue = self._header.dscp
+    if (value ~= nil) then self._header.dscp = value end
+    return oldValue
 end
 
----Get the header's ecn value
+---@param value? number
 ---@return number
-function IPv4Packet:getEcn() return self._header.ecn end
-
----Set the header's ecn value
----@param val number
-function IPv4Packet:setEcn(val)
-    checkArg(1, val, "number")
-    self._header.ecn = val
+function IPv4Packet:ecn(value)
+    checkArg(1, value, 'number', 'nil')
+    local oldValue = self._header.ecn
+    if (value ~= nil) then self._header.ecn = value end
+    return oldValue
 end
 
----Get the header's len value
+---@param value? number
 ---@return number
-function IPv4Packet:getLen() return self._header.len end
-
----Set the header's len value
----@protected
----@param val number
-function IPv4Packet:setLen(val)
-    checkArg(1, val, "number")
-    self._header.len = val
+function IPv4Packet:len(value)
+    checkArg(1, value, 'number', 'nil')
+    local oldValue = self._header.len
+    if (value ~= nil) then self._header.len = value end
+    return oldValue
 end
 
----Get the header's id value
+---@param value? number
 ---@return number
-function IPv4Packet:getId() return self._header.id end
-
----Set the header's id value
----@protected
----@param val number
-function IPv4Packet:setId(val)
-    checkArg(1, val, "number")
-    self._header.id = val
+function IPv4Packet:id(value)
+    checkArg(1, value, 'number', 'nil')
+    local oldValue = self._header.id
+    if (value ~= nil) then self._header.id = value end
+    return oldValue
 end
 
----Get the header's flags value
+---@param value? number
 ---@return number
-function IPv4Packet:getFlags() return self._header.flags end
-
----Set the header's flags value
----@param val number
-function IPv4Packet:setFlags(val)
-    checkArg(1, val, "number")
-    self._header.flags = val
+function IPv4Packet:flags(value)
+    checkArg(1, value, 'number', 'nil')
+    local oldValue = self._header.flags
+    if (value ~= nil) then self._header.flags = value end
+    return oldValue
 end
 
----Get the header's fragmentOffset value
+---@param value? number
 ---@return number
-function IPv4Packet:getFragmentOffset() return self._header.fragmentOffset end
-
----Set the header's fragmentOffset value
----@protected
----@param val number
-function IPv4Packet:setFragmentOffset(val)
-    checkArg(1, val, "number")
-    self._header.fragmentOffset = val
+function IPv4Packet:fragmentOffset(value)
+    checkArg(1, value, 'number', 'nil')
+    local oldValue = self._header.fragmentOffset
+    if (value ~= nil) then self._header.fragmentOffset = value end
+    return oldValue
 end
 
----Get the header's ttl value
+---@param value? number
 ---@return number
-function IPv4Packet:getTtl() return self._header.ttl end
-
----Set the header's ttl value
----@param val number
-function IPv4Packet:setTtl(val)
-    checkArg(1, val, "number")
-    self._header.ttl = val
+function IPv4Packet:ttl(value)
+    checkArg(1, value, 'number', 'nil')
+    local oldValue = self._header.ttl
+    if (value ~= nil) then self._header.ttl = value end
+    return oldValue
 end
 
----Get the header's protocol value
----@return ipv4Protocol
-function IPv4Packet:getProtocol() return self._header.protocol end
-
----Set the header's protocol value
----@param val ipv4Protocol
-function IPv4Packet:setProtocol(val)
-    checkArg(1, val, "number")
-    self._header.protocol = val
-end
-
----Get the header's src value
+---@param value? number
 ---@return number
-function IPv4Packet:getSrc() return self._header.src end
-
----Set the header's src value
----@param val number
-function IPv4Packet:setSrc(val)
-    checkArg(1, val, "number")
-    self._header.src = val
+function IPv4Packet:protocol(value)
+    checkArg(1, value, 'number', 'nil')
+    local oldValue = self._header.protocol
+    if (value ~= nil) then self._header.protocol = value end
+    return oldValue
 end
 
----Get the header's dst value
+---@param value? number
 ---@return number
-function IPv4Packet:getDst() return self._header.dst end
+function IPv4Packet:src(value)
+    checkArg(1, value, 'number', 'nil')
+    local oldValue = self._header.src
+    if (value ~= nil) then self._header.src = value end
+    return oldValue
+end
 
----Set the header's dst value
----@param val number
-function IPv4Packet:setDst(val)
-    checkArg(1, val, "number")
-    self._header.dst = val
+---@param value? number
+---@return number
+function IPv4Packet:dst(value)
+    checkArg(1, value, 'number', 'nil')
+    local oldValue = self._header.dst
+    if (value ~= nil) then self._header.dst = value end
+    return oldValue
 end
 
 --#endregion
@@ -211,36 +184,36 @@ end
 function IPv4Packet:getFragments(maxFragmentSize)
     local fragments = {}
     local fragmentID = 1;
-    local fragmentTotal = math.ceil(#self:getPayload() / maxFragmentSize)
+    local fragmentTotal = math.ceil(#self:payload() / maxFragmentSize)
     local currentPos = 1
     if (fragmentTotal > 1) then
-        if (bit32.btest(self:getFlags(), 2)) then
+        if (bit32.btest(self:flags(), 2)) then
             error("Packet may not be fragmented", 2)
         end
     end
     maxFragmentSize = math.max(1, maxFragmentSize - 1)
-    local currentFragment = self:getPayload():sub(currentPos, currentPos + maxFragmentSize)
+    local currentFragment = self:payload():sub(currentPos, currentPos + maxFragmentSize)
     while currentFragment ~= "" do
-        local framgentPacket = IPv4Packet(self:getSrc(), self:getDst(), currentFragment, self:getProtocol())
+        local framgentPacket = IPv4Packet(self:src(), self:dst(), currentFragment, self:protocol())
         table.insert(fragments, framgentPacket)
-        framgentPacket:setId(self:getId())
-        framgentPacket:setFragmentOffset(#fragments)
-        framgentPacket:setLen(fragmentTotal)
+        framgentPacket:id(self:id())
+        framgentPacket:fragmentOffset(#fragments)
+        framgentPacket:len(fragmentTotal)
         fragmentID = fragmentID + 1
         currentPos = currentPos + maxFragmentSize + 1
         if (fragmentID < fragmentTotal) then
             --Set the MF (more fragment flag)
-            framgentPacket:setFlags(bit32.bor(framgentPacket:getFlags(), 4))
+            framgentPacket:flags(bit32.bor(framgentPacket:flags(), 4))
         end
-        currentFragment = self:getPayload():sub(currentPos, currentPos + maxFragmentSize)
+        currentFragment = self:payload():sub(currentPos, currentPos + maxFragmentSize)
     end
     return fragments
 end
 
-local PACK_FORMAT = "xI1I1I2I1I1I2I1I1xxI4I4s"
+IPv4Packet.payloadFormat = "xI1I1I2I1I1I2I1I1xxI4I4s"
 
 function IPv4Packet:pack()
-    return string.pack(PACK_FORMAT, self:getDscp(), self:getEcn(), self:getLen(), self:getId(), self:getFlags(), self:getFragmentOffset(), self:getTtl(), self:getProtocol(), self:getSrc(), self:getDst(), self:getPayload())
+    return string.pack(self.payloadFormat, self:dscp(), self:ecn(), self:len(), self:id(), self:flags(), self:fragmentOffset(), self:ttl(), self:protocol(), self:src(), self:dst(), self:payload())
 end
 
 ---@param val string
@@ -248,7 +221,7 @@ end
 function IPv4Packet.unpack(val)
     checkArg(1, val, 'string')
 
-    local dscp, ecn, len, id, flags, fragmentOffset, ttl, protocol, src, dst, payload = string.unpack(PACK_FORMAT, val)
+    local dscp, ecn, len, id, flags, fragmentOffset, ttl, protocol, src, dst, payload = string.unpack(IPv4Packet.payloadFormat, val)
     ---@cast dscp number
     ---@cast ecn number
     ---@cast len number
@@ -262,13 +235,13 @@ function IPv4Packet.unpack(val)
     ---@cast payload string
 
     local packet = IPv4Packet(src, dst, payload, protocol)
-    packet:setDscp(dscp)
-    packet:setEcn(ecn)
-    packet:setLen(len)
-    packet:setId(id)
-    packet:setFlags(flags)
-    packet:setFragmentOffset(fragmentOffset)
-    packet:setTtl(ttl)
+    packet:dscp(dscp)
+    packet:ecn(ecn)
+    packet:len(len)
+    packet:id(id)
+    packet:flags(flags)
+    packet:fragmentOffset(fragmentOffset)
+    packet:ttl(ttl)
 
     return packet
 end

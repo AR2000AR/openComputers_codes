@@ -1,8 +1,11 @@
 local bit32 = require("bit32")
-local ipv4 = require("network.ipv4")
+local ipv4Address = require("network.ipv4.address")
+local IPv4Packet = require("network.ipv4.IPv4Packet")
+local NetworkLayer = require('network.abstract.NetworkLayer')
+local class = require("libClass2")
 
 ---@class routingLib
-local routing = {}
+local routing = class(NetworkLayer)
 --=============================================================================
 
 ---@class Route
@@ -13,25 +16,23 @@ local routing = {}
 ---@field interface IPv4Layer
 --=============================================================================
 
----@class IPv4Router:OSINetworkLayer
+---@class IPv4Router:NetworkLayer
 ---@field private _routes table<Route>
----@field private _protocols table<ipv4Protocol,OSILayer>
+---@field private _protocols table<ipv4Protocol,NetworkLayer>
 ---@operator call:IPv4Router
 ---@overload fun():IPv4Router
-local IPv4Router = {}
+local IPv4Router = class(NetworkLayer)
 IPv4Router.layerType = require("network.ethernet").TYPE.IPv4
 
 ---@return IPv4Router
-setmetatable(IPv4Router, {
-    __call = function(self)
-        local o = {
-            _routes = {},
-            _protocols = {}
-        }
-        setmetatable(o, {__index = self})
-        return o
-    end
-})
+function IPv4Router:new()
+    local o = self.parent()
+    setmetatable(o, {__index = self})
+    ---@cast o IPv4Router
+    o._routes = {}
+    o._protocols = {}
+    return o
+end
 
 ---Add a new route
 ---@param route Route
@@ -84,7 +85,7 @@ function IPv4Router:getRoute(address)
         local address2 = bit32.band(route.network, route.mask)
         if (address1 == address2) then return route end
     end
-    error(string.format("No route found to %s. This is not normal. Make sure a default route is set", ipv4.address.tostring(address)), 2)
+    error(string.format("No route found to %s. This is not normal. Make sure a default route is set", ipv4Address.tostring(address)), 2)
 end
 
 ---Remove a route
@@ -134,36 +135,23 @@ function IPv4Router:removeByInterface(interface)
     for v in pairs(rmRoutes) do
         table.remove(self._routes, v)
     end
-    self:removeGateway(interface:getAddr())
+    self:removeGateway(interface:addr())
 end
 
 ---send the IPv4 packet
 ---@param packet IPv4Packet
 function IPv4Router:send(packet)
-    packet:setTtl(packet:getTtl() - 1)
+    packet:ttl(packet:ttl() - 1)
     --TODO : icmp error if ttl 0
-    local route = self:getRoute(packet:getDst())
-    if (packet:getSrc() == 0) then
-        packet:setSrc(route.interface:getAddr())
+    local route = self:getRoute(packet:dst())
+    if (packet:src() == 0) then
+        packet:src(route.interface:addr())
     end
-    if (route.gateway == route.interface:getAddr()) then
+    if (route.gateway == route.interface:addr()) then
         route.interface:send(packet)
     else
         route.interface:send(route.gateway, packet)
     end
-end
-
----@param protocolHandler OSILayer
-function IPv4Router:setProtocol(protocolHandler)
-    self._protocols[protocolHandler.layerType] = protocolHandler
-end
-
-IPv4Router.setLayer = IPv4Router.setProtocol
-
----@param protocolID ipv4Protocol
----@return OSILayer
-function IPv4Router:getProtocol(protocolID)
-    return self._protocols[protocolID]
 end
 
 ---@param from number
@@ -173,21 +161,21 @@ function IPv4Router:payloadHandler(from, to, payload)
     checkArg(1, from, 'number')
     checkArg(2, to, 'number')
     checkArg(3, payload, 'string')
-    local packet = ipv4.IPv4Packet.unpack(payload)
-    if (self._protocols[packet:getProtocol()]) then
-        self._protocols[packet:getProtocol()]:payloadHandler(from, to, packet:getPayload())
+    local packet = IPv4Packet.unpack(payload)
+    if (self:higherLayer(packet:protocol())) then
+        self:higherLayer(packet:protocol()):payloadHandler(from, to, packet:payload())
     end
 end
 
-function IPv4Router:getAddr()
-    return self:getRoute().interface
+---@return number
+function IPv4Router:addr()
+    return self:getRoute().interface:addr()
 end
 
-function IPv4Router:getMTU()
-    return self:getRoute().interface:getMTU()
+function IPv4Router:mtu()
+    return self:getRoute().interface:mtu()
 end
 
 --=============================================================================
 
-routing.IPv4Router = IPv4Router
-return routing
+return IPv4Router

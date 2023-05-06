@@ -168,7 +168,7 @@ end
 ---@param to number
 ---@param udpPacket UDPDatagram
 function UDPSocket:payloadHandler(from, to, udpPacket)
-    table.insert(self._buffer, {udpPacket:getPayload(), ipv4Address.tostring(from), udpPacket:getSrcPort()})
+    table.insert(self._buffer, {udpPacket:payload(), ipv4Address.tostring(from), udpPacket:srcPort()})
 end
 
 ---Create and returns an unconnected UDP obeject.

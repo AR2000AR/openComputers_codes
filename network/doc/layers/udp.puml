@@ -8,12 +8,12 @@ package layers.udp {
         - _dstPort number
         - _payload string
         + UDPPacket(srcPort:number,dstPort:number,paylaod:string)
-        + number getDstPort()
-        + number getSrcPort()
-        + string getPayload()
-        + void setDstPort(port:number)
-        + void setSrcPort(port:number)
-        + void setPayload(value:string)
+        + number dstPort()
+        + number srcPort()
+        + string payload()
+        + void dstPort(port:number)
+        + void srcPort(port:number)
+        + void payload(value:string)
     }
 
     class UDPSocket {
