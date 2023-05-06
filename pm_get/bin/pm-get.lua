@@ -313,6 +313,7 @@ local function printHelp()
     print("\t--autoremove : also remove dependencies non longer required")
     print("\t--purge : purge removed packages")
     print("\t--allow-same-version : allow the same package version to be installed over the currently installed one")
+    print("\t--installed : only list installed packages")
 end
 
 --=============================================================================
