@@ -79,7 +79,7 @@ local function getSources()
 end
 
 ---@return table<string,table<string,manifest>>
-local function getPackageList()
+local function getCachedPackageList()
     if (not reposRuntimeCache) then
         if (not filesystem.exists(REPO_MANIFEST_CACHE)) then
             printferr("No data. Run `pm-get upddate` or add repositorys")
@@ -92,12 +92,12 @@ local function getPackageList()
     return reposRuntimeCache
 end
 
----Get a packet manifest from the caceh
+---Get a packet manifest from the cache
 ---@param name string
 ---@param targetRepo? string
 ---@return manifest? manifest, string? originRepo
-local function getPacket(name, targetRepo)
-    for repoName, repo in pairs(getPackageList()) do
+local function getCachedPacketManifest(name, targetRepo)
+    for repoName, repo in pairs(getCachedPackageList()) do
         if (not targetRepo or repoName == targetRepo) then
             if (repo[name]) then
                 return repo[name], repoName
@@ -112,7 +112,7 @@ end
 ---@return string? error
 local function buildDepList(package)
     local dependances = {}
-    local manifest = getPacket(package)
+    local manifest = getCachedPacketManifest(package)
     if (manifest) then
         if (manifest.dependencies) then
             for dep, ver in pairs(manifest.dependencies) do
@@ -183,6 +183,12 @@ local function getNotNeededIfUninstalled(package)
         for dep, ver in pairs(manifest.dependencies) do
             if (#(pm.getDependantOf(dep)) == 1 and isAuto(dep)) then
                 table.insert(oldDep, dep)
+                local extraDeps = getNotNeededIfUninstalled(dep)
+                for _, extraDep in pairs(extraDeps) do
+                    if (isAuto(extraDep)) then
+                        table.insert(oldDep, extraDep)
+                    end
+                end
             end
         end
     end
@@ -206,7 +212,7 @@ end
 ---@param buildDepTree? boolean
 local function install(package, markAuto, buildDepTree)
     if (buildDepTree == nil) then buildDepTree = true end
-    local targetManifest, repoName = getPacket(package)
+    local targetManifest, repoName = getCachedPacketManifest(package)
     --check that the packet exists
     if (not targetManifest) then
         printferr("Package %s not found", package)
@@ -218,32 +224,48 @@ local function install(package, markAuto, buildDepTree)
             printferr(reason)
             os.exit(1)
         end
+        local notInstalledDep = {}
         for _, dep in pairs(dependances) do
             if (not pm.isInstalled(dep)) then
-                printf("Installing non installed dependancie : %s", dep)
-                install(dep, true, false)
+                table.insert(notInstalledDep, 1, dep)
             end
         end
+        if (#notInstalledDep > 0) then printf("Will be installed : %s", table.concat(notInstalledDep, ', ')) end
+        for _, dep in pairs(notInstalledDep) do
+            printf("Installing non installed dependancie : %s", dep)
+            install(dep, true, false)
+        end
     end
-    filesystem.makeDirectory(DOWNLOAD_DIR)
-    printf("Downloading : %s", package)
-    local data, reason = wget(f("%s/%s", repoName, targetManifest.archiveName))
-    if (not data) then
-        printferr("Failed to download %s", package)
-        printferr(reason)
-        os.exit(1)
+
+    if (not opts['dry-run']) then
+        --install the package
+        filesystem.makeDirectory(DOWNLOAD_DIR)
+        --download
+        printf("Downloading : %s", package)
+        local data, reason = wget(f("%s/%s", repoName, targetManifest.archiveName))
+        if (not data) then
+            printferr("Failed to download %s", package)
+            printferr(reason)
+            os.exit(1)
+        end
+        --write downloaded archive in download dir
+        io.open(f("%s/%s", DOWNLOAD_DIR, targetManifest.archiveName), "w"):write(data):close()
+        --build opts for pm
+        local pmOptions = ""
+        if (opts["allow-same-version"]) then
+            pmOptions = "--allow-same-version"
+        end
+        --run pm
+        local _, code = shell.execute(f("pm install %s %s", pmOptions, f("%s/%s", DOWNLOAD_DIR, targetManifest.archiveName)))
+        --cleanup
+        filesystem.remove(f("%s/%s", DOWNLOAD_DIR, targetManifest.archiveName))
+        --mark the pacakge as auto if asked for
+        if (markAuto) then
+            io.open(AUTO_INSTALLED, "a"):write(targetManifest.package .. "\n"):close()
+        end
+        return code
     end
-    io.open(f("%s/%s", DOWNLOAD_DIR, targetManifest.archiveName), "w"):write(data):close()
-    local pmOptions = ""
-    if (opts["allow-same-version"]) then
-        pmOptions = "--allow-same-version"
-    end
-    local _, code = shell.execute(f("pm install %s %s", pmOptions, f("%s/%s", DOWNLOAD_DIR, targetManifest.archiveName)))
-    filesystem.remove(f("%s/%s", DOWNLOAD_DIR, targetManifest.archiveName))
-    if (markAuto) then
-        io.open(AUTO_INSTALLED, "a"):write(targetManifest.package):close()
-    end
-    return code
+    return 0
 end
 
 local function update()
@@ -279,17 +301,18 @@ local function update()
 end
 
 local function printHelp()
-    printf("pm-get [opts] <mode> [args]")
-    printf("mode :")
-    printf("\tinstall <packageFile>")
-    printf("\tuninstall <packageName>")
-    printf("\tinfo <packageName>|<packageFile>")
-    printf("\tlist")
-    printf("\tsources list|add [new source url]")
-    printf("opts :")
-    printf("\t--autoremove : also remove dependencies non longer required")
-    printf("\t--purge : purge removed packages")
-    printf("\t--allow-same-version : allow the same package version to be installed over the currently installed one")
+    print("pm-get [opts] <mode> [args]")
+    print("mode :")
+    print("\tinstall <packageFile>")
+    print("\tuninstall <packageName>")
+    print("\tautoremove")
+    print("\tinfo <packageName>|<packageFile>")
+    print("\tlist")
+    print("\tsources list|add [new source url]")
+    print("opts :")
+    print("\t--autoremove : also remove dependencies non longer required")
+    print("\t--purge : purge removed packages")
+    print("\t--allow-same-version : allow the same package version to be installed over the currently installed one")
 end
 
 --=============================================================================
@@ -318,15 +341,33 @@ if (mode == "update") then
     update()
 elseif (mode == "list") then
     args[1] = args[1] or ".*"
-    for repoName, repo in pairs(getPackageList()) do
-        for package, manifest in pairs(repo) do
+    for repoName, repo in pairs(getCachedPackageList()) do
+        local sortedTable = {}
+        for package, _ in pairs(repo) do
+            table.insert(sortedTable, package)
+        end
+        table.sort(sortedTable, function(a, b) return string.lower(a) < string.lower(b) end)
+        for i, package in pairs(sortedTable) do
+            local manifest = repo[package]
             if (package:match("^" .. args[1])) then
-                printf("%s (%s)", package, manifest.version)
+                local installed, notpurged = pm.isInstalled(package)
+                if (not opts['installed'] or installed) then
+                    local lb = ""
+                    if (installed) then
+                        lb = '[installed]'
+                        if (isAuto(package)) then
+                            lb = '[installed, auto]'
+                        end
+                    elseif (notpurged) then
+                        lb = '[config]'
+                    end
+                    printf("%s (%s) %s", package, manifest.version, lb)
+                end
             end
         end
     end
 elseif (mode == "info") then
-    local manifest, repoName = getPacket(args[1])
+    local manifest, repoName = getCachedPacketManifest(args[1])
     if (not manifest) then
         printferr("Package %s not found", args[1])
         os.exit(1)
@@ -361,6 +402,7 @@ elseif (mode == "uninstall") then
                 table.insert(oldDep, dep)
             end
         end
+        if (#oldDep > 0) then printf("The following dependances are no longer required and will be uninstalled : %s", table.concat(oldDep, ', ')) end
     end
     --TODO : ask for confirmation
     --uninstallation
@@ -397,7 +439,7 @@ elseif (mode == "upgrade") then
             local manifest = assert(pm.getManifestFromInstalled(args[1]))
             if (manifest.dependencies) then
                 for dep, ver in pairs(manifest.dependencies) do
-                    local remoteManifest = getPacket(dep) --TODO : add target repo
+                    local remoteManifest = getCachedPacketManifest(dep) --TODO : add target repo
                     local localManifest = pm.getManifestFromInstalled(dep)
                     if (remoteManifest and (remoteManifest.version == "oppm" or compareVersion(remoteManifest.version, localManifest.version) or opts["allow-same-version"])) then
                         table.insert(toUpgrade, dep)
@@ -411,7 +453,7 @@ elseif (mode == "upgrade") then
                 printf("Found oppm version for %q.", pkg)
                 table.insert(toUpgrade, pkg)
             else
-                local remoteManifest = getPacket(pkg)
+                local remoteManifest = getCachedPacketManifest(pkg)
                 if (remoteManifest and (remoteManifest.version == "oppm" or compareVersion(remoteManifest.version, manifest.version))) then
                     table.insert(toUpgrade, pkg)
                 end
