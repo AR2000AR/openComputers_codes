@@ -3,6 +3,24 @@ local Widget = require("yaowbgl.widget.Widget")
 local event = require("event")
 
 --=============================================================================
+--test bitblt bug
+local bitBltFix = false
+local testBuffer1 = gpu.allocateBuffer(2, 2)
+local testBuffer2 = gpu.allocateBuffer(2, 2)
+gpu.setActiveBuffer(testBuffer1)
+gpu.set(1, 2, 'X')
+gpu.bitblt(testBuffer2, 1, 2, 1, 1, testBuffer1, 1, 2)
+gpu.setActiveBuffer(testBuffer2)
+if (gpu.get(1, 2) == 'X') then
+    bitBltFix = false
+else
+    bitBltFix = true
+end
+gpu.setActiveBuffer(0)
+gpu.freeBuffer(testBuffer1)
+gpu.freeBuffer(testBuffer2)
+
+--=============================================================================
 
 ---@class Frame:Widget
 ---@field parent Widget
@@ -112,7 +130,11 @@ function Frame:draw()
 
     if (newBuffer and newBuffer ~= defaultBuffer) then
         --copy the old buffer in the new buffer for transparancy effect
-        gpu.bitblt(newBuffer, self:absX(), self:absY(), self:width(), self:height(), defaultBuffer, self:absY(), self:absX())
+        if (bitBltFix) then
+            gpu.bitblt(newBuffer, self:absX(), self:absY(), self:width(), self:height(), defaultBuffer, self:absY(), self:absX())
+        else
+            gpu.bitblt(newBuffer, self:absX(), self:absY(), self:width(), self:height(), defaultBuffer, self:absX(), self:absY())
+        end
     end
 
     --clean background
@@ -141,7 +163,11 @@ function Frame:draw()
     end
     --restore buffer
     if (newBuffer and newBuffer ~= defaultBuffer) then
-        gpu.bitblt(defaultBuffer, self:absX(), self:absY(), self:width(), self:height(), newBuffer, self:absY(), self:absX())
+        if (bitBltFix) then
+            gpu.bitblt(defaultBuffer, self:absX(), self:absY(), self:width(), self:height(), newBuffer, self:absY(), self:absX())
+        else
+            gpu.bitblt(defaultBuffer, self:absX(), self:absY(), self:width(), self:height(), newBuffer, self:absX(), self:absY())
+        end
         gpu.setActiveBuffer(defaultBuffer)
         gpu.freeBuffer(newBuffer)
     end

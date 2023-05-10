@@ -363,7 +363,7 @@
 	["yaowbgl"] = {
 		["manifestVersion"] = "1.0",
 		["package"] = "yaowbgl",
-		["version"] = "1.1.0",
+		["version"] = "1.1.1",
 		["name"] = "Yet A Other Widget Based Graphical Library",
 		["repo"] = "tree/master/yaowbgl",
 		["description"] = "New version of libgui, but using libclass2 and cleaner code and interface.",
