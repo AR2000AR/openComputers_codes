@@ -155,6 +155,7 @@ end
 
 local function isAuto(package)
     local auto = false
+    if (not filesystem.exists(AUTO_INSTALLED)) then return false end
     for line in io.lines(AUTO_INSTALLED) do
         if (line == package) then
             auto = true
