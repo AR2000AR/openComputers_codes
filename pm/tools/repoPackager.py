@@ -1,13 +1,15 @@
 #!/bin/python3
-from slpp import slpp as lua
-import tarfile
-import sys
 import getopt
 import os
-import tempfile
-import shutil
 import pathlib
 import re
+import shutil
+import sys
+import tarfile
+import tempfile
+from glob import glob
+
+from slpp import slpp as lua
 
 RED = '\33[31m'
 RESET = '\33[0m'
@@ -18,10 +20,10 @@ def printError(msg):
 
 
 def printUsage():
-    print(
-        f"{sys.argv[0]} [-p|--programs <file>] [-d|--destination <path>] [*packageName]")
+    print(f"{sys.argv[0]} [-p|--programs <file>] [-d|--destination <path>] [-s|--strip-comments] [*packageName]")
     print("\t-p|--programs <file> : oppm's programs.cfg file. Default is \"./programs.cfg\"")
     print("\t-d|--destination <path> : path to output the pacakges. Default is \"./packages/\"")
+    print("\t-s|--strip-comments : remove the comments from lua files before adding them to the archive. Line number are not affected")
 
 
 def removeMetadata(tarObject):
@@ -30,6 +32,7 @@ def removeMetadata(tarObject):
 
 
 def makePackage(packageInfo, source=None, outputDirectory='./packages/'):
+    global opts
     with tempfile.TemporaryDirectory(prefix="packager.") as tmpDir:
         os.mkdir(tmpDir+"/CONTROL/")
         os.mkdir(tmpDir+"/DATA/")
@@ -76,8 +79,7 @@ def makePackage(packageInfo, source=None, outputDirectory='./packages/'):
                 if (prefix == "?"):  # add it to the config file list
                     if not "configFiles" in manifest:
                         manifest["configFiles"] = []
-                    configFile = pathlib.Path(
-                        *pathlib.Path(fileInfo).parts[2:])
+                    configFile = pathlib.Path(*pathlib.Path(fileInfo).parts[2:])
                     manifest["configFiles"].append("/"+str(configFile))
 
                 destination = tmpDir+"/DATA"+destination
@@ -89,23 +91,27 @@ def makePackage(packageInfo, source=None, outputDirectory='./packages/'):
                         parents=True, exist_ok=True)
                     shutil.copy(filePath, destination)
 
+        #write the package's manifest file
         with open(tmpDir+"/CONTROL/manifest", 'w') as file:
             file.write(lua.encode(manifest))
+    
+        if any(item in ['-s','--strip-comments'] for item,v in opts):
+            for luaFile in glob(root_dir=tmpDir+"/DATA/",pathname="**/*.lua",recursive=True):
+                os.system(f'sed -i s/--.*// {tmpDir+"/DATA/"+luaFile}')
 
         version = manifest["version"]
         # manifest["archiveName"] = f"{packageName}_({version}).tar"
         manifest["archiveName"] = f"{packageName}.tar"
         with tarfile.open(pathlib.Path(outputDirectory, manifest["archiveName"]), 'w') as tar:
-            tar.add(tmpDir+"/CONTROL", arcname="CONTROL",
-                    filter=removeMetadata)
+            tar.add(tmpDir+"/CONTROL", arcname="CONTROL",filter=removeMetadata)
             tar.add(tmpDir+'/DATA/', arcname="DATA", filter=removeMetadata)
         return manifest
 
 
 if __name__ == '__main__':
+    global opts,args
     try:
-        opts, args = getopt.gnu_getopt(
-            sys.argv[1:], 'hp:', ['programs=', 'destination='])
+        opts, args = getopt.gnu_getopt(sys.argv[1:], 'hp:d:s', ['programs=', 'destination=','strip-comments'])
     except getopt.GetoptError as e:
         printError(e.msg)
         exit(1)
@@ -122,8 +128,7 @@ if __name__ == '__main__':
         elif option in ("-d", "--destination"):
             outputDirectory = pathlib.Path(value).absolute()
 
-    pathlib.Path(outputDirectory).mkdir(
-        parents=True, exist_ok=True)
+    pathlib.Path(outputDirectory).mkdir(parents=True, exist_ok=True)
 
     if not os.path.isfile(packageInfoFile):
         printError(f"{packageInfoFile} not found")
@@ -138,8 +143,7 @@ if __name__ == '__main__':
     repoManifest = {}
     for packageName, packageInfo in data.items():
         if len(args) == 0 or packageName in args:
-            packageManifest = makePackage(
-                packageInfo, outputDirectory=outputDirectory)
+            packageManifest = makePackage(packageInfo, outputDirectory=outputDirectory)
             repoManifest[packageManifest["package"]] = packageManifest
 
     with open(pathlib.Path(outputDirectory, "manifest"), "w") as repoManifestFile:
