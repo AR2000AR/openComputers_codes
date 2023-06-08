@@ -12,6 +12,9 @@ local thread        = require("thread")
 --=============================================================================
 
 
+local CONFIG_DIR = "/etc/dnsd/"
+
+
 ---@type UDPSocket
 local udpSocket
 ---@type Zones
@@ -282,7 +285,7 @@ function start()
     ---@diagnostic disable-next-line: cast-local-type
     udpSocket = assert(socket.udp())
     assert(udpSocket:setsockname("*", 51))
-    zones = loadAllZoneFiles("/etc/dnsd/")
+    zones = loadAllZoneFiles(CONFIG_DIR)
     listenerThread = thread.create(listenSocket, udpSocket):detach()
 end
 
@@ -314,7 +317,7 @@ end
 ---@diagnostic disable-next-line: lowercase-global
 function testZone()
     if (not getStatus()) then require("rc").unload("dnsd") end
-    local callStatus, data = pcall(loadAllZoneFiles, "/etc/dnsd/")
+    local callStatus, data = pcall(loadAllZoneFiles, CONFIG_DIR)
     if (not callStatus) then
         print("Error : ", data)
     else
@@ -332,7 +335,7 @@ function printZone(name)
         end
         return r
     end
-    local tmpzones = loadAllZoneFiles("/etc/dnsd/")
+    local tmpzones = loadAllZoneFiles(CONFIG_DIR)
     for zname, zone in pairs(tmpzones) do
         print(zname)
         for k, v in pairs(zone) do
@@ -354,10 +357,10 @@ end
 
 ---@diagnostic disable-next-line: lowercase-global
 function resolve(name, rtype, class)
+    if (not getStatus()) then require("rc").unload("dnsd") end
     class = class or "IN"
     if (not getStatus()) then require("rc").unload("dnsd") end
-    local zone, zname = loadZoneFile("/etc/dnsd/testZone.zone")
-    zones[zname] = zone
+    zones = loadAllZoneFiles(CONFIG_DIR)
     local question = dns.DNSQuestion(name, dns.DNSRessourceRecord.TYPE[rtype], dns.DNSHeaderFlags.CLASS[class])
     print(serialization.serialize(table.pack(answerQuestion(question))))
 end

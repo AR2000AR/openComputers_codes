@@ -288,7 +288,7 @@
 	["dns_server"] = {
 		["manifestVersion"] = "1.0",
 		["package"] = "dns_server",
-		["version"] = "oppm",
+		["version"] = "1.1.0",
 		["name"] = "DNS server daemon",
 		["repo"] = "tree/master/dns_server",
 		["description"] = "this package provide the dns server",
