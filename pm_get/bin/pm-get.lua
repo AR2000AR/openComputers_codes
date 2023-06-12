@@ -303,6 +303,22 @@ local function update()
         end
     end
     io.open(REPO_MANIFEST_CACHE, "w"):write(serialization.serialize(manifests)):close()
+
+    --check if packages need updating
+    local canBeUpgraded = 0
+    local remotePackages = getCachedPackageList()
+    local installedPackages = pm.getInstalled()
+    for pkgName, pkgManifest in pairs(installedPackages) do
+        for src, srcManifests in pairs(remotePackages) do
+            if (srcManifests[pkgName]) then
+                if (compareVersion(srcManifests[pkgName].version, pkgManifest.version)) then
+                    canBeUpgraded = canBeUpgraded + 1
+                    break --next package
+                end
+            end
+        end
+    end
+    printf("%s package(s) can be upgraded", canBeUpgraded)
 end
 
 local function printHelp()
