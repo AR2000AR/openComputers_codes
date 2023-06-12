@@ -44,8 +44,10 @@ local function printferr(...)
     io.error():write(f("%s\n", f(...)))
 end
 
+---Return the sources list
+---@param raw? boolean
 ---@return table
-local function getSources()
+local function getSources(raw)
     local sources = {}
     local file
     if (filesystem.exists(SOURCE_FILE) and not filesystem.isDirectory(SOURCE_FILE)) then
@@ -70,9 +72,11 @@ local function getSources()
             end
         end
     end
-    for i, url in pairs(sources) do
-        if (url:match("^https://github.com/")) then
-            sources[i] = url:gsub("https://github.com/", "https://raw.githubusercontent.com/"):gsub("/tree/", "/"):gsub("/blob/", "/")
+    if (not raw) then
+        for i, url in pairs(sources) do
+            if (url:match("^https://github.com/")) then
+                sources[i] = url:gsub("https://github.com/", "https://raw.githubusercontent.com/"):gsub("/tree/", "/"):gsub("/blob/", "/")
+            end
         end
     end
     return sources
@@ -472,9 +476,21 @@ elseif (mode == "sources") then
             print(s)
         end
     elseif (args[1] == "add" and args[2]) then
-        --TODO check if exists
-        filesystem.makeDirectory(SOURCE_DIR)
-        assert(io.open(SOURCE_DIR .. "/custom.list", "a")):write(args[2] .. "\n"):close()
+        local sources = getSources(true)
+        local exists = false
+        for _, url in pairs(sources) do
+            if (url == args[2]) then
+                exists = true
+                printf("Found %q in the source list. It will not be added again.", args[2])
+                break
+            end
+        end
+
+        if (not exists) then
+            filesystem.makeDirectory(SOURCE_DIR)
+            assert(io.open(SOURCE_DIR .. "/custom.list", "a")):write(args[2] .. "\n"):close()
+            printf("Added %q to the source list", args[2])
+        end
     else
         print("pm-get sources add|list")
     end
