@@ -10,9 +10,12 @@ if (args[1] == "a") then
     local interfaces = networklib.getInterface()
     for interfaceName, itf in pairs(interfaces) do
         print(interfaceName:match("(%w+)"))
-        print(string.format("\tMAC : %s MTU : %d", itf.ethernet:addr(), itf.ethernet:mtu()))
-        local ipLayer = itf.ethernet:higherLayer(ethernet.TYPE.IPv4) --[[@as IPv4Layer]]
-        print(string.format("\tIP : %s Mask : %s", ipv4.address.tostring(ipLayer:addr()), ipv4.address.tostring(ipLayer:mask())))
+        if (itf.ethernet) then
+            print(string.format("\tMAC : %s MTU : %d", itf.ethernet:addr(), itf.ethernet:mtu()))
+        end
+        if (itf.ip) then
+            print(string.format("\tIP : %s Mask : %s", ipv4.address.tostring(itf.ip:addr()), ipv4.address.tostring(itf.ip:mask())))
+        end
     end
 elseif (args[1] == "r") then
     local routes = networklib.router:listRoutes()
