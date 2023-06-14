@@ -97,7 +97,7 @@ function IPv4Layer:mask(value)
     return oldValue
 end
 
-function IPv4Layer:mtu() return self:layer():mtu() - 38 end
+function IPv4Layer:mtu() return self:layer():mtu() - string.packsize(IPv4Packet.headerFormat) end
 
 ---@param value? IPv4Router
 ---@return IPv4Router
@@ -138,40 +138,49 @@ function IPv4Layer:send(to, payload)
     end
 end
 
----@param from string
----@param to string
+---@param from? string
+---@param to? string
 ---@param payload string
 function IPv4Layer:payloadHandler(from, to, payload)
-    checkArg(1, from, 'string')
-    checkArg(2, to, 'string')
+    checkArg(1, from, 'string','nil')
+    checkArg(2, to, 'string','nil')
     checkArg(3, payload, 'string')
     local pl = IPv4Packet.unpack(payload)
     if (pl:dst() == self:addr()) then
-        if (pl:len() > 1) then --merge framents
-            local bufferID = string.format("%d%d%d%d", from, to, pl:protocol(), pl:id())
+        if (bit32.btest(pl:flags(), ipv4Consts.FLAGS.MF --[[MF]]) or pl:fragmentOffset() > 0) then
+            --fragmented packet
+            local bufferID = string.pack('>IIH', pl:src(), pl:dst(), pl:id())
+            --Store the fragments
             self._buffer[bufferID] = self._buffer[bufferID] or {}
-
-            --place the packet in a buffer
-            table.insert(self._buffer[bufferID], math.max(#self._buffer[bufferID], pl:fragmentOffset()), pl)
-
-            --if the buffer hold all the packets merge them
-            if (#self._buffer[bufferID] == pl:len()) then
-                local fullPayload, proto = {}, pl:protocol()
-                for i, fragment in ipairs(self._buffer[pl:protocol()][pl:src()]) do
-                    table.insert(fullPayload, math.max(#fullPayload, fragment:fragmentOffset()), fragment:payload())
+            self._buffer[bufferID][pl:fragmentOffset()] = pl
+            --Check if we have a full packet
+            if (not bit32.btest(pl:flags(), ipv4Consts.FLAGS.MF)) then
+                local newPayload = ''
+                local reassembled = true
+                for k, v in pairs(self._buffer[bufferID]) do
+                    ---@cast v IPv4Packet
+                    if (k ~= #newPayload) then
+                        --missing a fragment
+                        --TODO : send reassembly error
+                        reassembled = false
+                        break
+                    end
+                    newPayload = newPayload .. v:payload()
                 end
-                pl = IPv4Packet(pl:src(), pl:dst(), table.concat(fullPayload), pl:protocol())
-                pl:protocol(proto)
-                self._buffer[pl:protocol()][pl:src()] = nil
+                if (reassembled) then
+                    pl:payload(newPayload)
+                    pl:flags(bit32.band(pl:flags(), bit32.bnot(ipv4Consts.FLAGS.MF)))
+                    pl:fragmentOffset(0)
+                end
             end
-            --TODO : handle merge timeout
         end
-        if (pl:len() == 1) then
+        if (not (bit32.btest(pl:flags(), ipv4Consts.FLAGS.MF --[[MF]])) and pl:fragmentOffset() == 0) then
             --if the packet is complete, send it to the router to be handed to the destination program
             self._router:payloadHandler(pl:src(), pl:dst(), pl:pack())
         end
     else
         --TODO : check if routing is enabled
+        --TODO : may need extra fragmenting
         self._router:send(pl)
     end
 end

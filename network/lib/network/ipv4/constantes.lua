@@ -9,4 +9,10 @@ ipv4Consts.PROTOCOLS = {
     OSPF = 89, -- Open Shortest Path First
 }
 
+ipv4Consts.FLAGS     = {
+    UNUSED = 4,
+    DF = 2,
+    MF = 1
+}
+
 return ipv4Consts
