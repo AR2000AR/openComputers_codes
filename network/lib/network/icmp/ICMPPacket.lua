@@ -1,11 +1,14 @@
 local ipv4             = require("network.ipv4")
 local Payload          = require("network.abstract.Payload")
+local utils            = require("network.utils")
+local bit32            = require("bit32")
 
 local class            = require("libClass2")
 
 ---@class ICMPPacket:Payload
 ---@field private _type number
 ---@field private _code number
+---@field private _checksum number
 ---@field private _param number
 ---@field private _payload string
 ---@operator call:ICMPPacket
@@ -54,6 +57,20 @@ end
 
 ---@param value? number
 ---@return number
+function ICMPPacket:checksum(value)
+    checkArg(1, value, 'number', 'nil')
+    local oldValue = self._checksum or self:calculateChecksum()
+    if (value ~= nil) then self._checksum = value end
+    return oldValue
+end
+
+---@return number
+function ICMPPacket:calculateChecksum()
+    return utils.checksum(string.pack(self.headerFormat, self:type(), self:code(), 0, self:param()) .. string.pack('c' .. #self:payload(), self:payload()))
+end
+
+---@param value? number
+---@return number
 function ICMPPacket:param(value)
     checkArg(1, value, 'number', 'nil')
     local oldValue = self._param
@@ -72,15 +89,21 @@ end
 
 --#endregion
 
-ICMPPacket.payloadFormat = "I1I1xxI4s"
+ICMPPacket.headerFormat = ">BBHI"
+ICMPPacket.payloadFormat = ICMPPacket.headerFormat
 
 function ICMPPacket:pack()
-    return string.pack(self.payloadFormat, self._type, self._code, self._param, self._payload)
+    local header = string.pack(self.payloadFormat, self:type(), self:code(), self:checksum(), self:param())
+    return header .. string.pack('c' .. #self:payload(), self:payload())
 end
 
 ---@return ICMPPacket
 function ICMPPacket.unpack(val)
-    return ICMPPacket(string.unpack(ICMPPacket.payloadFormat, val))
+    local type, code, checksum, param, offset = string.unpack(ICMPPacket.payloadFormat, val)
+    local payload = string.unpack('z', val, offset)
+    local icmp = ICMPPacket(type, code, param, payload)
+    icmp:checksum(checksum)
+    return icmp
 end
 
 return ICMPPacket
