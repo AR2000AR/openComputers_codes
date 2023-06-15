@@ -1,9 +1,13 @@
 local ipv4Address = require("network.ipv4.address")
 local UDPDatagram = require("network.udp.UDPDatagram")
 local network     = require("network")
+local class       = require("libClass2")
 
+---@alias UDPSocketKind
+--- | "unconnected"
+--- | "connected"
 
----@class UDPSocket
+---@class UDPSocket:Object
 ---@field public kind UDPSocketKind
 ---@field private _sockname table
 ---@field private _peername table
@@ -11,26 +15,21 @@ local network     = require("network")
 ---@field private _timeout number
 ---@operator call:UDPSocket
 ---@overload fun(self):UDPSocket
-local UDPSocket = {}
+local UDPSocket   = require('libClass2')()
 
----@alias UDPSocketKind
---- | "unconnected"
---- | "connected"
-
+---Comment
 ---@return UDPSocket
-setmetatable(UDPSocket, {
-    __call = function(self)
-        local o = {
-            _sockname = {"0.0.0.0", 0},
-            _peername = {"0.0.0.0", 0},
-            kind = "unconnected",
-            _buffer = {},
-            _timeout = 0
-        }
-        setmetatable(o, {__index = self})
-        return o
-    end
-})
+function UDPSocket:new()
+    local o = self.parent()
+    setmetatable(o, {__index = self})
+    ---@cast o UDPSocket
+    o._sockname = {"0.0.0.0", 0}
+    o._peername = {"0.0.0.0", 0}
+    o.kind = "unconnected"
+    o._buffer = {}
+    o._timeout = 0
+    return o
+end
 
 function UDPSocket:close()
     network.udp.getInterface():close(self)
