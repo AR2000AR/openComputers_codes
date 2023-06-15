@@ -132,6 +132,7 @@ function IPv4Layer:send(to, payload)
         local dst = arp.getAddress(self._arp, arp.HARDWARE_TYPE.ETHERNET, self.layerType, to, self:addr())
         if (not dst) then error("Cannot resolve IP", 2) end
         for _, payloadFragment in pairs(payload:getFragments(self:mtu())) do
+            ---@diagnostic disable-next-line: param-type-mismatch
             local eFrame = ethernet.EthernetFrame(self:layer():addr(), dst, nil, self.layerType, payloadFragment:pack())
             self:layer():send(dst, eFrame)
         end
@@ -142,8 +143,8 @@ end
 ---@param to? string
 ---@param payload string
 function IPv4Layer:payloadHandler(from, to, payload)
-    checkArg(1, from, 'string','nil')
-    checkArg(2, to, 'string','nil')
+    checkArg(1, from, 'string', 'nil')
+    checkArg(2, to, 'string', 'nil')
     checkArg(3, payload, 'string')
     local pl = IPv4Packet.unpack(payload)
     if (pl:dst() == self:addr()) then

@@ -100,6 +100,11 @@ end
 ---@return ICMPPacket
 function ICMPPacket.unpack(val)
     local type, code, checksum, param, offset = string.unpack(ICMPPacket.payloadFormat, val)
+    ---@cast type number
+    ---@cast code number
+    ---@cast checksum number
+    ---@cast param number
+    ---@cast offset number
     local payload = string.unpack('z', val, offset)
     local icmp = ICMPPacket(type, code, param, payload)
     icmp:checksum(checksum)
