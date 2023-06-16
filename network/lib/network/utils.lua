@@ -12,7 +12,7 @@ function utils.checksum(data)
 
     --Add left-over byte, if any
     if (count > 0) then
-        sum = sum + string.unpack('>B', data, offset)
+        sum = sum + (string.unpack('>B', data, offset) << 8)
     end
 
     --Fold 32-bit sum to 16 bits
