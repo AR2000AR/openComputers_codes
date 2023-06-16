@@ -66,7 +66,7 @@ end
 
 ---@return number
 function ICMPPacket:calculateChecksum()
-    return utils.checksum(string.pack(self.headerFormat, self:type(), self:code(), 0, self:param()) .. string.pack('c' .. #self:payload(), self:payload()))
+    return utils.checksum(string.pack(self.headerFormat, self:type(), self:code(), 0, self:param()) .. string.pack('>c' .. #self:payload(), self:payload()))
 end
 
 ---@param value? number
