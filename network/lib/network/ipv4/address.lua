@@ -30,10 +30,30 @@ end
 ---@return number address, number mask
 function ipv4Adress.fromCIDR(cidr)
     local address, mask = cidr:match("^(%d+%.%d+%.%d+%.%d+)/(%d+)$")
-    mask = tonumber(mask)
-    assert(mask >= 0, "Invalid mask")
-    assert(mask <= 32, "Invalid mask")
-    return ipv4Adress.fromString(address), bit32.lshift(2 ^ mask - 1, 32 - mask)
+    mask = assert(tonumber(mask))
+    return ipv4Adress.fromString(address), ipv4Adress.maskLenToMask(mask)
+end
+
+---Get the mask length (eg 24) and return the network mask
+---@param maskLen number
+---@return number mask
+function ipv4Adress.maskLenToMask(maskLen)
+    checkArg(1, maskLen, 'number')
+    assert(maskLen >= 0, "Invalid mask")
+    assert(maskLen <= 32, "Invalid mask")
+    return bit32.lshift(2 ^ maskLen - 1, 32 - maskLen)
+end
+
+---@param mask number
+---@return number maskLength
+function ipv4Adress.maskToMaskLen(mask)
+    local len = 32
+    mask = ~mask & 0xffffffff
+    while mask & 1 == 1 do
+        len = len - 1
+        mask = mask >> 1
+    end
+    return len
 end
 
 return ipv4Adress

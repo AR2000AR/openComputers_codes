@@ -45,7 +45,7 @@ local sentICMP = {}
 --=============================================================================
 local function ping()
     if (not run) then return end
-    local param = bit32.lshift(i, 8) + 0
+    local param = string.pack('>HH', 0, i)
     local icmpEcho = icmp.ICMPPacket(icmp.TYPE.ECHO_REQUEST, icmp.CODE.ECHO_REQUEST.Echo_request, param, string.rep(opts.p, math.floor(opts.s / #opts.p)))
     local sent, reason = pcall(icmpInterface.send, icmpInterface, targetIP, icmpEcho)
     --local sent, reason = icmpInterface.send(icmpInterface, targetIP, icmpEcho)
