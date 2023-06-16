@@ -45,13 +45,12 @@ local sentICMP = {}
 --=============================================================================
 local function ping()
     if (not run) then return end
-    local param = string.pack('>HH', 0, i)
+    local param = string.unpack('>I', string.pack('>HH', 0, i))
     local icmpEcho = icmp.ICMPPacket(icmp.TYPE.ECHO_REQUEST, icmp.CODE.ECHO_REQUEST.Echo_request, param, string.rep(opts.p, math.floor(opts.s / #opts.p)))
     local sent, reason = pcall(icmpInterface.send, icmpInterface, targetIP, icmpEcho)
-    --local sent, reason = icmpInterface.send(icmpInterface, targetIP, icmpEcho)
     local t = computer.uptime()
     if (sent) then
-        sentICMP[i] = t
+        sentICMP[param] = t
     else
         io.stderr:write(reason .. "\n")
         os.sleep(1)
@@ -75,9 +74,9 @@ local timeoutTimer = event.timer(0.1, function()
 --=============================================================================
 local icmpListener = event.listen("ICMP", function(eName, from, to, type, code, param, payload)
     local seq = bit32.extract(param, 8, 8)
-    if (sentICMP[seq]) then
-        print(string.format("From %s\ticmp_seq=%d\t%.2f s", args[1], seq, computer.uptime() - sentICMP[seq]))
-        sentICMP[seq] = nil
+    if (sentICMP[param]) then
+        print(string.format("From %s\ticmp_seq=%d\t%.2f s", args[1], param, computer.uptime() - sentICMP[param]))
+        sentICMP[param] = nil
     end
     ping()
 end) --[[@as number]]
