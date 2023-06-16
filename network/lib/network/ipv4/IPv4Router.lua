@@ -1,12 +1,11 @@
-local bit32 = require("bit32")
-local ipv4Address = require("network.ipv4.address")
-local IPv4Packet = require("network.ipv4.IPv4Packet")
+local bit32        = require("bit32")
+local ipv4Address  = require("network.ipv4.address")
+local ipv4Consts   = require("network.ipv4.constantes")
+local IPv4Packet   = require("network.ipv4.IPv4Packet")
+local UDPDatagram  = require("network.udp.UDPDatagram")
 local NetworkLayer = require('network.abstract.NetworkLayer')
-local class = require("libClass2")
+local class        = require("libClass2")
 
----@class routingLib
-local routing = class(NetworkLayer)
---=============================================================================
 
 ---@class Route
 ---@field network number
@@ -146,6 +145,11 @@ function IPv4Router:send(packet)
     local route = self:getRoute(packet:dst())
     if (packet:src() == 0) then
         packet:src(route.interface:addr())
+    end
+    if (packet:protocol() == ipv4Consts.PROTOCOLS.UDP) then
+        local udpPacket = UDPDatagram.unpack(packet:payload())
+        udpPacket:checksum(udpPacket:calculateChecksum(packet:src(), packet:dst()))
+        packet:payload(udpPacket:pack())
     end
     if (route.gateway == route.interface:addr()) then
         route.interface:send(packet)
