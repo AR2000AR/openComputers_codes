@@ -4,6 +4,7 @@ local bit32 = require("bit32")
 local ipv4Adress = {}
 
 function ipv4Adress.fromString(val)
+    checkArg(1, val, 'string')
     local a, b, c, d = val:match("^(%d+)%.(%d+)%.(%d+)%.(%d+)$")
     if (not a or not b or not c or not d) then error("Not a IPv4", 2) end
     a = assert(tonumber(a))
@@ -18,6 +19,7 @@ function ipv4Adress.fromString(val)
 end
 
 function ipv4Adress.tostring(val)
+    checkArg(1, val, 'number')
     local a = bit32.extract(val, 24, 8)
     local b = bit32.extract(val, 16, 8)
     local c = bit32.extract(val, 8, 8)
@@ -29,6 +31,7 @@ end
 ---@param cidr string
 ---@return number address, number mask
 function ipv4Adress.fromCIDR(cidr)
+    checkArg(1, cidr, 'string')
     local address, mask = cidr:match("^(%d+%.%d+%.%d+%.%d+)/(%d+)$")
     mask = assert(tonumber(mask))
     return ipv4Adress.fromString(address), ipv4Adress.maskLenToMask(mask)

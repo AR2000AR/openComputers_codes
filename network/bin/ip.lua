@@ -13,7 +13,7 @@ if (args[1] == "a") then
         if (itf.ethernet) then
             print(string.format("\tMAC : %s MTU : %d", itf.ethernet:addr(), itf.ethernet:mtu()))
         end
-        if (itf.ip) then
+        if (itf.ip and itf.ip:addr()) then
             print(string.format("\tIP : %s Mask : %s", ipv4.address.tostring(itf.ip:addr()), ipv4.address.tostring(itf.ip:mask())))
         end
     end
