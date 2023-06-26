@@ -4,6 +4,10 @@ Package manager for OpenOS. Use tar archive as package container
 ## Installation
 - run `oppm install pm`
 
+or
+
+Create a installation floppy. Installation and script can be found [here](../pm_installer/).
+
 ## Usage
 
 **Install a package :**\

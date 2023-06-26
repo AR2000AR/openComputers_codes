@@ -45,7 +45,9 @@ Command line tool for dns resolution
 ---
 ## PM Package manager
 `oppm` is good. No denying it. But it has it's limitations. The main one for me : requiring a github repository (ironic I know).\
-To fix this issue, I created a package format using tar as container.
+To fix this issue, I created a package format using tar as container.\
+
+You can find instructions to make a installation floppy [here](pm_installer/)
 
 ### [pm](pm/)
 The package manager. Install, uninstall and keep track of installed packages.

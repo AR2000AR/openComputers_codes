@@ -1,6 +1,13 @@
 # pm_get
 Download and install pm packages from a repository on internet.
 
+## Installation
+- run `oppm install pm`
+
+or
+
+Create a installation floppy. Installation and script can be found [here](../pm_installer/).
+
 ## Usage :
 - `pm-get install <package>` : install the package
 - `pm-get uninstall <package> [--autoremove] [--purge]` : uninstall the package. Optionally remove configurations files and/or old dependance no longer needed

@@ -1,0 +1,27 @@
+local shell = require("shell")
+local package = require("package")
+local component = require("component")
+local filesystem = require("filesystem")
+
+
+local FROM = _ENV.install.from
+local exists = filesystem.exists
+
+--init path
+local oldPackagePath = package.path
+package.path = table.concat({oldPackagePath, string.format("%s/lib/?.lua", FROM)}, ";")
+
+
+--install
+if (exists(FROM .. "libtar.tar") and exists(FROM .. "pm.tar")) then
+    shell.execute(FROM .. "bin/pm install --allow-same-version " .. FROM .. "libtar.tar")
+    shell.execute(FROM .. "bin/pm install --allow-same-version " .. FROM .. "pm.tar")
+end
+if (component.isAvailable("internet")) then
+    shell.execute(FROM .. "bin/pm install --allow-same-version " .. FROM .. "pm_get.tar")
+    shell.execute("pm-get update")
+    shell.execute("pm-get upgrade")
+end
+
+--reset path
+package.path = oldPackagePath
