@@ -7,101 +7,29 @@ local IPv4Router   = require('network.ipv4.IPv4Router')
 local NetworkLayer = require('network.abstract.NetworkLayer')
 local bit32        = require("bit32")
 local class        = require("libClass2")
+local IPv4Layer    = require("network.ipv4.IPv4Layer")
 
 
----@class IPv4Layer : NetworkLayer
----@field private _addr number
----@field private _mask number
----@field private _router IPv4Router
----@field protected _layer NetworkLayer
----@field protected _arp ARPLayer
----@field protected _buffer table<number,table<number,table<number,IPv4Packet>>>
----@operator call:IPv4Layer
----@overload fun(dataLayer:NetworkLayer,router:IPv4Router,addr:number|string,mask:number|string):IPv4Layer
-local IPv4Layer     = class(NetworkLayer)
-IPv4Layer.layerType = ethernet.TYPE.IPv4
-
-
----@param dataLayer NetworkLayer
----@param router IPv4Router
----@param addr number|string
----@param mask number
----@return IPv4Layer
-function IPv4Layer:new(dataLayer, router, addr, mask)
-    checkArg(1, dataLayer, "table")
-    checkArg(2, addr, "number", "string")
-    checkArg(3, mask, "number", "string")
-    local o = self.parent()
-    setmetatable(o, {__index = self})
-    ---@cast o IPv4Layer
-    o._layer = dataLayer
-    o._arp = nil
-    o._buffer = {}
-
-    o:layer(dataLayer)
-    o:addr(addr)
-    o:mask(mask)
-    o:router(router)
-    --arp
-    o:arp(arp.ARPLayer(dataLayer))
-    arp.setLocalAddress(arp.HARDWARE_TYPE.ETHERNET, arp.PROTOCOLE_TYPE.IPv4, dataLayer:addr(), o:addr())
-    return o
-end
-
----@param value? ARPLayer
----@return ARPLayer
-function IPv4Layer:arp(value)
-    checkArg(1, value, 'table', 'nil')
-    local oldValue = self._arp
-    if (value ~= nil) then
-        assert(value:instanceOf(arp.ARPLayer))
-        self._arp = value
-    end
-    return oldValue
-end
+---@class IPv4Loopback : IPv4Layer
+local IPv4Loopback = class(IPv4Layer)
 
 ---@param value? string|number
 ---@return number
-function IPv4Layer:addr(value)
+function IPv4Loopback:addr(value)
     checkArg(1, value, 'string', 'number', 'nil')
-    local oldValue = self._addr
-    if (value ~= nil) then
-        if (type(value) == "number" and value > 0 and value < 0xffffffff) then
-            self._addr = value
-        else
-            self._addr = ipv4Address.fromString(value)
-        end
-    end
-    return oldValue
+    return 2130706433
 end
 
 ---@param value? number
 ---@return number
-function IPv4Layer:mask(value)
+function IPv4Loopback:mask(value)
     checkArg(1, value, 'number', 'nil')
-    local oldValue = self._mask
-    if (value ~= nil) then
-        if (not (value >= 0 and value <= 0xffffffff)) then error("Invalid mask", 2) end
-        local found0 = false
-        for i = 31, 0, -1 do
-            if (not found0) then
-                found0 = (0 == bit32.extract(value, i))
-            else
-                if (bit32.extract(value, i) == 1) then
-                    error("Invalid mask", 2)
-                end
-            end
-        end
-        self._mask = value
-    end
-    return oldValue
+    return 0xff000000
 end
-
-function IPv4Layer:mtu() return self:layer():mtu() - string.packsize(IPv4Packet.headerFormat) end
 
 ---@param value? IPv4Router
 ---@return IPv4Router
-function IPv4Layer:router(value)
+function IPv4Loopback:router(value)
     checkArg(1, value, 'table', 'nil')
     local oldValue = self._router
     if (value ~= nil) then
@@ -114,40 +42,32 @@ function IPv4Layer:router(value)
 end
 
 ---Send a IPv4Packet
----@param self IPv4Layer
+---@param self IPv4Loopback
 ---@param to number
 ---@param payload IPv4Packet
----@overload fun(self:IPv4Layer,payload:IPv4Packet)
-function IPv4Layer:send(to, payload)
+---@overload fun(self:IPv4Loopback,payload:IPv4Packet)
+function IPv4Loopback:send(to, payload)
     if (not payload) then
         ---@diagnostic disable-next-line: cast-local-type
         payload = to
         to = payload:dst()
     end
     ---@cast payload IPv4Packet
-    if (to == self:addr()) then --sent to self
+    if ((to & self:mask()) == (self:addr() & self:mask())) then --sent to self
         local l = self:layer() --[[@as EthernetInterface]]
         self:payloadHandler(l:addr() --[[@as string]], l:addr() --[[@as string]], payload:pack())
-    else
-        local dst = arp.getAddress(self._arp, arp.HARDWARE_TYPE.ETHERNET, self.layerType, to, self:addr())
-        if (not dst) then error("Cannot resolve IP", 2) end
-        for _, payloadFragment in pairs(payload:getFragments(self:mtu())) do
-            ---@diagnostic disable-next-line: param-type-mismatch
-            local eFrame = ethernet.EthernetFrame(self:layer():addr(), dst, nil, self.layerType, payloadFragment:pack())
-            self:layer():send(dst, eFrame)
-        end
     end
 end
 
 ---@param from? string
 ---@param to? string
 ---@param payload string
-function IPv4Layer:payloadHandler(from, to, payload)
+function IPv4Loopback:payloadHandler(from, to, payload)
     checkArg(1, from, 'string', 'nil')
     checkArg(2, to, 'string', 'nil')
     checkArg(3, payload, 'string')
     local pl = IPv4Packet.unpack(payload)
-    if (pl:dst() == self:addr()) then
+    if ((pl:dst() & self:mask()) == (self:addr() & self:mask())) then
         if (bit32.btest(pl:flags(), ipv4Consts.FLAGS.MF --[[MF]]) or pl:fragmentOffset() > 0) then
             --fragmented packet
             local bufferID = string.pack('>IIH', pl:src(), pl:dst(), pl:id())
@@ -186,4 +106,4 @@ function IPv4Layer:payloadHandler(from, to, payload)
     end
 end
 
-return IPv4Layer
+return IPv4Loopback

@@ -141,7 +141,10 @@ end
 ---@param packet IPv4Packet
 function IPv4Router:send(packet)
     packet:ttl(packet:ttl() - 1)
-    --TODO : icmp error if ttl 0
+    if (packet:ttl() < 1) then
+        --TODO : icmp error if ttl 0
+        return
+    end
     local route = self:getRoute(packet:dst())
     if (packet:src() == 0) then
         packet:src(route.interface:addr())

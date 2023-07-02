@@ -1,12 +1,13 @@
-local io        = require("io")
-local fs        = require("filesystem")
-local component = require("component")
-local computer  = require("computer")
-local network   = require("network")
-local icmp      = require("network.icmp")
-local ipv4      = require("network.ipv4")
-local udp       = require("network.udp")
-local ethernet  = require("network.ethernet")
+local io            = require("io")
+local fs            = require("filesystem")
+local component     = require("component")
+local computer      = require("computer")
+local network       = require("network")
+local icmp          = require("network.icmp")
+local ipv4          = require("network.ipv4")
+local udp           = require("network.udp")
+local ethernet      = require("network.ethernet")
+local DummyEthernet = require("network.ethernet.DummyEthernet")
 
 
 --=============================================================================
@@ -303,6 +304,19 @@ function ifconfig.autoIfup(iName)
     else
         return false
     end
+end
+
+--=============================================================================
+
+function ifconfig.raiseLo()
+    if (not network.interfaces['lo']) then
+        local dumE = DummyEthernet()
+        network.interfaces['lo'] = {
+            ethernet = dumE,
+            ip = ipv4.IPv4Loopback(dumE, network.router, 0x7f000001, 0xff000000)
+        }
+    end
+    return true
 end
 
 --=============================================================================

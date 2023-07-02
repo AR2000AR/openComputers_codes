@@ -13,5 +13,7 @@ local function onComponentRemoved(eName, address, cType)
     ifconfig.ifdown(address)
 end
 
+ifconfig.raiseLo()
+
 event.listen("component_added", onComponentAdded)
 event.listen("component_removed", onComponentRemoved)
