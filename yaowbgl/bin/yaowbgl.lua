@@ -14,7 +14,7 @@ local term = require("term")
 local os = require("os")
 local io = require("io")
 
-io.output("/dev/socket"):setvbuf("line")
+--io.output("/dev/socket"):setvbuf("line")
 --io.error("/dev/socket"):setvbuf("line")
 
 term.clear()
@@ -46,7 +46,7 @@ text:maxWidth(rootFrame:width() - (text:x() - 1))
 --text:maxHeight(2)
 text:backgroundColor(0x7f7f7f)
 
-local imgFrame = yaowbgl.widget.Frame(superRoot, 49, 5)
+--[[ local imgFrame = yaowbgl.widget.Frame(superRoot, 49, 5)
 local img = yaowbgl.widget.Image(imgFrame, 1, 1, "/home/vortex.pam")
 local img2 = yaowbgl.widget.Image(imgFrame, 1, 1, "/home/sg00.pam")
 img2:z(img:z() + 1)
@@ -57,7 +57,7 @@ input:minSize(30, 1)
 input:multilines(true)
 input:backgroundColor(0)
 local r2 = yaowbgl.widget.Rectangle(superRoot, input:x(), input:y(), input:width(), input:height(), 0)
-r2:z(input:z() - 1)
+r2:z(input:z() - 1) ]]
 
 
 local list = yaowbgl.widget.WidgetList(superRoot, 30, 3)
@@ -96,7 +96,7 @@ require("event").listen("interrupted", function()
     return false
 end)
 superRoot:draw()
-img:visible(false)
+---img:visible(false)
 while run do
     os.sleep(0.1)
     superRoot:draw()
