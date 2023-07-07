@@ -373,6 +373,20 @@
 		},
 		["archiveName"] = "yaowbgl.tar"
 	},
+	["yaowbgl_example"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "yaowbgl_example",
+		["version"] = "1.1.1",
+		["name"] = "Yet A Other Widget Based Graphical Library Example file",
+		["repo"] = "tree/master/yaowbgl",
+		["description"] = "New version of libgui, but using libclass2 and cleaner code and interface.",
+		["note"] = "This is only a example file",
+		["authors"] = "AR2000AR",
+		["dependencies"] = 	{
+			["yaowbgl"] = "oppm"
+		},
+		["archiveName"] = "yaowbgl_example.tar"
+	},
 	["stargate2"] = {
 		["manifestVersion"] = "1.0",
 		["package"] = "stargate2",
