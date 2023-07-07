@@ -51,13 +51,13 @@ local img = yaowbgl.widget.Image(imgFrame, 1, 1, "/home/vortex.pam")
 local img2 = yaowbgl.widget.Image(imgFrame, 1, 1, "/home/sg00.pam")
 img2:z(img:z() + 1)
 imgFrame:size(img:size())
-imgFrame:backgroundColor(0xffffff)
+imgFrame:backgroundColor(0xffffff)]]
 local input = yaowbgl.widget.TextInput(superRoot, 3, 20, "", 0xffffff)
 input:minSize(30, 1)
 input:multilines(true)
 input:backgroundColor(0)
 local r2 = yaowbgl.widget.Rectangle(superRoot, input:x(), input:y(), input:width(), input:height(), 0)
-r2:z(input:z() - 1) ]]
+r2:z(input:z() - 1)
 
 
 local list = yaowbgl.widget.WidgetList(superRoot, 30, 3)
