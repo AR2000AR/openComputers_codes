@@ -1,4 +1,4 @@
-local Frame = require("yaowbgl.widget.Frame")
+local Frame = require("yawl.widget.Frame")
 
 ---@class WidgetList:Frame
 ---@operator call:WidgetList

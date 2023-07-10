@@ -1,7 +1,7 @@
 local event = require("event")
 local text = require("text")
 local class = require("libClass2")
-local Text = require("yaowbgl.widget.Text")
+local Text = require("yawl.widget.Text")
 local gpu = require("component").gpu
 
 ---@class TextInput:Text

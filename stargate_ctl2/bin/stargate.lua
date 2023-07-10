@@ -4,7 +4,7 @@ local os             = require "os"
 local filesystem     = require "filesystem"
 local serialization  = require "serialization"
 local class          = require "libClass2"
-local yaowbgl        = require "yaowbgl"
+local yawl           = require "yawl"
 
 local gpu            = component.gpu
 local stargate       = component.stargate
@@ -561,15 +561,15 @@ end
 ---@param gateName? string
 local function addGateToList(gateAddress, gateName)
     if (not gateName or gateName == "") then gateName = formatAddress(gateAddress) end
-    local gateButtonFrame = yaowbgl.widget.Frame(uiWidgets.gateList, 1, 1)
+    local gateButtonFrame = yawl.widget.Frame(uiWidgets.gateList, 1, 1)
     gateButtonFrame:size(uiWidgets.gateList:width(), 1)
 
-    local gateNameText = yaowbgl.widget.Text(gateButtonFrame, 1, 1, gateName, THEME.FOREGROUND.GATE_LIST_NAME)
+    local gateNameText = yawl.widget.Text(gateButtonFrame, 1, 1, gateName, THEME.FOREGROUND.GATE_LIST_NAME)
     gateNameText:backgroundColor(THEME.BACKGROUND.GATE_LIST_NAME)
     gateNameText:size(gateButtonFrame:width() - 3, gateButtonFrame:height())
     gateNameText:callback(gateNameButtonHandler, {addr = gateAddress})
 
-    local whiteListButton = yaowbgl.widget.Text(gateButtonFrame, gateButtonFrame:width() - 2, 1, "W", 0)
+    local whiteListButton = yawl.widget.Text(gateButtonFrame, gateButtonFrame:width() - 2, 1, "W", 0)
     whiteListButton:size(1, 1)
     whiteListButton:callback(whiteListButtonHandler, gateAddress)
     if (gatesData[gateAddress].whitelist) then
@@ -580,7 +580,7 @@ local function addGateToList(gateAddress, gateName)
         whiteListButton:backgroundColor(THEME.BACKGROUND.WHITELIST_BUTTON.OFF)
     end
 
-    local blackListButton = yaowbgl.widget.Text(gateButtonFrame, gateButtonFrame:width() - 1, 1, "B", 0)
+    local blackListButton = yawl.widget.Text(gateButtonFrame, gateButtonFrame:width() - 1, 1, "B", 0)
     blackListButton:size(1, 1)
     blackListButton:callback(blacklistButtonHandler, gateAddress)
     if (gatesData[gateAddress].blacklist) then
@@ -591,7 +591,7 @@ local function addGateToList(gateAddress, gateName)
         blackListButton:backgroundColor(THEME.BACKGROUND.BLACKLIST_BUTTON.OFF)
     end
 
-    local deleteListButton = yaowbgl.widget.Text(gateButtonFrame, gateButtonFrame:width(), 1, "X", THEME.FOREGROUND.DELETE_BUTTON)
+    local deleteListButton = yawl.widget.Text(gateButtonFrame, gateButtonFrame:width(), 1, "X", THEME.FOREGROUND.DELETE_BUTTON)
     deleteListButton:size(1, 1)
     deleteListButton:backgroundColor(THEME.BACKGROUND.DELETE_BUTTON)
     deleteListButton:callback(deleteButtonHandler, {container = gateButtonFrame, addr = gateAddress})
@@ -670,7 +670,7 @@ local function onStargateStateChange(eventName, componentAddress, toState, fromS
         uiWidgets.remoteAddress:text("OFFLINE")
         uiWidgets.passwordInput:foregroundColor(THEME.FOREGROUND.PASSWORD_INPUT.DEFAULT)
         uiWidgets.passwordInput:backgroundColor(THEME.BACKGROUND.PASSWORD_INPUT.DEFAULT)
-        uiWidgets.gateLayer:imageData(yaowbgl.ImageFile(GATE_STATE[0]))
+        uiWidgets.gateLayer:imageData(yawl.ImageFile(GATE_STATE[0]))
         openIris()
         uiWidgets.vortexLayer:visible(false)
         smartRemote = false
@@ -689,7 +689,7 @@ local function onIrisStateChange(eventName, componentAddress, toState, fromState
             openIris()
             return
         end
-        uiWidgets.irisLayer:imageData(yaowbgl.ImageFile(IRIS_STATE[3]))
+        uiWidgets.irisLayer:imageData(yawl.ImageFile(IRIS_STATE[3]))
         uiWidgets.irisButton:foregroundColor(THEME.FOREGROUND.IRIS_BUTTON.CLOSE)
         uiWidgets.irisButton:backgroundColor(THEME.BACKGROUND.IRIS_BUTTON.CLOSE)
     elseif (toState == "Opening") then
@@ -697,7 +697,7 @@ local function onIrisStateChange(eventName, componentAddress, toState, fromState
             closeIris()
             return
         end
-        uiWidgets.irisLayer:imageData(yaowbgl.ImageFile(IRIS_STATE[2]))
+        uiWidgets.irisLayer:imageData(yawl.ImageFile(IRIS_STATE[2]))
         uiWidgets.irisButton:foregroundColor(THEME.FOREGROUND.IRIS_BUTTON.MOVING)
         uiWidgets.irisButton:backgroundColor(THEME.BACKGROUND.IRIS_BUTTON.MOVING)
     elseif (toState == "Open") then
@@ -705,7 +705,7 @@ local function onIrisStateChange(eventName, componentAddress, toState, fromState
             closeIris()
             return
         end
-        uiWidgets.irisLayer:imageData(yaowbgl.ImageFile(IRIS_STATE[1]))
+        uiWidgets.irisLayer:imageData(yawl.ImageFile(IRIS_STATE[1]))
         uiWidgets.irisButton:foregroundColor(THEME.FOREGROUND.IRIS_BUTTON.OPEN)
         uiWidgets.irisButton:backgroundColor(THEME.BACKGROUND.IRIS_BUTTON.OPEN)
     elseif (toState == "Closing") then
@@ -713,7 +713,7 @@ local function onIrisStateChange(eventName, componentAddress, toState, fromState
             openIris()
             return
         end
-        uiWidgets.irisLayer:imageData(yaowbgl.ImageFile(IRIS_STATE[2]))
+        uiWidgets.irisLayer:imageData(yawl.ImageFile(IRIS_STATE[2]))
         uiWidgets.irisButton:foregroundColor(THEME.FOREGROUND.IRIS_BUTTON.MOVING)
         uiWidgets.irisButton:backgroundColor(THEME.BACKGROUND.IRIS_BUTTON.MOVING)
     elseif (toState == "Offline") then
@@ -724,9 +724,9 @@ end
 local function onChevronEngaded(eventName, componentAddress, chevronID, chevronChar)
     --sgChevronEngaded addr number chevronChar
     if (chevronID > 7) then chevronID = chevronID + 1 end --chevron 8 and 9 are used
-    uiWidgets.gateLayer:imageData(yaowbgl.ImageFile(GATE_STATE[chevronID]))
+    uiWidgets.gateLayer:imageData(yawl.ImageFile(GATE_STATE[chevronID]))
     --if the gate is still dialling, skip the img 7 (fully dialled 7 chevron)
-    if (chevronID == 7 and stargate.stargateState() == "Dialling") then uiWidgets.gateLayer:imageData(yaowbgl.ImageFile(GATE_STATE[chevronID + 1])) end
+    if (chevronID == 7 and stargate.stargateState() == "Dialling") then uiWidgets.gateLayer:imageData(yawl.ImageFile(GATE_STATE[chevronID + 1])) end
 end
 
 local function onMessageReceived(eventName, componentAddress, protocol, command, password, arg, reason)
@@ -753,63 +753,63 @@ end
 --#endregion
 
 --#region gui
-rootFrame = yaowbgl.widget.Frame()
+rootFrame = yawl.widget.Frame()
 rootFrame:backgroundColor(THEME.BACKGROUND.MAIN)
 --#region main screen
-local mainFrame = yaowbgl.widget.Frame(rootFrame)
+local mainFrame = yawl.widget.Frame(rootFrame)
 uiWidgets.mainFrame = mainFrame
 --#region Infos
-local localAddressText = yaowbgl.widget.Text(mainFrame, 1, 1, " " .. formatAddress(stargate.localAddress()) .. " ", THEME.FOREGROUND.LOCAL_ADDRESSE)
+local localAddressText = yawl.widget.Text(mainFrame, 1, 1, " " .. formatAddress(stargate.localAddress()) .. " ", THEME.FOREGROUND.LOCAL_ADDRESSE)
 localAddressText:center(true)
 localAddressText:backgroundColor(THEME.BACKGROUND.LOCAL_ADDRESSE)
-local remoteAddress = yaowbgl.widget.Text(mainFrame, localAddressText:x() + localAddressText:width() + 1, 1, "OFFLINE", THEME.FOREGROUND.REMOTE_ADRESSE.OFFLINE)
+local remoteAddress = yawl.widget.Text(mainFrame, localAddressText:x() + localAddressText:width() + 1, 1, "OFFLINE", THEME.FOREGROUND.REMOTE_ADRESSE.OFFLINE)
 remoteAddress:center(true)
 remoteAddress:size(localAddressText:size())
 remoteAddress:backgroundColor(THEME.BACKGROUND.REMOTE_ADRESSE.OFFLINE)
 uiWidgets.remoteAddress = remoteAddress
-local configButton = yaowbgl.widget.Text(mainFrame, remoteAddress:x() + remoteAddress:width() + 1, 1, "CONFIG", THEME.FOREGROUND.CONFIG_BUTTON)
+local configButton = yawl.widget.Text(mainFrame, remoteAddress:x() + remoteAddress:width() + 1, 1, "CONFIG", THEME.FOREGROUND.CONFIG_BUTTON)
 configButton:backgroundColor(THEME.BACKGROUND.CONFIG_BUTTON)
 configButton:center(true)
 configButton:size(11)
 configButton:callback(configButtonHandler)
-local infoText = yaowbgl.widget.Text(mainFrame, 1, 25, "Welcome", 0xFFFFFF)
+local infoText = yawl.widget.Text(mainFrame, 1, 25, "Welcome", 0xFFFFFF)
 infoText:size(80, 1)
 infoText:backgroundColor(0)
 uiWidgets.infoText = infoText
 --#endregion
 --#region known gates list
-local gateList = yaowbgl.widget.WidgetList(mainFrame, 2, 3)
+local gateList = yawl.widget.WidgetList(mainFrame, 2, 3)
 gateList:size(38, 20)
 gateList:backgroundColor(0xffffff)
 uiWidgets.gateList = gateList
 --#endregion
 --#region gate img
-local gateImgFrame = yaowbgl.widget.Frame(mainFrame, 47, 4)
-local vortexLayer  = yaowbgl.widget.Image(gateImgFrame, 1, 1, VORTEX)
+local gateImgFrame = yawl.widget.Frame(mainFrame, 47, 4)
+local vortexLayer  = yawl.widget.Image(gateImgFrame, 1, 1, VORTEX)
 vortexLayer:z(0)
 uiWidgets.vortexLayer = vortexLayer
-local irisLayer = yaowbgl.widget.Image(gateImgFrame, 1, 1, IRIS_STATE[1])
+local irisLayer = yawl.widget.Image(gateImgFrame, 1, 1, IRIS_STATE[1])
 irisLayer:z(vortexLayer:z() + 1)
 irisLayer:callback(irisButtonHandler)
 if (stargate.irisState() == "Closed") then
-    irisLayer:imageData(yaowbgl.ImageFile(IRIS_STATE[3]))
+    irisLayer:imageData(yawl.ImageFile(IRIS_STATE[3]))
 elseif (stargate.irisState() == "Opening") then
-    irisLayer:imageData(yaowbgl.ImageFile(IRIS_STATE[2]))
+    irisLayer:imageData(yawl.ImageFile(IRIS_STATE[2]))
 elseif (stargate.irisState() == "Open") then
-    irisLayer:imageData(yaowbgl.ImageFile(IRIS_STATE[1]))
+    irisLayer:imageData(yawl.ImageFile(IRIS_STATE[1]))
 elseif (stargate.irisState() == "Closing") then
-    irisLayer:imageData(yaowbgl.ImageFile(IRIS_STATE[2]))
+    irisLayer:imageData(yawl.ImageFile(IRIS_STATE[2]))
 elseif (stargate.irisState() == "Offline") then
     irisLayer:visible(false)
 end
 uiWidgets.irisLayer = irisLayer
-local gateLayer = yaowbgl.widget.Image(gateImgFrame, 1, 1, GATE_STATE[0])
+local gateLayer = yawl.widget.Image(gateImgFrame, 1, 1, GATE_STATE[0])
 gateLayer:z(irisLayer:z() + 1)
 uiWidgets.gateLayer = gateLayer
 gateImgFrame:size(gateLayer:size())
 --#endregion
 --#region buttons
-local dialButton = yaowbgl.widget.Text(mainFrame, 47, gateImgFrame:y() + gateImgFrame:height() + 1, "DIAL", 0)
+local dialButton = yawl.widget.Text(mainFrame, 47, gateImgFrame:y() + gateImgFrame:height() + 1, "DIAL", 0)
 dialButton:center(true)
 dialButton:size(12, 1)
 dialButton:callback(dialButtonHandler)
@@ -823,7 +823,7 @@ else
     dialButton:backgroundColor(THEME.BACKGROUND.DIAL_BUTTON.DEFAULT)
     dialButton:text("DIAL")
 end
-local irisButton = yaowbgl.widget.Text(mainFrame, gateImgFrame:x() + gateImgFrame:width() - dialButton:width(), dialButton:y(), "IRIS", 0)
+local irisButton = yawl.widget.Text(mainFrame, gateImgFrame:x() + gateImgFrame:width() - dialButton:width(), dialButton:y(), "IRIS", 0)
 irisButton:center(true)
 irisButton:size(dialButton:size())
 irisButton:callback(irisButtonHandler)
@@ -840,22 +840,22 @@ else
 end
 --#endregion
 --#region inputs
-local addressInputLabel = yaowbgl.widget.Text(mainFrame, gateImgFrame:x(), gateImgFrame:y() + gateImgFrame:height() + 2, "Address :", THEME.FOREGROUND.ADDRESS_INPUT_LABEL)
+local addressInputLabel = yawl.widget.Text(mainFrame, gateImgFrame:x(), gateImgFrame:y() + gateImgFrame:height() + 2, "Address :", THEME.FOREGROUND.ADDRESS_INPUT_LABEL)
 addressInputLabel:backgroundColor(THEME.BACKGROUND.ADDRESS_INPUT_LABEL)
-local addressInput = yaowbgl.widget.TextInput(mainFrame, addressInputLabel:x() + addressInputLabel:width(), addressInputLabel:y(), "", THEME.FOREGROUND.ADDRESS_INPUT)
+local addressInput = yawl.widget.TextInput(mainFrame, addressInputLabel:x() + addressInputLabel:width(), addressInputLabel:y(), "", THEME.FOREGROUND.ADDRESS_INPUT)
 addressInput:center(true)
 addressInput:size(18, 1)
 addressInput:backgroundColor(THEME.BACKGROUND.ADDRESS_INPUT)
 uiWidgets.addressInput = addressInput
-local passwordInputLabel = yaowbgl.widget.Text(mainFrame, addressInputLabel:x(), addressInputLabel:y() + 1, "Password :", THEME.FOREGROUND.PASSWORD_INPUT_LABEL)
+local passwordInputLabel = yawl.widget.Text(mainFrame, addressInputLabel:x(), addressInputLabel:y() + 1, "Password :", THEME.FOREGROUND.PASSWORD_INPUT_LABEL)
 passwordInputLabel:backgroundColor(THEME.BACKGROUND.PASSWORD_INPUT_LABEL)
-local passwordInput = yaowbgl.widget.TextInput(mainFrame, passwordInputLabel:x() + passwordInputLabel:width(), passwordInputLabel:y(), "", THEME.FOREGROUND.PASSWORD_INPUT.DEFAULT)
+local passwordInput = yawl.widget.TextInput(mainFrame, passwordInputLabel:x() + passwordInputLabel:width(), passwordInputLabel:y(), "", THEME.FOREGROUND.PASSWORD_INPUT.DEFAULT)
 passwordInput:center(true)
 passwordInput:placeholder("*")
 passwordInput:size(17, 1)
 passwordInput:backgroundColor(THEME.BACKGROUND.PASSWORD_INPUT.DEFAULT)
 uiWidgets.passwordInput = passwordInput
-local renameInput = yaowbgl.widget.TextInput(mainFrame, gateList:x(), gateList:y() + gateList:height(), "Right click twice to rename", THEME.FOREGROUND.RENAME_INPUT)
+local renameInput = yawl.widget.TextInput(mainFrame, gateList:x(), gateList:y() + gateList:height(), "Right click twice to rename", THEME.FOREGROUND.RENAME_INPUT)
 renameInput:size(gateList:width(), 1)
 renameInput:backgroundColor(THEME.BACKGROUND.RENAME_INPUT)
 uiWidgets.renameInput = renameInput
@@ -863,14 +863,14 @@ uiWidgets.renameInput = renameInput
 --#endregion
 --#region config screen
 loadConfig()
-local configFrame = yaowbgl.widget.Frame(rootFrame, 10, 2)
+local configFrame = yawl.widget.Frame(rootFrame, 10, 2)
 configFrame:size(60, 21)
 configFrame:backgroundColor(THEME.BACKGROUND.CONFIG_FRAME)
 configFrame:enabled(false)
 configFrame:visible(false)
 uiWidgets.configFrame = configFrame
 
-local whitelistToggle = yaowbgl.widget.Text(configFrame, 2, 2, "Use whitelist", THEME.FOREGROUND.TOGGLE.OFF)
+local whitelistToggle = yawl.widget.Text(configFrame, 2, 2, "Use whitelist", THEME.FOREGROUND.TOGGLE.OFF)
 whitelistToggle:backgroundColor(THEME.BACKGROUND.TOGGLE.OFF)
 whitelistToggle:callback(toogleConfigWhitelist)
 if (config.whitelist) then
@@ -878,7 +878,7 @@ if (config.whitelist) then
     whitelistToggle:backgroundColor(THEME.BACKGROUND.TOGGLE.ON)
 end
 uiWidgets.whitelistToggle = whitelistToggle
-local blacklistToggle = yaowbgl.widget.Text(configFrame, 2, 4, "Use blacklist", THEME.FOREGROUND.TOGGLE.OFF)
+local blacklistToggle = yawl.widget.Text(configFrame, 2, 4, "Use blacklist", THEME.FOREGROUND.TOGGLE.OFF)
 blacklistToggle:backgroundColor(THEME.BACKGROUND.TOGGLE.OFF)
 blacklistToggle:callback(toogleConfigBlacklist)
 if (config.blacklist) then
@@ -886,22 +886,22 @@ if (config.blacklist) then
     blacklistToggle:backgroundColor(THEME.BACKGROUND.TOGGLE.ON)
 end
 uiWidgets.blacklistToggle = blacklistToggle
-local dropNotAllowedToogle = yaowbgl.widget.Text(configFrame, 2, 6, "Drop not allowed connections", THEME.FOREGROUND.TOGGLE.OFF)
+local dropNotAllowedToogle = yawl.widget.Text(configFrame, 2, 6, "Drop not allowed connections", THEME.FOREGROUND.TOGGLE.OFF)
 dropNotAllowedToogle:backgroundColor(THEME.BACKGROUND.TOGGLE.OFF)
 dropNotAllowedToogle:callback(toogleAutoDrop)
 if (config.dropNotAllowed) then
     dropNotAllowedToogle:foregroundColor(THEME.FOREGROUND.TOGGLE.ON)
     dropNotAllowedToogle:backgroundColor(THEME.BACKGROUND.TOGGLE.ON)
 end
-local passwordConfigLabel = yaowbgl.widget.Text(configFrame, 2, 8, "Password :", THEME.FOREGROUND.PASSWORD_CONFIG_LABEL)
+local passwordConfigLabel = yawl.widget.Text(configFrame, 2, 8, "Password :", THEME.FOREGROUND.PASSWORD_CONFIG_LABEL)
 passwordConfigLabel:backgroundColor(THEME.BACKGROUND.PASSWORD_CONFIG_LABEL)
-local passwordConfigInput = yaowbgl.widget.TextInput(configFrame, passwordConfigLabel:x() + passwordConfigLabel:width(), passwordConfigLabel:y(), config.password or "", THEME.FOREGROUND.PASSWORD_CONFIG_INPUT)
+local passwordConfigInput = yawl.widget.TextInput(configFrame, passwordConfigLabel:x() + passwordConfigLabel:width(), passwordConfigLabel:y(), config.password or "", THEME.FOREGROUND.PASSWORD_CONFIG_INPUT)
 passwordConfigInput:placeholder("*")
 passwordConfigInput:size(15, 1)
 passwordConfigInput:backgroundColor(THEME.BACKGROUND.PASSWORD_CONFIG_INPUT)
 uiWidgets.passwordConfigInput = passwordConfigInput
 
-local configCloseButton = yaowbgl.widget.Text(configFrame, configFrame:width(), 1, "X", THEME.FOREGROUND.FRAME_CLOSE_BUTTON)
+local configCloseButton = yawl.widget.Text(configFrame, configFrame:width(), 1, "X", THEME.FOREGROUND.FRAME_CLOSE_BUTTON)
 configCloseButton:backgroundColor(THEME.BACKGROUND.FRAME_CLOSE_BUTTON)
 configCloseButton:callback(closeConfigFrame)
 

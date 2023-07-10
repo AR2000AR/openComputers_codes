@@ -1,5 +1,5 @@
 local gpu = require("component").gpu
-local Widget = require("yaowbgl.widget.Widget")
+local Widget = require("yawl.widget.Widget")
 
 ---@class Rectangle:Widget
 ---@field private _size Size

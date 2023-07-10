@@ -1,11 +1,11 @@
 local class = require("libClass2")
-local Frame = require("yaowbgl.widget.Frame")
+local Frame = require("yawl.widget.Frame")
 
 ---@class LinkedWidget:Frame
 ---@field parent Frame
 ---@operator call:LinkedWidget
----@overload fun(parent:Frame,x:number,y:number,master:Widget)
-local LinkedWidget = require('libClass2')(Frame)
+---@overload fun(parent:Frame,x:number,y:number)
+local LinkedWidget = class(Frame)
 
 ---Comment
 ---@return LinkedWidget

@@ -360,43 +360,43 @@
 		["authors"] = "AR2000AR",
 		["archiveName"] = "libclass2.tar"
 	},
-	["yaowbgl"] = {
+	["yawl"] = {
 		["manifestVersion"] = "1.0",
-		["package"] = "yaowbgl",
+		["package"] = "yawl",
 		["version"] = "1.1.1",
-		["name"] = "Yet A Other Widget Based Graphical Library",
-		["repo"] = "tree/master/yaowbgl",
+		["name"] = "Yet Another Widget Library",
+		["repo"] = "tree/master/yawl",
 		["description"] = "New version of libgui, but using libclass2 and cleaner code and interface.",
 		["authors"] = "AR2000AR",
 		["dependencies"] = 	{
 			["libclass2"] = "oppm"
 		},
-		["archiveName"] = "yaowbgl.tar"
+		["archiveName"] = "yawl.tar"
 	},
-	["yaowbgl_example"] = {
+	["yawl_example"] = {
 		["manifestVersion"] = "1.0",
-		["package"] = "yaowbgl_example",
+		["package"] = "yawl_example",
 		["version"] = "1.1.1",
-		["name"] = "Yet A Other Widget Based Graphical Library Example file",
-		["repo"] = "tree/master/yaowbgl",
+		["name"] = "Yet Another Widget Library Example file",
+		["repo"] = "tree/master/yawl",
 		["description"] = "New version of libgui, but using libclass2 and cleaner code and interface.",
 		["note"] = "This is only a example file",
 		["authors"] = "AR2000AR",
 		["dependencies"] = 	{
-			["yaowbgl"] = "oppm"
+			["yawl"] = "oppm"
 		},
-		["archiveName"] = "yaowbgl_example.tar"
+		["archiveName"] = "yawl_example.tar"
 	},
 	["stargate2"] = {
 		["manifestVersion"] = "1.0",
 		["package"] = "stargate2",
-		["version"] = "1.1.0",
+		["version"] = "1.2.0",
 		["name"] = "Stargate Ctl",
 		["repo"] = "tree/master/stargate_crl2",
 		["description"] = "GUI to controll stargates from SGCraft",
 		["authors"] = "AR2000AR",
 		["dependencies"] = 	{
-			["yaowbgl"] = "oppm"
+			["yawl"] = "oppm"
 		},
 		["archiveName"] = "stargate2.tar"
 	},

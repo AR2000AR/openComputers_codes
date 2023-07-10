@@ -1,7 +1,7 @@
 local gpu       = require("component").gpu
 local class     = require("libClass2")
-local Widget    = require("yaowbgl.widget.Widget")
-local ImageFile = require("yaowbgl.ImageFile")
+local Widget    = require("yawl.widget.Widget")
+local ImageFile = require("yawl.ImageFile")
 
 local HALF_CHAR = "▀"
 
@@ -16,7 +16,7 @@ local Image = class(Widget)
 ---@param parent Frame
 ---@param x number
 ---@param y number
----@param img any
+---@param img ImageFile|string
 function Image:new(parent, x, y, img)
     local o = self.parent(parent, x, y)
     setmetatable(o, {__index = self})

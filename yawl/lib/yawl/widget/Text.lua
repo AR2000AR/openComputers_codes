@@ -10,7 +10,7 @@ local text = require("text")
 ---@field private _maxHeight number
 ---@overload fun(parent:Frame,x:number,y:number,text:string,foregroundColor:number):Text
 ---@operator call:Text
-local Text = require('libClass2')(require("yaowbgl.widget.Widget"))
+local Text = require('libClass2')(require("yawl.widget.Widget"))
 
 ---@param parent Frame
 ---@param x number

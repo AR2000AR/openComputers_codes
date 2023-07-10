@@ -7,9 +7,9 @@
 ---@field height number
 
 ---@class yaowbgllib
-local yaowbgl = {
-    widget = require('yaowbgl.widget'),
-    ImageFile = require("yaowbgl.ImageFile")
+local yawl = {
+    widget = require('yawl.widget'),
+    ImageFile = require("yawl.ImageFile")
 }
 
-return yaowbgl
+return yawl
