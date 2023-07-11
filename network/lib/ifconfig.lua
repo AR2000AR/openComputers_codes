@@ -312,6 +312,7 @@ function ifconfig.raiseLo()
     if (not network.interfaces['lo']) then
         local dumE = DummyEthernet()
         network.interfaces['lo'] = {
+            ---@diagnostic disable-next-line: assign-type-mismatch
             ethernet = dumE,
             ip = ipv4.IPv4Loopback(dumE, network.router, 0x7f000001, 0xff000000)
         }
