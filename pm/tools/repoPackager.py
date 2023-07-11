@@ -97,7 +97,7 @@ def makePackage(packageInfo, source=None, outputDirectory='./packages/'):
     
         if any(item in ['-s','--strip-comments'] for item,v in opts):
             for luaFile in glob(root_dir=tmpDir+"/DATA/",pathname="**/*.lua",recursive=True):
-                os.system(f'sed -i s/--.*// {tmpDir+"/DATA/"+luaFile}')
+                os.system(f'sed -i s/^--.*// {tmpDir+"/DATA/"+luaFile}')
 
         version = manifest["version"]
         # manifest["archiveName"] = f"{packageName}_({version}).tar"
