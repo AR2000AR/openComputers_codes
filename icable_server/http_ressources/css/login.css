@@ -1,0 +1,51 @@
+#loginForm {
+    display: grid;
+    grid-column-gap: 0.3em;
+    grid-row-gap: 0.3em;
+    padding: 0.5em;
+}
+
+#loginForm>label {
+    text-align: right;
+    text-wrap: nowrap;
+}
+
+.loginLink,
+.signupLink {
+    text-align: center;
+}
+
+#logoutForm {
+    margin: 0.5em;
+}
+
+#logoutForm>button {
+    margin-top: 0.25em;
+}
+
+.indexLoginInnerDiv {
+    border-radius: 1em;
+    border: 1px black solid;
+    width: fit-content;
+    padding: 1em;
+}
+
+.indexLoginOuterDiv {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    -webkit-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+}
+
+.indexLoginInnerDiv>h1 {
+    text-align: center;
+}
+
+.grid-wide {
+    grid-column: 1/3;
+}

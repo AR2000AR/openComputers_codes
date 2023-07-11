@@ -1,0 +1,104 @@
+@import url('/css/login.css');
+
+main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 1em 1em 1em;
+}
+
+main h2 {
+    position: sticky;
+    left: 0;
+}
+
+
+main>div {
+    min-width: 75%;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+main {
+    background-color: lightgray;
+}
+
+table {
+    border-collapse: collapse;
+}
+
+table,
+td,
+th {
+    border: 1px solid black;
+}
+
+header {
+    background-color: aqua;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px;
+}
+
+#loginDiv {
+    border: 1px solid black;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#loginDiv>form>input[type="submit"],
+#loginDiv>form>button[type="submit"] {
+    width: 100%;
+}
+
+#loginDiv>a {
+    margin: 0 0.5em 0.5em 0.5em;
+}
+
+nav ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #333;
+}
+
+nav li {
+    float: left;
+}
+
+nav li a {
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+}
+
+/* Change the link color to #111 (black) on hover */
+nav li a:hover {
+    background-color: #111;
+    transition: all 1s;
+}
+
+nav li a.active:hover {
+    background-color: gray;
+    color: white;
+    transition: all 0.2s;
+}
+
+nav .active {
+    background-color: white;
+    color: #111;
+}
+
+form {
+    margin: 0;
+}
+
+input:invalid:not(:focus) {
+    color: red;
+}

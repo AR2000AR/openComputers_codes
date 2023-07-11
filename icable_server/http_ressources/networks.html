@@ -1,0 +1,74 @@
+<html>
+
+<head>
+    <title>icable</title>
+    <link rel="stylesheet" href="/css/main.css" />
+    <link rel="stylesheet" href="/css/network.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body>
+    <header>
+        <h1>icable</h1>
+        <div id="loginDiv">
+            ${login}
+        </div>
+    </header>
+    <nav>
+        <ul>
+            <li><a href="/clients">Clients</a></li>
+            <li><a href="/network" class="active">Networks</a></li>
+        </ul>
+    </nav>
+    <main>
+        <div>
+            <h2>Networks :</h2>
+            <table>
+                <tr>
+                    <th>Network</th>
+                    <th>Network mask</th>
+                    <th>Action</th>
+                </tr>
+                ${networkList}
+                <tr>
+                    <form id="networkForm" action="/network" method="post">
+                        <td><input type="text" placeholder="Network" name="network" required
+                                pattern="^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$">
+                        </td>
+                        <td><input type="text" placeholder="Mask" name="mask" required
+                                pattern="^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$">
+                        </td>
+                        <input type="hidden" value="new" name="cmd">
+                        <td><input type="submit" value="Create"></td>
+                    </form>
+                </tr>
+            </table>
+
+
+            <h2>Firewall :</h2>
+            <span>Firewall default : (${firewallDefault})</span>
+            <table>
+                <tr>
+                    <th>Source</th>
+                    <th>Destination</th>
+                    <th>Action</th>
+                    <th>Action</th>
+                </tr>
+                ${firewallRuleList}
+                ${firewallRuleForm}
+            </table>
+
+            <h2>Pool :</h2>
+            <span>Current network pool id : ${poolid}</span>
+            <table id="pooltable">
+                <tr>
+                    <th>User</th>
+                    <th>Role</th>
+                </tr>
+                ${poolusers}
+            </table>
+        </div>
+    </main>
+</body>
+
+</html>

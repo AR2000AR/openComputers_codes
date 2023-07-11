@@ -1,0 +1,135 @@
+icable protocol
+
+header :
+|76543210|76543210|76543210|76543210|
+|--------|--------|--------|--------|
+|          MAGIC  "ICAB"            |
+|--------|--------|--------|--------|
+|  KIND  |  LEN            |RESERVED|
+|--------|--------|--------|--------|
+
+MAGIC (4B) : string "ICAB"
+KIND (1B) : type of packet
+	LSB indicate if the msg is for the server or for the client
+	- CLIENT_AUTH (0x02)			: authentication request from the client
+	- SERVER_AUTH (0x03)			: authentication answer from the server
+	- CLIENT_NETCONF (0x04)			: network configuration request from the client
+	- SERVER_NETCONF (0x05)			: network configuration answer from the server
+	- CLIENT_AUTH_REQUEST (0x06)		: request a random string from the server to secure the authentication process
+	- SERVER_AUTH_REQUEST (0x07)		: provide a random string to the client and it's password salt
+	- CLIENT_ERROR (0xfa)			: error returned by the client
+	- SERVER_ERROR (0xfb)			: error returned by the server
+	- CLIENT_DISCONNECT (0xfc)		: client disconnection notification
+	- SERVER_DISCONNECT (0xfd)		: server disconnection notification
+	- CLIENT_DATA (0xfe)			: data packet sent from the client
+	- SERVER_DATA (0xff)			: data packet sent by the server
+LEN (2B) : total length data after the header
+RESERVED (1B) : reserved for later use
+
+CLIENT_AUTH :
+A client authentication packet contain 4 fields :
+- username len (1B) : the username string length in bytes
+- username (username len) : the username string
+- password len (1B) : the password length in bytes
+- password (password len) : the password string
+
+If a CLIENT_AUTH_REQUEST was sent and a CLIENT_AUTH_REQUEST was received, the password field contain sha256(srvsalt..sha256(salt..password)) where srvsalt and salt were provided by the srv via SERVER_AUTH_REQUEST
+
+SERVER_AUTH :
+A server authentication packet contain 1 fields :
+- success (1B) : set to 0x00 if the authentication request was denied or 0xff is successful
+
+CLIENT_NETCONF :
+|76543210|76543210|76543210|76543210|
+|--------|--------|--------|--------|
+| KIND   |           IPv4           ~
+|--------|--------|--------|--------|
+~        | NMASK  |
+|--------|--------|
+KIND (1B) : kind of request :
+	- MANUAL_IPv4 (0x01) : manual address request
+	- AUTO_IPv4 (0x02) : automatic address attribution.
+	- RESERVED (0x04) : avoid confusion with SERVER_NETCONF IPv4
+If KIND is MANUAL the following fields must be present
+IPv4 (4B) : requested ipv4 address
+NMASK (1B) : requested ipv4 network mask
+If KIND is AUTO_IPv4 the following fields may be present
+IPv4 (4B) : network name the client want to be part of
+NMAK (1B) : netmask of the network
+
+SERVER_NETCONF 
+If a CLIENT_NETCONF request is success, the server will respond with info about the client network configuration
+|76543210|76543210|76543210|76543210|
+|--------|--------|--------|--------|
+| KIND   |           IPv4           ~
+|--------|--------|--------|--------|
+~        | NMASK  |
+|--------|--------|
+KIND (1B) : kind of address
+	- IPv4 (0x04) : IPv4 address
+IPv4 (4B) : IPv4 address attributed to the client
+NMASK (4B) : network mask for the given IPv4 address
+
+CLIENT_AUTH_REQUEST
+Request random strings from the srv to secure the authentication
+|76543210|76543210|76543210|76543210|
+|--------|--------|--------|--------|
+|UNAMELEN|          UNAME           ~
+|--------|--------|--------|--------|
+UNAMELEN (1B) length of the UNAME string
+UNAME (UNAMELEN B) username
+The srv will answer with a SERVER_AUTH with sucess 0x00 if the user doesn't exists
+
+SERVER_AUTH_REQUEST
+|76543210|76543210|76543210|76543210|76543210|76543210|76543210|76543210|
+|--------|--------|--------|--------|--------|--------|--------|--------|
+|                                  SALT                                 ~
+|--------|--------|--------|--------|--------|--------|--------|--------|
+~									|
+|--------|--------|--------|--------|--------|--------|--------|--------|
+|                                SRVSALT                                ~
+|--------|--------|--------|--------|--------|--------|--------|--------|
+~									|
+|--------|--------|--------|--------|--------|--------|--------|--------|
+SLAT(16B) : salt used to hash the password
+SRVSALT(16B) : salt used to hash the slat+password hash
+
+CLIENT_ERROR :
+Error notification from the client.
+|76543210|76543210|76543210|76543210|
+| KIND   | MSGLEN          |  MSG   ~
+|--------|--------|--------|--------|
+~               ...                 |
+|--------|--------|--------|--------|
+KIND (1B) : kind of error
+	- UNKNOWN_MSG (0x01) : the kind of message received is unknown to the client
+MSGLEN (1B) : length of the error message string. May be 0
+MSG (MSGLEN) : error message
+
+SERVER_ERROR :
+Error notification from the server.
+|76543210|76543210|76543210|76543210|
+| KIND   | MSGLEN          |  MSG   ~
+|--------|--------|--------|--------|
+~               ...                 |
+|--------|--------|--------|--------|
+KIND (1B) : kind of error
+	- UNKNOWN_MSG (0x01) : the kind of message received is unknown to the server
+	- NOT_AUTH (0x02) : client is not authenticated
+	- NETCONF_ERROR (0x04) : invalid network configuration request
+	- MISSING_NETCONF (0x05) : client didn't request a network configuration
+	- NETCONF_MISSMATCH (0x06) : source address in IPv4 header doesn't match the client's configuration
+MSGLEN (1B) : length of the error message string. May be 0
+MSG (MSGLEN) : error message
+
+CLIENT_DISCONNECT :
+This msg is empty and is sent just before closing the socket. No answer is expected and the server should close his end of the socket as soon as possible.
+
+SERVER_DISCONNECT :
+This msg is empty and is sent just before closing the socket. No answer is expected and the client should close his end of the socket as soon as possible.
+
+CLIENT_DATA :
+Raw packet. Usually IPv4
+
+SERVER_DATA :
+Raw packet. Usually IPv4

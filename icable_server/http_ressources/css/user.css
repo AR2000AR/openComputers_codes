@@ -1,0 +1,13 @@
+#deletUser,
+#passwordChange {
+    display: flex;
+    flex-direction: column;
+}
+
+#deletUser input[type="submit"] {
+    background-color: red;
+}
+
+input {
+    max-width: 20em;
+}

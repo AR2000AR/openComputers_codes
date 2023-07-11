@@ -1,0 +1,19 @@
+#networkForm>input[type="text"] {
+    width: 15ch;
+}
+
+#firewallForm>input[type="text"] {
+    width: 18ch;
+}
+
+.ip-cell {
+    min-width: 15ch;
+}
+
+.cidr-cell {
+    min-width: 18ch;
+}
+
+#pooltable td {
+    min-width: 15ch;
+}

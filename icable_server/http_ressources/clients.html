@@ -1,0 +1,37 @@
+<html>
+
+<head>
+    <title>icable</title>
+    <link rel="stylesheet" href="/css/main.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body>
+    <header>
+        <h1>icable</h1>
+        <div id="loginDiv">
+            ${login}
+        </div>
+    </header>
+    <nav>
+        <ul>
+            <li><a href="/clients" class="active">Clients</a></li>
+            <li><a href="/network">Networks</a></li>
+        </ul>
+    </nav>
+    <main>
+        <div>
+            <h2>Clients :</h2>
+            <table>
+                <tr>
+                    <th>Client address</th>
+                    <th>icable client address</th>
+                    <th>username</th>
+                </tr>
+                ${clientList}
+            </table>
+        </div>
+    </main>
+</body>
+
+</html>

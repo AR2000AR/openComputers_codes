@@ -410,5 +410,29 @@
 		["note"] = "/usr/share/stargate/stargate.bios",
 		["authors"] = "AR2000AR",
 		["archiveName"] = "stargate2_bios.tar"
+	},
+	["icable"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "icable",
+		["version"] = "0.1.0",
+		["name"] = "icable",
+		["repo"] = "tree/master/icable",
+		["description"] = "Use the internet card instead of the network card with osinetwork",
+		["authors"] = "AR2000AR",
+		["dependencies"] = 	{
+			["osinetwork"] = "oppm",
+			["datahashlib"] = "oppm"
+		},
+		["archiveName"] = "icable.tar"
+	},
+	["datahashlib"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "datahashlib",
+		["version"] = "1.2.0",
+		["name"] = "data hash library",
+		["repo"] = "tree/master/datahashlib",
+		["description"] = "provide the sha256 algo.",
+		["authors"] = "AR2000AR, Roberto Ierusalimschy",
+		["archiveName"] = "datahashlib.tar"
 	}
 }

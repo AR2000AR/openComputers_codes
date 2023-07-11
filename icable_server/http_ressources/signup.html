@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>icable</title>
+    <link rel="stylesheet" href="/css/main.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+
+<body>
+    <div class="indexLoginOuterDiv">
+        <div class="indexLoginInnerDiv">
+            <h1>icable</h1>
+            <div id="loginDiv">
+                <form id="loginForm" action="/signup" method="post">
+                    <label for="username">Username :</label>
+                    <input type="text" name="username" id="username" autocomplete="username" required>
+                    <label for="password">Password :</label>
+                    <input type="password" name="password" id="password" autocomplete="new-password" required
+                        minlength="8" pattern="(?=.*[A-Z])(?=.*[a-z])(?=.*\d).*"
+                        title="Password must contain at least on uppercase character, one lower case character and one number.">
+                    <label for="passwordConfirmation">Password confirmation:</label>
+                    <input type="password" name="passwordConfirmation" id="passwordConfirmation"
+                        autocomplete="new-password" required minlength="8" pattern="(?=.*[A-Z])(?=.*[a-z])(?=.*\d).*"
+                        title="Password must contain at least on uppercase character, one lower case character and one number.">
+                    <input class="grid-wide" type="submit" value="Signup">
+                    <a href="/" class="grid-wide loginLink">Login</a>
+                </form>
+            </div>
+            <!-- <span>Your password is sent as clear text between the in game clients and the
+                server.<br> <b>DO NOT USE A PASSWORD FROM A OTHER WEBSITE.</b></span> -->
+        </div>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,52 @@
+<html>
+
+<head>
+    <title>icable</title>
+    <link rel="stylesheet" href="/css/main.css" />
+    <link rel="stylesheet" href="/css/user.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body>
+    <header>
+        <h1>icable</h1>
+        <div id="loginDiv">
+            ${login}
+        </div>
+    </header>
+    <nav>
+        <ul>
+            <li><a href="/clients">Clients</a></li>
+            <li><a href="/network">Networks</a></li>
+        </ul>
+    </nav>
+    <main>
+        <div>
+            <h2>User settings :</h2>
+            <h3>Change the password :</h3>
+            <form id="passwordChange" action="/user" method="post">
+                <input type="password" placeholder="current password" autocomplete="current-password" name="password"
+                    required>
+                <!-- <span class="grid-wide">Your password is sent as clear text between the in game clients and the
+                        server.<br> <b>DO NOT USE A PASSWORD FROM A OTHER WEBSITE.</b></span> -->
+                <input type="password" placeholder="new password" autocomplete="current-password" name="newPassword"
+                    pattern="(?=.*[A-Z])(?=.*[a-z])(?=.*\d).*"
+                    title="Password must contain at least on uppercase character, one lower case character and one number."
+                    required>
+                <input type="password" placeholder="validate new password" autocomplete="current-password"
+                    name="newPassword2" pattern="(?=.*[A-Z])(?=.*[a-z])(?=.*\d).*"
+                    title="Password must contain at least on uppercase character, one lower case character and one number."
+                    required>
+                <input type="submit" value="Change password">
+                <input type="hidden" name="cmd" value="password">
+            </form>
+            <h3>Danger zone :</h3>
+            <form id="deletUser" action="/user" method="post">
+                <input type="submit" value="Delete User">
+                <input type="hidden" name="cmd" value="delete">
+            </form>
+        </div>
+    </main>
+</body>
+
+</html>
