@@ -8,8 +8,11 @@ local Frame = require("yawl.widget.Frame")
 local WidgetList = require('libClass2')(Frame)
 
 function WidgetList:draw()
-    for i, w in ipairs(self._childs) do
-        w:position(1, i)
+    local y = 1
+    for _, w in ipairs(self._childs) do
+        w:position(1, y)
+        y = y + w:height()
+        if (y >= self:height()) then break end
     end
     self.parent.draw(self)
 end
