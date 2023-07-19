@@ -99,7 +99,7 @@ end
 ---@return UDPDatagram
 function UDPDatagram.unpack(value)
     local src, dst, len, chk, offset = string.unpack(UDPDatagram.payloadFormat, value)
-    local payload = string.unpack('>c' .. len - offset, value, offset)
+    local payload = string.unpack('>c' .. (len - offset) + 1, value, offset)
     return UDPDatagram(src, dst, payload)
 end
 

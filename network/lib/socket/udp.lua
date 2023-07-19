@@ -60,6 +60,7 @@ end
 
 ---@return string? datagram, string? fromAddress, number? fromPort
 function UDPSocket:receivefrom(size)
+    --TODO : use the size
     if (select(2, self:getsockname()) == 0) then
         error("Reciving object before binding to a address/port", 2)
     end
@@ -156,6 +157,8 @@ function UDPSocket:setoption(option, value)
     error("NOT IMPLEMENTED", 2)
 end
 
+---Set the socket's timeout in second
+---@param value number seconds
 function UDPSocket:settimeout(value)
     checkArg(1, value, 'number')
     self._timeout = value * 100
