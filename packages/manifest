@@ -376,7 +376,7 @@
 	["yawl_example"] = {
 		["manifestVersion"] = "1.0",
 		["package"] = "yawl_example",
-		["version"] = "1.2.0",
+		["version"] = "1.2.1",
 		["name"] = "Yet Another Widget Library Example file",
 		["repo"] = "tree/master/yawl",
 		["description"] = "New version of libgui, but using libclass2 and cleaner code and interface.",
