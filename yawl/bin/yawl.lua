@@ -22,7 +22,7 @@ frame1:backgroundColor(0xffff00)             --Set this second frame's backgroun
 frame1:size(20, 11)                          --Set the Fame size. By default it take the rest of the screen
 
 
-yawl.widget.Text(frame1, 1, 1, "Retangle button :", 0)                 --A simple text
+yawl.widget.Text(frame1, 1, 1, "Rectangle button :", 0)                --A simple text
 local rectangle = yawl.widget.Rectangle(frame1, 1, 2, 10, 3, 0xffffff) --A white rectangle
 --define a function that's called whne a `touch` `walk` `drag` `scroll` or `drop` event is triggered
 rectangle:callback(

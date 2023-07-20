@@ -10,9 +10,15 @@ local WidgetList = require('libClass2')(Frame)
 function WidgetList:draw()
     local y = 1
     for _, w in ipairs(self._childs) do
-        w:position(1, y)
-        y = y + w:height()
-        if (y >= self:height()) then break end
+        if (y > self:height()) then
+            w:visible(false)
+            w:enabled(false)
+        else
+            w:visible(true)
+            w:enabled(true)
+            w:position(1, y)
+            y = y + w:height()
+        end
     end
     self.parent.draw(self)
 end
