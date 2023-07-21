@@ -68,8 +68,13 @@ for i = 1, 5 do                                                                 
     t:backgroundColor(bk)
 end
 
+local b = yawl.widget.Border(root, 52, 2)
+local bText = yawl.widget.Text(b, 1, 1, "Bordered text", 0xffffff)
+bText:backgroundColor(0)
+b:backgroundColor(0xff0000)
+
 local function animate() --animate the text widget. Add one char with each loop
-    MSG = "123456789 123456789 123456789 123456789 abcdefghijklmnopqrstuvwxyz "
+    local MSG = "123456789 123456789 123456789 123456789 abcdefghijklmnopqrstuvwxyz "
     root:draw()
     text:text(MSG:sub(1, #(text:text()) + 1))
     if (#(text:text()) == #MSG) then
@@ -90,7 +95,6 @@ require("event").listen("interrupted", function()
     return false
 end)
 root:draw()
----img:visible(false)
 while run do
     os.sleep(0.1)
     root:draw()
