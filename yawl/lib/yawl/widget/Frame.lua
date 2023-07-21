@@ -157,7 +157,7 @@ function Frame:draw()
 
     if (newBuffer and newBuffer ~= defaultBuffer) then
         --copy the old buffer in the new buffer for transparancy effect
-        gpu.bitblt(defaultBuffer, x, y, width, height, newBuffer, bitBltFix and y or x, bitBltFix and x or y)
+        gpu.bitblt(newBuffer, x, y, width, height, newBuffer, bitBltFix and y or x, bitBltFix and x or y)
     end
 
     --clean background
