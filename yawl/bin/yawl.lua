@@ -24,16 +24,19 @@ frame1:size(20, 11)                          --Set the Fame size. By default it 
 
 yawl.widget.Text(frame1, 1, 1, "Rectangle button :", 0)                --A simple text
 local rectangle = yawl.widget.Rectangle(frame1, 1, 2, 10, 3, 0xffffff) --A white rectangle
---define a function that's called whne a `touch` `walk` `drag` `scroll` or `drop` event is triggered
+--define a function that's called whne a `touch` `walk` `drag` `scroll` or `drop` or the custom `double_touch` event is triggered
 rectangle:callback(
     function(self, _, eventName, ...)
-        if (not (eventName == "touch")) then return end
-        if (self:backgroundColor() == 0xffffff) then
-            self:backgroundColor(0)
-        else
-            self:backgroundColor(0xffffff)
+        if (eventName == "touch") then
+            if (self:backgroundColor() == 0xffffff) then
+                self:backgroundColor(0)
+            else
+                self:backgroundColor(0xffffff)
+            end
+        elseif (eventName == "double_touch") then
+            self:backgroundColor(0x00ff00)
         end
-        self:draw()
+        --self:draw()
     end)
 
 local textLabel = yawl.widget.Text(frame1, 1, 5, "Text :", 0)                                          --A simple text
@@ -83,6 +86,7 @@ exitText:backgroundColor(0)
 local run = true
 require("event").listen("interrupted", function()
     run = false;
+    root:closeListeners()
     return false
 end)
 root:draw()

@@ -1,6 +1,7 @@
 local gpu = require("component").gpu
 local Widget = require("yawl.widget.Widget")
 local event = require("event")
+local computer = require("computer")
 
 --=============================================================================
 --test bitblt bug
@@ -27,6 +28,8 @@ gpu.freeBuffer(testBuffer2)
 ---@field private _parentFrame? Frame Inherited from Widget, but made optional
 ---@field protected _childs table<number,Widget|Frame>
 ---@field private _listeners table
+---@field private _lastTouch table
+---@field private _doubleTouchDelay number
 ---@operator call:Frame
 ---@overload fun():Frame
 ---@overload fun(parent:Frame):Frame
@@ -56,14 +59,27 @@ function Frame:new(parentFrame, x, y)
     o._listeners = {}
     local w, h = gpu.getViewport()
     o:size(w - o:x() + 1, h - o:y() + 1)
+    o._lastTouch = {x = 0, y = 0, t = 0}
     if (not parentFrame) then
-        table.insert(o._listeners, event.listen("touch", function(...) o:propagateEvent(...) end))
+        table.insert(o._listeners, event.listen("touch", function(...) o:_touchHandler(...) end))
         table.insert(o._listeners, event.listen("drag", function(...) o:propagateEvent(...) end))
         table.insert(o._listeners, event.listen("drop", function(...) o:propagateEvent(...) end))
         table.insert(o._listeners, event.listen("scroll", function(...) o:propagateEvent(...) end))
         table.insert(o._listeners, event.listen("walk", function(...) o:propagateEvent(...) end))
     end
     return o
+end
+
+---@package
+function Frame:_touchHandler(eName, screenAddress, x, y, ...)
+    local cTime = computer.uptime()
+    self:propagateEvent(eName, screenAddress, x, y, ...)
+    if (x == self._lastTouch.x and y == self._lastTouch.y) then
+        if ((cTime - self._lastTouch.t) < self:doubleTouchDelay()) then
+            self:propagateEvent("double_touch", screenAddress, x, y, ...)
+        end
+    end
+    self._lastTouch = {x = x, y = y, t = cTime}
 end
 
 function Frame:closeListeners()
@@ -105,7 +121,8 @@ end
 function Frame:propagateEvent(eName, screenAddress, x, y, ...)
     if (not self:enabled()) then return end
     for _, w in pairs(self._childs) do
-        os.sleep()
+        --TODO : find a new yeilding methods
+        --os.sleep()
         if (w:checkCollision(x, y)) then
             if (w:instanceOf(Frame)) then
                 ---@cast w Frame
@@ -115,6 +132,15 @@ function Frame:propagateEvent(eName, screenAddress, x, y, ...)
             end
         end
     end
+end
+
+---@param value? number
+---@return number
+function Frame:doubleTouchDelay(value)
+    checkArg(1, value, 'number', 'nil')
+    local oldValue = self._doubleTouchDelay or 0.5
+    if (value ~= nil) then self._doubleTouchDelay = value end
+    return oldValue
 end
 
 ---Draw the widgets in the container
