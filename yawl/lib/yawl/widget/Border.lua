@@ -73,7 +73,7 @@ function Border:draw()
     local defaultBuffer = gpu.getActiveBuffer()
     local success, newBuffer = pcall(gpu.allocateBuffer, gpu.getResolution())
     --local success, newBuffer = nil, nil
-    if (success ~= false) then
+    if success then
         defaultBuffer = gpu.setActiveBuffer(newBuffer)
     end
 
