@@ -94,7 +94,7 @@ function Frame:addChild(containerChild)
     table.insert(self._childs, containerChild)
 end
 
----Remove a child from the container. Return the removed child on sucess
+---Remove a child from the container. Return the removed child on success
 ---@generic T : Widget|Frame
 ---@param child T
 ---@return T? child
@@ -149,9 +149,9 @@ function Frame:draw()
     --init frame buffer
     local x, y, width, height = self:absX(), self:absY(), self:width(), self:height()
     local defaultBuffer = gpu.getActiveBuffer()
-    local sucess, newBuffer = pcall(gpu.allocateBuffer, gpu.getResolution())
-    --local sucess, newBuffer = nil, nil
-    if (sucess ~= false) then
+    local success, newBuffer = pcall(gpu.allocateBuffer, gpu.getResolution())
+    --local success, newBuffer = nil, nil
+    if success then
         defaultBuffer = gpu.setActiveBuffer(newBuffer)
     end
 
