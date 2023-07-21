@@ -12,10 +12,12 @@ local Border = class(Frame)
 ---@param parent Frame
 ---@param x number
 ---@param y number
-function Border:new(parent, x, y)
+function Border:new(parent, x, y, borderset) --borderset can be string too
     checkArg(1, parent, "table")
+    checkArg(1, borderset, "string", nil)
     local o = self.parent(parent, x, y)
     setmetatable(o, {__index = self})
+    o._borderSet = borderset
     ---@cast o Border
     return o
 end
@@ -23,6 +25,13 @@ end
 ---@return Widget
 function Border:master()
     return self._childs[1]
+end
+
+function Border:foregroundColor(value)
+    checkArg(1, value, 'number', 'nil')
+    local oldValue = self._foregroundColor
+    if (value) then self._foregroundColor = value end
+    return oldValue
 end
 
 ---@param value? number
