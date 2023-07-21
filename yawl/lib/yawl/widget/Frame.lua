@@ -147,7 +147,7 @@ end
 function Frame:draw()
     if (not self:visible()) then return end
     --init frame buffer
-    local x,y,width,height = self:absX(), self:absY(), self:width(), self:height()
+    local x, y, width, height = self:absX(), self:absY(), self:width(), self:height()
     local defaultBuffer = gpu.getActiveBuffer()
     local sucess, newBuffer = pcall(gpu.allocateBuffer, gpu.getResolution())
     --local sucess, newBuffer = nil, nil
@@ -157,7 +157,7 @@ function Frame:draw()
 
     if (newBuffer and newBuffer ~= defaultBuffer) then
         --copy the old buffer in the new buffer for transparancy effect
-        gpu.bitblt(defaultBuffer, self:absX(), self:absY(), self:width(), self:height(), newBuffer, bitBltFix and self:absY() or self:absX(), bitBltFix and self:absX() or self:absY())
+        gpu.bitblt(defaultBuffer, x, y, width, height, newBuffer, bitBltFix and y or x, bitBltFix and x or y)
     end
 
     --clean background
@@ -186,7 +186,7 @@ function Frame:draw()
     end
     --restore buffer
     if (newBuffer and newBuffer ~= defaultBuffer) then
-        gpu.bitblt(defaultBuffer, self:absX(), self:absY(), self:width(), self:height(), newBuffer, bitBltFix and self:absY() or self:absX(), bitBltFix and self:absX() or self:absY())
+        gpu.bitblt(defaultBuffer, x, y, width, height, newBuffer, bitBltFix and y or x, bitBltFix and x or y)
         gpu.setActiveBuffer(defaultBuffer)
         gpu.freeBuffer(newBuffer)
     end
