@@ -147,6 +147,7 @@ end
 function Frame:draw()
     if (not self:visible()) then return end
     --init frame buffer
+    local x,y,width,height = self:absX(), self:absY(), self:width(), self:height()
     local defaultBuffer = gpu.getActiveBuffer()
     local sucess, newBuffer = pcall(gpu.allocateBuffer, gpu.getResolution())
     --local sucess, newBuffer = nil, nil
@@ -156,45 +157,14 @@ function Frame:draw()
 
     if (newBuffer and newBuffer ~= defaultBuffer) then
         --copy the old buffer in the new buffer for transparancy effect
-        if (bitBltFix) then
-            gpu.bitblt(newBuffer, self:absX(), self:absY(), self:width(), self:height(), defaultBuffer, self:absY(), self:absX())
-        else
-            gpu.bitblt(newBuffer, self:absX(), self:absY(), self:width(), self:height(), defaultBuffer, self:absX(), self:absY())
-        end
+        gpu.bitblt(defaultBuffer, self:absX(), self:absY(), self:width(), self:height(), newBuffer, bitBltFix and self:absY() or self:absX(), bitBltFix and self:absX() or self:absY())
     end
 
     --clean background
     if (self:backgroundColor()) then
         local oldBG = gpu.getBackground()
         gpu.setBackground(self:backgroundColor() --[[@as number]])
-        local x,y,width,height = self:absX(), self:absY(), self:width(), self:height()
         gpu.fill(x, y, width, height, " ")
-        local borderSet = self._borderSet
-        if borderSet then
-            local oldFG = self._foregroundColor and gpu.getForeground()
-            if oldFG then gpu.setForeground(self._foregroundColor) end
-            local unicode = require("unicode")
-            local setLength = unicode.len(borderSet)
-            if setLength > 3 then 
-                gpu.set(x, y, unicode.sub(borderSet, 1,1)) --topleft
-                gpu.set(x+width-1, y, unicode.sub(borderSet, 2,2)) --topright
-                gpu.set(x, y+height-1, unicode.sub(borderSet, 3,3)) --bottomleft
-                gpu.set(x+width-1, y+height-1, unicode.sub(borderSet, 4,4)) --bottomright
-                if setLength > 4 then
-                    gpu.fill(x+1, y, width-2, 1, unicode.sub(borderSet, 5,5)) --top
-                    if setLength == 6 then
-                        gpu.fill(x+1, y+height-1, width-2, 1, unicode.sub(borderSet, 5,5)) --bottom
-                        gpu.fill(x, y+1, 1, height-2, unicode.sub(borderSet, 6,6)) --left
-                        gpu.fill(x+width-1, y+1, 1, height-2, unicode.sub(borderSet, 6,6)) -- right
-                    elseif setLength == 8 then
-                        gpu.fill(x+1, y+height-1, width-2, 1, unicode.sub(borderSet, 6,6)) --bottom
-                        gpu.fill(x, y+1, 1, height-2, unicode.sub(borderSet, 7,7)) --left
-                        gpu.fill(x+width-1, y+1, 1, height-2, unicode.sub(borderSet, 8,8)) -- right
-                    end
-                end
-            end
-            if oldFG then gpu.setForeground(oldFG) end
-        end
         gpu.setBackground(oldBG)
     end
 
@@ -216,14 +186,11 @@ function Frame:draw()
     end
     --restore buffer
     if (newBuffer and newBuffer ~= defaultBuffer) then
-        if (bitBltFix) then
-            gpu.bitblt(defaultBuffer, self:absX(), self:absY(), self:width(), self:height(), newBuffer, self:absY(), self:absX())
-        else
-            gpu.bitblt(defaultBuffer, self:absX(), self:absY(), self:width(), self:height(), newBuffer, self:absX(), self:absY())
-        end
+        gpu.bitblt(defaultBuffer, self:absX(), self:absY(), self:width(), self:height(), newBuffer, bitBltFix and self:absY() or self:absX(), bitBltFix and self:absX() or self:absY())
         gpu.setActiveBuffer(defaultBuffer)
         gpu.freeBuffer(newBuffer)
     end
 end
 
+Frame._bitBltFix = bitBltFix
 return Frame

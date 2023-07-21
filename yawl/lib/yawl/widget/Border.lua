@@ -1,5 +1,6 @@
 local class = require("libClass2")
 local Frame = require("yawl.widget.Frame")
+local gpu = require("component").gpu
 
 ---@class Border:Frame
 ---@field parent Frame
@@ -68,7 +69,75 @@ function Border:draw()
         end
         w:position(2, 2)
     end
-    self.parent.draw(self)
+    local x,y,width,height = self:absX(), self:absY(), self:width(), self:height()
+    local defaultBuffer = gpu.getActiveBuffer()
+    local success, newBuffer = pcall(gpu.allocateBuffer, gpu.getResolution())
+    --local success, newBuffer = nil, nil
+    if (success ~= false) then
+        defaultBuffer = gpu.setActiveBuffer(newBuffer)
+    end
+
+    if (newBuffer and newBuffer ~= defaultBuffer) then
+        --copy the old buffer in the new buffer for transparancy effect
+        gpu.bitblt(defaultBuffer, self:absX(), self:absY(), self:width(), self:height(), newBuffer, self._bitBltFix and self:absY() or self:absX(), self._bitBltFix and self:absX() or self:absY())
+    end
+
+    --clean background
+    if (self:backgroundColor()) then
+        local oldBG = gpu.getBackground()
+        gpu.setBackground(self:backgroundColor() --[[@as number]])
+        gpu.fill(x, y, width, height, " ")
+        local borderSet = self._borderSet
+        if borderSet then
+            local oldFG = self._foregroundColor and gpu.getForeground()
+            if oldFG then gpu.setForeground(self._foregroundColor) end
+            local unicode = require("unicode")
+            local setLength = unicode.len(borderSet)
+            if setLength > 3 then 
+                gpu.set(x, y, unicode.sub(borderSet, 1,1)) --topleft
+                gpu.set(x+width-1, y, unicode.sub(borderSet, 2,2)) --topright
+                gpu.set(x, y+height-1, unicode.sub(borderSet, 3,3)) --bottomleft
+                gpu.set(x+width-1, y+height-1, unicode.sub(borderSet, 4,4)) --bottomright
+                if setLength > 4 then
+                    gpu.fill(x+1, y, width-2, 1, unicode.sub(borderSet, 5,5)) --top
+                    if setLength == 6 then
+                        gpu.fill(x+1, y+height-1, width-2, 1, unicode.sub(borderSet, 5,5)) --bottom
+                        gpu.fill(x, y+1, 1, height-2, unicode.sub(borderSet, 6,6)) --left
+                        gpu.fill(x+width-1, y+1, 1, height-2, unicode.sub(borderSet, 6,6)) -- right
+                    elseif setLength == 8 then
+                        gpu.fill(x+1, y+height-1, width-2, 1, unicode.sub(borderSet, 6,6)) --bottom
+                        gpu.fill(x, y+1, 1, height-2, unicode.sub(borderSet, 7,7)) --left
+                        gpu.fill(x+width-1, y+1, 1, height-2, unicode.sub(borderSet, 8,8)) -- right
+                    end
+                end
+            end
+            if oldFG then gpu.setForeground(oldFG) end
+        end
+        gpu.setBackground(oldBG)
+    end
+
+    --sort widgets by z
+    local unsorted = false
+    for i, w in pairs(self._childs) do
+        if (i > 1) then
+            if (self._childs[i - 1]:z() > w:z()) then
+                unsorted = true
+                break
+            end
+        end
+    end
+    if (unsorted) then table.sort(self._childs, function(a, b) return a:z() < b:z() end) end
+
+    --draw widgets
+    for _, element in pairs(self._childs) do
+        element:draw()
+    end
+    --restore buffer
+    if (newBuffer and newBuffer ~= defaultBuffer) then
+        gpu.bitblt(defaultBuffer, self:absX(), self:absY(), self:width(), self:height(), newBuffer, self._bitBltFix and self:absY() or self:absX(), self._bitBltFix and self:absX() or self:absY())
+        gpu.setActiveBuffer(defaultBuffer)
+        gpu.freeBuffer(newBuffer)
+    end
 end
 
 return Border
