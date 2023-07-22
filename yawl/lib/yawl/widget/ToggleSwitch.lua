@@ -59,7 +59,7 @@ function ToggleSwitch:size(width, height)
 end
 
 function ToggleSwitch:toggle()
-    return self:set(not self._value)
+    return self:value(not self:value())
 end
 
 function ToggleSwitch:draw()
