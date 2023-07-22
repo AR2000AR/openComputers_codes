@@ -63,7 +63,7 @@ end
 function ToggleSwitch:draw()
     if (not self:visible()) then return end
     local visual = self._visual
-    local x, step = visual:x(), (self._value and 1 or -1) * math.max(1, self._size.width * self._speed)
+    local x, step = visual:x(), (self.:value() and 1 or -1) * math.max(1, self:width() * self:speed())
     local boundary = math.max(math.min(self:width()-visual:width()+1, x+step), 1)
     if boundary~=x then --
         visual:position(boundary, 1)
