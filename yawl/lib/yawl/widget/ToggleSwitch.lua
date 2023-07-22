@@ -41,7 +41,7 @@ end
 function ToggleSwitch:set(value)
     checkArg(1, value, 'boolean', 'nil')
     local oldValue = self._value
-    if (value) then self._value = value end
+    if (value~=nil) then self._value = value end
     return oldValue
 end
 
@@ -53,9 +53,7 @@ function ToggleSwitch:speed(newspeed)
 end
 
 function ToggleSwitch:toggle()
-    local oldValue = self._value
-    self._value = not self._value
-    return oldValue
+    return self:set(not self._value)
 end
 
 function ToggleSwitch:draw()
