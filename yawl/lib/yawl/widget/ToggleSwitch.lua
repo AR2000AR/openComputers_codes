@@ -28,7 +28,6 @@ function ToggleSwitch:new(parent, x, y, width, height, backgroundColor, foregrou
     checkArg(6, foregroundColor, 'number','nil')
     local o = self.parent(parent, x, y)
     setmetatable(o, {__index = self})
-    o._size = {width = 1, height = 1}
     o._value = false
     o._visual = Rectangle(o, 1, 1, math.min(width, height), height, foregroundColor or 0)
     o:speed(2)
