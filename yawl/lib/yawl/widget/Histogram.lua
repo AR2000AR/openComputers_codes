@@ -97,6 +97,13 @@ function Histogram:headline(value)
     return oldValue
 end
 
+function Histogram:label(name)
+    checkArg(1, value, 'string', 'nil')
+    local oldValue = self._label
+    if (name) then self._label = name end
+    return oldValue
+end
+
 function Histogram:draw()
     if (not self:visible()) then return end
     --need to make an option to display data above or underneath of graph
@@ -110,7 +117,6 @@ function Histogram:draw()
     --draw over area
     if headlineFunc then 
         height = height - 2
-        yOffset = yOffset + 2
     end
     if bgColor then gpu.setBackground(bgColor) end
     if fgColor then gpu.setForeground(fgColor) end
@@ -128,8 +134,9 @@ function Histogram:draw()
     mean = mean / bars
     if headlineFunc then
         if txtFgColor then gpu.setForeground(txtFgColor) end
-        gpu.set(x, y, headlineFunc(width, min, max, maxValue, mean) )
-        gpu.set(x,y+1,string.rep("-",width))
+        local headline, divider = headlineFunc(self._label, width, min, max, maxValue, mean)
+        gpu.set(x, y, headline or "Headline missing!")
+        gpu.set(x,y+1, divider or string.rep("─",width))
     end
     gpu.setBackground(oldBG)
     gpu.setForeground(oldFG)
