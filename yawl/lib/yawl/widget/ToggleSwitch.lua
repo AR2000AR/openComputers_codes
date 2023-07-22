@@ -37,7 +37,9 @@ function ToggleSwitch:new(parent, x, y, width, height, backgroundColor, foregrou
     return o
 end
 
-function ToggleSwitch:set(value)
+---@param value boolean
+---@return boolean
+function ToggleSwitch:value(value)
     checkArg(1, value, 'boolean', 'nil')
     local oldValue = self._value
     if (value~=nil) then self._value = value end
