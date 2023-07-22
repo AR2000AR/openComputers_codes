@@ -7,7 +7,8 @@ local yaowbglWidget = {
     TextInput    = require("yawl.widget.TextInput"),
     LinkedWidget = require("yawl.widget.LinkedWidget"),
     WidgetList   = require("yawl.widget.WidgetList"),
-    Border       = require("yawl.widget.Border")
+    Border       = require("yawl.widget.Border"),
+    Histogram    = require("yawl.widget.Histogram")
 }
 
 return yaowbglWidget
