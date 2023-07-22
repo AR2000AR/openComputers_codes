@@ -31,7 +31,7 @@ function ToggleSwitch:new(parent, x, y, width, height, backgroundColor, foregrou
     o._size = {width = 1, height = 1}
     o._value = false
     o._visual = Rectangle(o, 1, 1, height, height, foregroundColor or 0)
-    o.debug = Text(parent, x, y+height+1, 'dafuq', foregroundColor)
+    o:speed(2)
     ---@cast o ToggleSwitch
     o:size(width, height)
     o:backgroundColor(backgroundColor or 0xffffff) --testing defaults
@@ -45,6 +45,13 @@ function ToggleSwitch:set(value)
     return oldValue
 end
 
+function ToggleSwitch:speed(newspeed)
+    checkArg(1, newspeed, 'number', 'nil')
+    local oldValue = self._speed
+    if (newspeed) then self._speed = math.max(newspeed, 1) / 10 end
+    return oldValue
+end
+
 function ToggleSwitch:toggle()
     local oldValue = self._value
     self._value = not self._value
@@ -54,11 +61,10 @@ end
 function ToggleSwitch:draw()
     if (not self:visible()) then return end
     local visual = self._visual
-    local x, step = visual:x(), (self._value and 1 or -1) * math.max(1, self._size.width/10)
+    local x, step = visual:x(), (self._value and 1 or -1) * math.max(1, self._size.width * self._speed)
     local boundary = math.max(math.min(self._size.width-visual:width()+1, x+step), 1)
     if boundary~=x then --
         visual:position(boundary, 1)
-        self.debug:text(table.concat({tostring(self:set()), x,step,boundary},", "))
     end
     self.parent.draw(self)
 end
