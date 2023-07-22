@@ -51,6 +51,11 @@ function ToggleSwitch:speed(newspeed)
     return oldValue
 end
 
+function ToggleSwitch:size(width, height)
+    self._visual:size(height, height)
+    return self.parent.size(self, width, height)
+end
+
 function ToggleSwitch:toggle()
     return self:set(not self._value)
 end
