@@ -30,10 +30,10 @@ function ToggleSwitch:new(parent, x, y, width, height, backgroundColor, foregrou
     setmetatable(o, {__index = self})
     o._size = {width = 1, height = 1}
     o._value = false
-    o._visual = Rectangle(o, 1, 1, height, height, foregroundColor or 0)
+    o._visual = Rectangle(o, 1, 1, math.min(width, height), height, foregroundColor or 0)
     o:speed(2)
     ---@cast o ToggleSwitch
-    o:size(width, height)
+    o:size(math.max(2, width), height)
     o:backgroundColor(backgroundColor or 0xffffff) --testing defaults
     return o
 end
