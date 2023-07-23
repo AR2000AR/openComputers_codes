@@ -94,7 +94,7 @@ function Frame:addChild(containerChild)
     table.insert(self._childs, containerChild)
 end
 
----Remove a child from the container. Return the removed child on sucess
+---Remove a child from the container. Return the removed child on success
 ---@generic T : Widget|Frame
 ---@param child T
 ---@return T? child
@@ -147,27 +147,24 @@ end
 function Frame:draw()
     if (not self:visible()) then return end
     --init frame buffer
+    local x, y, width, height = self:absX(), self:absY(), self:width(), self:height()
     local defaultBuffer = gpu.getActiveBuffer()
-    local sucess, newBuffer = pcall(gpu.allocateBuffer, gpu.getResolution())
-    --local sucess, newBuffer = nil, nil
-    if (sucess ~= false) then
+    local success, newBuffer = pcall(gpu.allocateBuffer, gpu.getResolution())
+    --local success, newBuffer = nil, nil
+    if success then
         defaultBuffer = gpu.setActiveBuffer(newBuffer)
     end
 
     if (newBuffer and newBuffer ~= defaultBuffer) then
         --copy the old buffer in the new buffer for transparancy effect
-        if (bitBltFix) then
-            gpu.bitblt(newBuffer, self:absX(), self:absY(), self:width(), self:height(), defaultBuffer, self:absY(), self:absX())
-        else
-            gpu.bitblt(newBuffer, self:absX(), self:absY(), self:width(), self:height(), defaultBuffer, self:absX(), self:absY())
-        end
+        gpu.bitblt(newBuffer, x, y, width, height, newBuffer, bitBltFix and y or x, bitBltFix and x or y)
     end
 
     --clean background
     if (self:backgroundColor()) then
         local oldBG = gpu.getBackground()
         gpu.setBackground(self:backgroundColor() --[[@as number]])
-        gpu.fill(self:absX(), self:absY(), self:width(), self:height(), " ")
+        gpu.fill(x, y, width, height, " ")
         gpu.setBackground(oldBG)
     end
 
@@ -189,14 +186,11 @@ function Frame:draw()
     end
     --restore buffer
     if (newBuffer and newBuffer ~= defaultBuffer) then
-        if (bitBltFix) then
-            gpu.bitblt(defaultBuffer, self:absX(), self:absY(), self:width(), self:height(), newBuffer, self:absY(), self:absX())
-        else
-            gpu.bitblt(defaultBuffer, self:absX(), self:absY(), self:width(), self:height(), newBuffer, self:absX(), self:absY())
-        end
+        gpu.bitblt(defaultBuffer, x, y, width, height, newBuffer, bitBltFix and y or x, bitBltFix and x or y)
         gpu.setActiveBuffer(defaultBuffer)
         gpu.freeBuffer(newBuffer)
     end
 end
 
+Frame._bitBltFix = bitBltFix
 return Frame

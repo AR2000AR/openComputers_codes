@@ -1,0 +1,146 @@
+local class = require("libClass2")
+local Frame = require("yawl.widget.Frame")
+local gpu = require("component").gpu
+
+--[[
+    Ideally, Histogram will have horizontal scrolling. Though there is some contention about the direction.
+]]
+---@class Histogram:Frame
+---@field parent Frame
+---@operator call:Histogram
+---@overload fun(parent:Frame,x:number,y:number)
+local Histogram = class(Frame)
+
+---Comment
+---@return Histogram
+---@param parent Frame
+---@param x number
+---@param y number
+function Histogram:new(parent, x, y, maxColumns) --Histogramset can be string too
+    checkArg(1, parent, "table")
+    checkArg(1, maxColumns, "number", "nil")
+    local o = self.parent(parent, x, y)
+    setmetatable(o, {__index = self})
+    o._maxColumns = maxColumns
+    o._data = {}
+    o:fillChar(" ")
+    ---@cast o Histogram
+    return o
+end
+
+function Histogram:insert(value) --insert at the end
+    checkArg(1, value, "number")
+    table.insert(self._data, value)
+end
+
+function Histogram:set(index, value) --overwride the value
+    checkArg(1, index, 'number')
+    checkArg(1, value, 'number')
+    local oldValue = self._data[index]
+    if (value) then self._data[index] = value end
+    return oldValue
+end
+
+function Histogram:adjust(value, index) --change existing value
+    checkArg(1, index, 'number', 'nil')
+    checkArg(1, value, 'number')
+    index = index or #self._data --if no chosen index, change the last
+    local oldValue = self._data[index]
+    self._data[index] = oldValue + value
+    return oldValue
+end
+
+function Histogram:maxValue(value) --not the best name, basically used to control the vertical height
+    checkArg(1, value, 'number', 'nil')
+    local oldValue = self._maxValue
+    if (value) then self._maxValue = value end
+    return oldValue
+end
+
+function Histogram:clear()
+    self._data = {}
+    self:draw()
+end
+
+function Histogram:fillChar(value)
+    checkArg(1, value, 'string', 'nil')
+    local oldValue = self._fill
+    if (value) then self._fill = value end
+    return oldValue
+end
+
+function Histogram:fillForegroundColor(value)
+    checkArg(1, value, 'string', 'nil')
+    local oldValue = self._fillforegroundColor
+    if (value) then self._fillforegroundColor = value end
+    return oldValue
+end
+
+function Histogram:fillBackgroundColor(value)
+    checkArg(1, value, 'number', 'nil')
+    local oldValue = self._fillbackgroundColor
+    if (value) then self._fillbackgroundColor = value end
+    return oldValue
+end
+
+function Histogram:textForegroundColor(value)
+    checkArg(1, value, 'number', 'nil')
+    local oldValue = self._textForegroundColor
+    if (value) then self._textForegroundColor = value end
+    return oldValue
+end
+
+function Histogram:headline(value)
+    checkArg(1, value, 'function', 'nil')
+    local oldValue = self._headlineCallback
+    if (value) then self._headlineCallback = value end
+    return oldValue
+end
+
+function Histogram:label(name)
+    checkArg(1, value, 'string', 'nil')
+    local oldValue = self._label
+    if (name) then self._label = name end
+    return oldValue
+end
+
+function Histogram:draw()
+    if (not self:visible()) then return end
+    --need to make an option to display data above or underneath of graph
+    local headlineFunc = self._headlineCallback
+    local x, y, width, height = self:absX(), self:absY(), self:width(), self:height()
+    local xOffset, yOffset, maxValue = x + width - 1, y + height, self:maxValue() or height
+    local totalPoints, fillChar = #self._data, self:fillChar()
+    local mean, min, max = 0, maxValue, -1
+    local fgColor, bgColor, txtFgColor = self:fillForegroundColor(), self:fillBackgroundColor(), self:textForegroundColor() --colors
+    local oldFG, oldBG = gpu.getForeground(), gpu.getBackground()
+    --draw over area
+    if headlineFunc then 
+        height = height - 2
+    end
+    if bgColor then gpu.setBackground(bgColor) end
+    if fgColor then gpu.setForeground(fgColor) end
+    local bars = math.min(width - 1, totalPoints)
+    for i = 0, bars do
+        local value = math.max(self._data[totalPoints - i] or 0, 0) --math max probably not necessary
+        if value > 0 then --temporary debug
+            local pixelHeight = math.min(math.floor((value / maxValue) * height), height)
+            if value<min then min = value end 
+            if value>max then max = value end
+            gpu.fill(xOffset - i, yOffset-pixelHeight, 1, pixelHeight, fillChar)
+            mean=mean+value
+        end
+    end
+    mean = mean / bars
+    if headlineFunc then
+        if txtFgColor then gpu.setForeground(txtFgColor) end
+        local headline, divider = headlineFunc(self._label, width, min, max, maxValue, mean)
+        gpu.set(x, y, headline or "Headline missing!")
+        gpu.set(x,y+1, divider or string.rep("─",width))
+    end
+    gpu.setBackground(oldBG)
+    gpu.setForeground(oldFG)
+    return min, max, mean
+end
+
+return Histogram
