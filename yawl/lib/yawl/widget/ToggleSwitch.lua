@@ -39,6 +39,8 @@ function ToggleSwitch:new(parent, x, y, width, height, backgroundColor, foregrou
     return o
 end
 
+---@param value boolean
+---@return boolean
 function ToggleSwitch:value(value)
     checkArg(1, value, 'boolean', 'nil')
     local oldValue = self._value
@@ -76,7 +78,6 @@ end
 
 function ToggleSwitch:draw()
     if (not self:visible()) then return end
-    --self. = {x = 0, widthheight}
     local slider = self._slider
     local width, height = self:width(), self:height()
     local x, y = self:absX(), self:absY()
@@ -95,8 +96,6 @@ function ToggleSwitch:draw()
         gpu.setBackground(activeBG)
         gpu.fill(x,y, boundary, self:height(), " ")
     end
-    --if boundary ~= sliderX then --
-    --end
     gpu.setBackground(oldBG)
 end
 
