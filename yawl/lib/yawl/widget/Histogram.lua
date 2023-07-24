@@ -21,6 +21,7 @@ function Histogram:new(parent, x, y, maxColumns) --Histogramset can be string to
     checkArg(1, maxColumns, "number", "nil")
     local o = self.parent(parent, x, y)
     setmetatable(o, {__index = self})
+    ---@cast o Histogram
     o._maxColumns = maxColumns
     o._data = {}
     o:fillChar(" ")
@@ -71,15 +72,15 @@ end
 
 function Histogram:fillForegroundColor(value)
     checkArg(1, value, 'string', 'nil')
-    local oldValue = self._fillforegroundColor
-    if (value) then self._fillforegroundColor = value end
+    local oldValue = self._fillForegroundColor
+    if (value) then self._fillForegroundColor = value end
     return oldValue
 end
 
 function Histogram:fillBackgroundColor(value)
     checkArg(1, value, 'number', 'nil')
-    local oldValue = self._fillbackgroundColor
-    if (value) then self._fillbackgroundColor = value end
+    local oldValue = self._fillBackgroundColor
+    if (value) then self._fillBackgroundColor = value end
     return oldValue
 end
 
@@ -98,7 +99,7 @@ function Histogram:headline(value)
 end
 
 function Histogram:label(name)
-    checkArg(1, value, 'string', 'nil')
+    checkArg(1, name, 'string', 'nil')
     local oldValue = self._label
     if (name) then self._label = name end
     return oldValue
@@ -115,7 +116,7 @@ function Histogram:draw()
     local fgColor, bgColor, txtFgColor = self:fillForegroundColor(), self:fillBackgroundColor(), self:textForegroundColor() --colors
     local oldFG, oldBG = gpu.getForeground(), gpu.getBackground()
     --draw over area
-    if headlineFunc then 
+    if headlineFunc then
         height = height - 2
     end
     if bgColor then gpu.setBackground(bgColor) end
@@ -123,20 +124,20 @@ function Histogram:draw()
     local bars = math.min(width - 1, totalPoints)
     for i = 0, bars do
         local value = math.max(self._data[totalPoints - i] or 0, 0) --math max probably not necessary
-        if value > 0 then --temporary debug
+        if value > 0 then                                           --temporary debug
             local pixelHeight = math.min(math.floor((value / maxValue) * height), height)
-            if value<min then min = value end 
-            if value>max then max = value end
-            gpu.fill(xOffset - i, yOffset-pixelHeight, 1, pixelHeight, fillChar)
-            mean=mean+value
+            if value < min then min = value end
+            if value > max then max = value end
+            gpu.fill(xOffset - i, yOffset - pixelHeight, 1, pixelHeight, fillChar)
+            mean = mean + value
         end
     end
     mean = mean / bars
     if headlineFunc then
         if txtFgColor then gpu.setForeground(txtFgColor) end
-        local headline, divider = headlineFunc(self._label, width, min, max, maxValue, mean)
+        local headline, divider = headlineFunc(self:label(), width, min, max, maxValue, mean)
         gpu.set(x, y, headline or "Headline missing!")
-        gpu.set(x,y+1, divider or string.rep("─",width))
+        gpu.set(x, y + 1, divider or string.rep("─", width))
     end
     gpu.setBackground(oldBG)
     gpu.setForeground(oldFG)

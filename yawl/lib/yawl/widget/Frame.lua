@@ -143,10 +143,10 @@ function Frame:doubleTouchDelay(value)
     return oldValue
 end
 
----Draw the widgets in the container
-function Frame:draw()
-    if (not self:visible()) then return end
-    --init frame buffer
+---initialize a frame buffer
+---@protected
+---@return number defaultBuffer,number newBuffer
+function Frame:_initBuffer()
     local x, y, width, height = self:absX(), self:absY(), self:width(), self:height()
     local defaultBuffer = gpu.getActiveBuffer()
     local success, newBuffer = pcall(gpu.allocateBuffer, gpu.getResolution())
@@ -159,6 +159,28 @@ function Frame:draw()
         --copy the old buffer in the new buffer for transparancy effect
         gpu.bitblt(newBuffer, x, y, width, height, newBuffer, bitBltFix and y or x, bitBltFix and x or y)
     end
+    return defaultBuffer, newBuffer
+end
+
+---copy to previous buffer and free buffer
+---@param defaultBuffer number
+---@param newBuffer number
+function Frame:_restoreBuffer(defaultBuffer, newBuffer)
+    local x, y, width, height = self:absX(), self:absY(), self:width(), self:height()
+    if (newBuffer and newBuffer ~= defaultBuffer) then
+        gpu.bitblt(defaultBuffer, x, y, width, height, newBuffer, bitBltFix and y or x, bitBltFix and x or y)
+        gpu.setActiveBuffer(defaultBuffer)
+        gpu.freeBuffer(newBuffer)
+    end
+end
+
+---Draw the widgets in the container
+function Frame:draw()
+    if (not self:visible()) then return end
+    local x, y, width, height = self:absX(), self:absY(), self:width(), self:height()
+
+    --init frame buffer
+    local defaultBuffer, newBuffer = self:_initBuffer()
 
     --clean background
     if (self:backgroundColor()) then
@@ -185,12 +207,11 @@ function Frame:draw()
         element:draw()
     end
     --restore buffer
-    if (newBuffer and newBuffer ~= defaultBuffer) then
-        gpu.bitblt(defaultBuffer, x, y, width, height, newBuffer, bitBltFix and y or x, bitBltFix and x or y)
-        gpu.setActiveBuffer(defaultBuffer)
-        gpu.freeBuffer(newBuffer)
-    end
+    self:_restoreBuffer(defaultBuffer, newBuffer)
 end
 
+---Should the fix for bitBlt be used. Only apply to old OC versions.
 Frame._bitBltFix = bitBltFix
+
+
 return Frame

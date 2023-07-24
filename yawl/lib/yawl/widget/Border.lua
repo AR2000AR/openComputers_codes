@@ -13,7 +13,8 @@ local Border = class(Frame)
 ---@param parent Frame
 ---@param x number
 ---@param y number
-function Border:new(parent, x, y, borderset) --borderset can be string too
+---@param borderset? string
+function Border:new(parent, x, y, borderset)
     checkArg(1, parent, "table")
     checkArg(1, borderset, "string", nil)
     local o = self.parent(parent, x, y)
@@ -26,6 +27,16 @@ end
 ---@return Widget
 function Border:master()
     return self._childs[1]
+end
+
+---A set of characters used to draw the border.
+---@param value? string
+---@return string
+function Border:borderSet(value)
+    checkArg(1, value, 'string', 'nil')
+    local oldValue = self._borderSet
+    if (value ~= nil) then self._borderSet = value end
+    return oldValue
 end
 
 function Border:foregroundColor(value)
@@ -70,44 +81,33 @@ function Border:draw()
         w:position(2, 2)
     end
     local x, y, width, height = self:absX(), self:absY(), self:width(), self:height()
-    local defaultBuffer = gpu.getActiveBuffer()
-    local success, newBuffer = pcall(gpu.allocateBuffer, gpu.getResolution())
-    --local success, newBuffer = nil, nil
-    if success then
-        defaultBuffer = gpu.setActiveBuffer(newBuffer)
-    end
-
-    if (newBuffer and newBuffer ~= defaultBuffer) then
-        --copy the old buffer in the new buffer for transparancy effect
-        gpu.bitblt(newBuffer, x, y, width, height, newBuffer, self._bitBltFix and y or x, self._bitBltFix and x or y)
-    end
+    local defaultBuffer, newBuffer = self:_initBuffer()
 
     --clean background
     if (self:backgroundColor()) then
         local oldBG = gpu.getBackground()
         gpu.setBackground(self:backgroundColor() --[[@as number]])
         gpu.fill(x, y, width, height, " ")
-        local borderSet = self._borderSet
-        if borderSet then
+        if self:borderSet() then
             local oldFG = self._foregroundColor and gpu.getForeground()
             if oldFG then gpu.setForeground(self._foregroundColor) end
             local unicode = require("unicode")
-            local setLength = unicode.len(borderSet)
-            if setLength > 3 then 
-                gpu.set(x, y, unicode.sub(borderSet, 1,1)) --topleft
-                gpu.set(x+width-1, y, unicode.sub(borderSet, 2,2)) --topright
-                gpu.set(x, y+height-1, unicode.sub(borderSet, 3,3)) --bottomleft
-                gpu.set(x+width-1, y+height-1, unicode.sub(borderSet, 4,4)) --bottomright
+            local setLength = unicode.len(self:borderSet())
+            if setLength > 3 then
+                gpu.set(x, y, unicode.sub(self:borderSet(), 1, 1))                                         --topleft
+                gpu.set(x + width - 1, y, unicode.sub(self:borderSet(), 2, 2))                             --topright
+                gpu.set(x, y + height - 1, unicode.sub(self:borderSet(), 3, 3))                            --bottomleft
+                gpu.set(x + width - 1, y + height - 1, unicode.sub(self:borderSet(), 4, 4))                --bottomright
                 if setLength > 4 then
-                    gpu.fill(x+1, y, width-2, 1, unicode.sub(borderSet, 5,5)) --top
+                    gpu.fill(x + 1, y, width - 2, 1, unicode.sub(self:borderSet(), 5, 5))                  --top
                     if setLength == 6 then
-                        gpu.fill(x+1, y+height-1, width-2, 1, unicode.sub(borderSet, 5,5)) --bottom
-                        gpu.fill(x, y+1, 1, height-2, unicode.sub(borderSet, 6,6)) --left
-                        gpu.fill(x+width-1, y+1, 1, height-2, unicode.sub(borderSet, 6,6)) -- right
+                        gpu.fill(x + 1, y + height - 1, width - 2, 1, unicode.sub(self:borderSet(), 5, 5)) --bottom
+                        gpu.fill(x, y + 1, 1, height - 2, unicode.sub(self:borderSet(), 6, 6))             --left
+                        gpu.fill(x + width - 1, y + 1, 1, height - 2, unicode.sub(self:borderSet(), 6, 6)) -- right
                     elseif setLength == 8 then
-                        gpu.fill(x+1, y+height-1, width-2, 1, unicode.sub(borderSet, 6,6)) --bottom
-                        gpu.fill(x, y+1, 1, height-2, unicode.sub(borderSet, 7,7)) --left
-                        gpu.fill(x+width-1, y+1, 1, height-2, unicode.sub(borderSet, 8,8)) -- right
+                        gpu.fill(x + 1, y + height - 1, width - 2, 1, unicode.sub(self:borderSet(), 6, 6)) --bottom
+                        gpu.fill(x, y + 1, 1, height - 2, unicode.sub(self:borderSet(), 7, 7))             --left
+                        gpu.fill(x + width - 1, y + 1, 1, height - 2, unicode.sub(self:borderSet(), 8, 8)) -- right
                     end
                 end
             end
@@ -133,11 +133,7 @@ function Border:draw()
         element:draw()
     end
     --restore buffer
-    if (newBuffer and newBuffer ~= defaultBuffer) then
-        gpu.bitblt(defaultBuffer, x, y, width, height, newBuffer, self._bitBltFix and y or x, self._bitBltFix and x or y)
-        gpu.setActiveBuffer(defaultBuffer)
-        gpu.freeBuffer(newBuffer)
-    end
+    self:_restoreBuffer(defaultBuffer, newBuffer)
 end
 
 return Border
