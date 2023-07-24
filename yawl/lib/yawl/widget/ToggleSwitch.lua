@@ -56,7 +56,7 @@ function ToggleSwitch:value(value)
     return oldValue
 end
 
----Speed is between 0 and 1
+---Speed is between greater that 1
 ---@param newspeed? number
 ---@return number
 function ToggleSwitch:speed(newspeed)
