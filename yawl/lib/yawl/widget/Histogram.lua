@@ -25,7 +25,6 @@ function Histogram:new(parent, x, y, maxColumns) --Histogramset can be string to
     o._maxColumns = maxColumns
     o._data = {}
     o:fillChar(" ")
-    ---@cast o Histogram
     return o
 end
 

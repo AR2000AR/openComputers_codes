@@ -50,7 +50,8 @@ input:multilines(true)                                                          
 input:backgroundColor(0)                                                                               --black background
 
 local frameList = yawl.widget.WidgetList(root, 30, 2)                                                  --WidgetList is a subclass of Frame that orders the widgets inside
-yawl.widget.Text(frameList, 1, 1, "WidgetList :", 0)                                                   --Label
+local lb = yawl.widget.Text(frameList, 1, 1, "WidgetList :", 0)                                        --Label
+lb:foregroundColor(0xffffff)
 local list = yawl.widget.WidgetList(frameList, 1, 1)                                                   --A second WidgetList inside the firt one
 list:size(20, 6)                                                                                       --set the container's size
 frameList:size(list:width(), list:height() + 1)                                                        --set the first container's size
@@ -68,10 +69,12 @@ for i = 1, 5 do                                                                 
     t:backgroundColor(bk)
 end
 
-local b = yawl.widget.Border(root, 52, 2)
+local b = yawl.widget.Border(root, 52, 2, "╔╗╚╝══║║")
 local bText = yawl.widget.Text(b, 1, 1, "Bordered text", 0xffffff)
 bText:backgroundColor(0)
 b:backgroundColor(0xff0000)
+
+local ts = yawl.widget.ToggleSwitch(root, 52, 6, 10, 3, 0, 0xffffff)
 
 local function animate() --animate the text widget. Add one char with each loop
     local MSG = "123456789 123456789 123456789 123456789 abcdefghijklmnopqrstuvwxyz "
