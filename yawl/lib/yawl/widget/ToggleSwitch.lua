@@ -3,6 +3,7 @@ local class = require("libClass2")
 local Widget = require("yawl.widget.Widget")
 
 ---@class ToggleSwitch:Widget
+---@field parent Widget
 ---@field private _speed number
 ---@field private _slider table
 ---@operator call:ToggleSwitch
@@ -67,12 +68,12 @@ end
 
 function ToggleSwitch:size(width, height)
     self._slider.width, self._slider.height = height, height
-    return self:size(width, height)
+    return self.parent.size(self, width, height)
 end
 
 function ToggleSwitch:switchSize(width, height) --fix later
     self._slider.width, self._slider.height = height, height
-    return self:size(width, height)
+    return self.parent.size(self, width, height)
 end
 
 function ToggleSwitch:toggle()
