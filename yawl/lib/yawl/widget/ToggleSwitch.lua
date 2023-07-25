@@ -7,7 +7,7 @@ local Widget = require("yawl.widget.Widget")
 ---@field private _speed number
 ---@field private _slider table
 ---@operator call:ToggleSwitch
----@overload fun(parent:Frame,x:number,y:number,width:number,height:number,backgroundColor:number)
+---@overload fun(parent:Frame,x:number,y:number,width:number,height:number,backgroundColor:number|nil,foregroundColor:number|nil):ToggleSwitch
 local ToggleSwitch = class(Widget)
 
 ---Create a new ToggleSwitch
@@ -16,7 +16,8 @@ local ToggleSwitch = class(Widget)
 ---@param y number
 ---@param width number
 ---@param height number
----@param backgroundColor number
+---@param backgroundColor? number
+---@param foregroundColor? number
 ---@return ToggleSwitch
 function ToggleSwitch:new(parent, x, y, width, height, backgroundColor, foregroundColor)
     checkArg(1, parent, 'table')
@@ -34,15 +35,21 @@ function ToggleSwitch:new(parent, x, y, width, height, backgroundColor, foregrou
     o:speed(2)
     ---@cast o ToggleSwitch
     o:size(math.max(2, width), height)
-    o:backgroundColor(backgroundColor or 0xffffff) --testing defaults
+    o:backgroundColor(backgroundColor)
     return o
+end
+
+function ToggleSwitch:defaultCallback(_, eventName)
+    if (eventName == "touch") then
+        self:toggle()
+    end
 end
 
 ---@param value? number
 ---@return number
 function ToggleSwitch:backgroundColor(value)
     checkArg(1, value, 'number', 'nil')
-    local oldValue = self._backgroundColor
+    local oldValue = self._backgroundColor or 0
     if (value ~= nil) then self._backgroundColor = value end
     return oldValue
 end
@@ -66,10 +73,11 @@ function ToggleSwitch:speed(newspeed)
     return oldValue
 end
 
-function ToggleSwitch:size(width, height)
+--size already call :width() and :heigh()
+--[[ function ToggleSwitch:size(width, height)
     self._slider.width, self._slider.height = height, height
     return self.parent.size(self, width, height)
-end
+end ]]
 
 function ToggleSwitch:switchSize(width, height) --fix later
     self._slider.width, self._slider.height = height, height
@@ -80,6 +88,9 @@ function ToggleSwitch:toggle()
     return self:value(not self:value())
 end
 
+---The background color when the switch is on
+---@param value? number
+---@return number
 function ToggleSwitch:activeBackgroundColor(value)
     checkArg(1, value, 'number', 'nil')
     local oldValue = self._activeBackgroundColor
@@ -89,18 +100,16 @@ end
 
 function ToggleSwitch:draw()
     if (not self:visible()) then return end
-    local slider = self._slider
-    local width, height = self:width(), self:height()
     local x, y = self:absX(), self:absY()
-    local sliderX, step = slider.x, (self:value() and 1 or -1) * math.max(1, width * self:speed() / 10)
-    local boundary = math.max(math.min(width - slider.width, sliderX + step), 0)
+    local sliderX, step = self._slider.x, (self:value() and 1 or -1) * math.max(1, self:width() * self:speed() / 10)
+    local boundary = math.max(math.min(self:width() - self._slider.width, sliderX + step), 0)
     local oldBG = gpu.getBackground()
     gpu.setBackground(self:backgroundColor())
-    gpu.fill(x, y, width, height, " ")
-    gpu.setBackground(slider.backgroundColor)
-    gpu.fill(x + boundary, y, slider.width, slider.height, " ")
+    gpu.fill(x, y, self:width(), self:height(), " ")
+    gpu.setBackground(self._slider.backgroundColor)
+    gpu.fill(x + boundary, y, self._slider.width, self._slider.height, " ")
     if boundary ~= sliderX then
-        slider.x = boundary
+        self._slider.x = boundary
     end
     local activeBG = self:activeBackgroundColor()
     if activeBG and boundary - 1 > 0 then
