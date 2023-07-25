@@ -8,15 +8,18 @@ end
 for _, pkgn in pairs(pkg) do
     require("package").loaded[pkgn] = nil
 end
+---=============================================================================
 
+--Require the library we need
 local yawl = require("yawl")
 local term = require("term")
 local os = require("os")
 
+--=============================================================================
+local root = yawl.widget.Frame() --Create a root frame.
+root:backgroundColor(0x0000ff)   --Set the frame's background to blue. If no color is set, the screen is not cleared (transparent Frame)
 
-local root = yawl.widget.Frame()             --Create a root frame.
-root:backgroundColor(0x0000ff)               --Set the frame's background to blue. If no color is set, the screen is not cleared (transparent Frame)
-
+--=============================================================================
 local frame1 = yawl.widget.Frame(root, 2, 2) --Create a second Frame
 frame1:backgroundColor(0xffff00)             --Set this second frame's background to yellow
 frame1:size(20, 11)                          --Set the Fame size. By default it take the rest of the screen
@@ -39,24 +42,20 @@ rectangle:callback(
         --self:draw()
     end)
 
-local textLabel = yawl.widget.Text(frame1, 1, 5, "Text :", 0)                                          --A simple text
-local text = yawl.widget.Text(frame1, 1, textLabel:y() + 1, "", 0x00ff00)                              --A other text. This one will be animated later
-text:maxWidth(frame1:width() - (text:x() - 1))                                                         --define the text's max width. Used to demonstrate the word wrapping functionality
-text:backgroundColor(0x7f7f7f)                                                                         --set the background color
+local textLabel = yawl.widget.Text(frame1, 1, 5, "Text :", 0)             --A simple text
+local text = yawl.widget.Text(frame1, 1, textLabel:y() + 1, "", 0x00ff00) --A other text. This one will be animated later
+text:maxWidth(frame1:width() - (text:x() - 1))                            --define the text's max width. Used to demonstrate the word wrapping functionality
+text:backgroundColor(0x7f7f7f)                                            --set the background color
 
-local input = yawl.widget.TextInput(root, 2, frame1:y() + frame1:height() + 2, "Text input", 0xffffff) --A subclass of Text for user input
-input:minSize(30, 1)                                                                                   --set the input minimum size. It will grow as needed
-input:multilines(true)                                                                                 --set the input to accept multiples lines of text
-input:backgroundColor(0)                                                                               --black background
-
-local frameList = yawl.widget.WidgetList(root, 30, 2)                                                  --WidgetList is a subclass of Frame that orders the widgets inside
-local lb = yawl.widget.Text(frameList, 1, 1, "WidgetList :", 0)                                        --Label
+--=============================================================================
+local frameList = yawl.widget.WidgetList(root, 24, 2)           --WidgetList is a subclass of Frame that orders the widgets inside
+local lb = yawl.widget.Text(frameList, 1, 1, "WidgetList :", 0) --Label
 lb:foregroundColor(0xffffff)
-local list = yawl.widget.WidgetList(frameList, 1, 1)                                                   --A second WidgetList inside the firt one
-list:size(20, 6)                                                                                       --set the container's size
-frameList:size(list:width(), list:height() + 1)                                                        --set the first container's size
-list:backgroundColor(0xffffff)                                                                         --set the container's background color
-for i = 1, 5 do                                                                                        --create 5 Text. One of them will be out of view
+local list = yawl.widget.WidgetList(frameList, 1, 1)            --A second WidgetList inside the firt one
+list:size(20, 6)                                                --set the container's size
+frameList:size(list:width(), list:height() + 1)                 --set the first container's size
+list:backgroundColor(0xffffff)                                  --set the container's background color
+for i = 1, 5 do                                                 --create 5 Text. One of them will be out of view
     local text = string.format("Text %d", i)
     local bk = nil
     if (i % 2 == 0) then
@@ -68,13 +67,22 @@ for i = 1, 5 do                                                                 
     t:width(list:width())
     t:backgroundColor(bk)
 end
-
-local b = yawl.widget.Border(root, 52, 2, "╔╗╚╝══║║")
+--=============================================================================
+local b = yawl.widget.Border(root, 46, 2, yawl.widget.Border.DOUBLE_LINE)
 local bText = yawl.widget.Text(b, 1, 1, "Bordered text", 0xffffff)
 bText:backgroundColor(0)
 b:backgroundColor(0xff0000)
-
-local ts = yawl.widget.ToggleSwitch(root, 52, 6, 10, 3, 0, 0xffffff)
+--=============================================================================
+local offColor, onColor = 0xff0000, 0x00ff00
+local sliderColor = 0xffffff
+local ts = yawl.widget.ToggleSwitch(root, 46, 6, 10, 3, offColor, sliderColor)
+ts:activeBackgroundColor(onColor)
+--=============================================================================
+local input = yawl.widget.TextInput(root, 2, frame1:y() + frame1:height() + 1, "Text input", 0xffffff) --A subclass of Text for user input
+input:minSize(30, 1)                                                                                   --set the input minimum size. It will grow as needed
+input:multilines(true)                                                                                 --set the input to accept multiples lines of text
+input:backgroundColor(0)                                                                               --black background
+--=============================================================================
 
 local function animate() --animate the text widget. Add one char with each loop
     local MSG = "123456789 123456789 123456789 123456789 abcdefghijklmnopqrstuvwxyz "
@@ -88,16 +96,18 @@ local function animate() --animate the text widget. Add one char with each loop
 end
 while animate() do
 end
+--=============================================================================
 local exitText = yawl.widget.Text(root, 1, root:height(), " Press CTRL+C to exit", 0xffffff)
 exitText:width(root:width())
 exitText:backgroundColor(0)
+
 local run = true
 require("event").listen("interrupted", function()
     run = false;
     root:closeListeners()
     return false
 end)
-root:draw()
+
 while run do
     os.sleep(0.1)
     root:draw()
