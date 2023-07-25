@@ -8,7 +8,8 @@ local gpu = require("component").gpu
 ---@class Histogram:Frame
 ---@field parent Frame
 ---@operator call:Histogram
----@overload fun(parent:Frame,x:number,y:number)
+---@overload fun(parent:Frame,x:number,y:number):Histogram
+---@overload fun(parent:Frame,x:number,y:number,maxColumns:number):Histogram
 local Histogram = class(Frame)
 
 ---Comment
@@ -16,7 +17,8 @@ local Histogram = class(Frame)
 ---@param parent Frame
 ---@param x number
 ---@param y number
-function Histogram:new(parent, x, y, maxColumns) --Histogramset can be string too
+---@param maxColumns? number
+function Histogram:new(parent, x, y, maxColumns)
     checkArg(1, parent, "table")
     checkArg(1, maxColumns, "number", "nil")
     local o = self.parent(parent, x, y)
@@ -28,12 +30,18 @@ function Histogram:new(parent, x, y, maxColumns) --Histogramset can be string to
     return o
 end
 
-function Histogram:insert(value) --insert at the end
+--insert at the end
+---@param value number
+function Histogram:insert(value)
     checkArg(1, value, "number")
     table.insert(self._data, value)
 end
 
-function Histogram:set(index, value) --overwride the value
+--overwride the value
+---@param index number
+---@param value number
+---@return number
+function Histogram:set(index, value)
     checkArg(1, index, 'number')
     checkArg(1, value, 'number')
     local oldValue = self._data[index]
@@ -41,7 +49,11 @@ function Histogram:set(index, value) --overwride the value
     return oldValue
 end
 
-function Histogram:adjust(value, index) --change existing value
+--change existing value
+---@param value number
+---@param index number
+---@return number
+function Histogram:adjust(value, index)
     checkArg(1, index, 'number', 'nil')
     checkArg(1, value, 'number')
     index = index or #self._data --if no chosen index, change the last
@@ -50,18 +62,24 @@ function Histogram:adjust(value, index) --change existing value
     return oldValue
 end
 
-function Histogram:maxValue(value) --not the best name, basically used to control the vertical height
+--not the best name, basically used to control the vertical height
+---@param value? number
+---@return number
+function Histogram:maxValue(value)
     checkArg(1, value, 'number', 'nil')
     local oldValue = self._maxValue
     if (value) then self._maxValue = value end
     return oldValue
 end
 
+---Remove all the data
 function Histogram:clear()
     self._data = {}
-    self:draw()
 end
 
+---The characted used inside the graph bars
+---@param value? string
+---@return string
 function Histogram:fillChar(value)
     checkArg(1, value, 'string', 'nil')
     local oldValue = self._fill
@@ -69,6 +87,8 @@ function Histogram:fillChar(value)
     return oldValue
 end
 
+---@param value? any
+---@return any
 function Histogram:fillForegroundColor(value)
     checkArg(1, value, 'string', 'nil')
     local oldValue = self._fillForegroundColor
@@ -76,6 +96,8 @@ function Histogram:fillForegroundColor(value)
     return oldValue
 end
 
+---@param value? number
+---@return number
 function Histogram:fillBackgroundColor(value)
     checkArg(1, value, 'number', 'nil')
     local oldValue = self._fillBackgroundColor
@@ -83,6 +105,8 @@ function Histogram:fillBackgroundColor(value)
     return oldValue
 end
 
+---@param value? number
+---@return number
 function Histogram:textForegroundColor(value)
     checkArg(1, value, 'number', 'nil')
     local oldValue = self._textForegroundColor
@@ -90,6 +114,8 @@ function Histogram:textForegroundColor(value)
     return oldValue
 end
 
+---@param value? string
+---@return string
 function Histogram:headline(value)
     checkArg(1, value, 'function', 'nil')
     local oldValue = self._headlineCallback
@@ -97,6 +123,8 @@ function Histogram:headline(value)
     return oldValue
 end
 
+---@param name? string
+---@return string
 function Histogram:label(name)
     checkArg(1, name, 'string', 'nil')
     local oldValue = self._label
