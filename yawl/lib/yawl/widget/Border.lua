@@ -5,7 +5,8 @@ local gpu = require("component").gpu
 ---@class Border:Frame
 ---@field parent Frame
 ---@operator call:Border
----@overload fun(parent:Frame,x:number,y:number)
+---@overload fun(parent:Frame,x:number,y:number,borderset:string):Border
+---@overload fun(parent:Frame,x:number,y:number):Border
 local Border = class(Frame)
 
 ---Comment
@@ -39,6 +40,9 @@ function Border:borderSet(value)
     return oldValue
 end
 
+---The borderSet characters color
+---@param value number
+---@return number
 function Border:foregroundColor(value)
     checkArg(1, value, 'number', 'nil')
     local oldValue = self._foregroundColor
@@ -135,5 +139,9 @@ function Border:draw()
     --restore buffer
     self:_restoreBuffer(defaultBuffer, newBuffer)
 end
+
+Border.DOUBLE_LINE      = "╔╗╚╝═║"
+Border.SIMPLE_LINE      = "┌┐└┘─│"
+Border.BOLD_SIMPLE_LINE = "┏┓┗┛━┃"
 
 return Border
