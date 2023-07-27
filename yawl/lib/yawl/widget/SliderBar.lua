@@ -72,7 +72,7 @@ function SliderBar:draw()
     if newFG then gpu.setForeground(newFG) end
     gpu.fill(x, y + math.ceil(height/2)-1, width, 1, "━")
     --gpu.setBackground(self._slider.backgroundColor) --maybe
-    --slider width later
+    --TODO : slider width
     if value then
         local percent = math.floor( ((width - 1) * (value / (self:max() - self:min() ) ) ) ) 
         if newFG then gpu.setBackground(newFG) end
