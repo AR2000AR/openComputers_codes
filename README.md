@@ -10,23 +10,9 @@ My lua programs for openComputers.
 ## Install with pm
 - download the tar file from [packages](packages/) with `get` (get the raw file url)
 - run `pm install <archiveName.tar>`
-## OPPM bug
-Because of a bug in oppm (Issue : https://github.com/OpenPrograms/Vexatos-Programs/issues/30) (PR : https://github.com/OpenPrograms/Vexatos-Programs/pull/31), please use [repo-installer](repo-installer/) to install any of programs until the bug get fixed.
-### Install repo-installer manually
-```
-mkdir /usr/bin/ /usr/misc/repo-installer/
-wget https://raw.githubusercontent.com/AR2000AR/openComputers_codes/master/repo-installer/bin/instgen.lua /usr/bin/instgen.lua
-wget https://raw.githubusercontent.com/AR2000AR/openComputers_codes/master/repo-installer/misc/repo-installer/repoinstaller.lua /usr/misc/repo-installer/repoinstaller.lua
-```
-### Create the installation floppy
-Get a empty floppy disk and run :
-```
-$ instgen AR2000AR/openComputers_codes <floppy path>
-```
-### Install a package
-With the floppy in the machine run `install`. No internet card is required.
 
 ---
+
 ## Network
 Yes, yes, I know. Yet a other network stack. Why use it when [minitel](https://github.com/ShadowKatStudios/OC-Minitel/tree/master/) or [network](https://github.com/OpenPrograms/Magik6k-Programs/tree/master/network) are a thing. No reason really, except that my version called `osinetwork` is close the the reals RFCs. It implement Ethernet, ARP, ICMP, IPV4, and UDP.
 

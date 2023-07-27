@@ -6,7 +6,7 @@ Download and install pm packages from a repository on internet.
 
 or
 
-Create a installation floppy. Installation and script can be found [here](../pm_installer/).
+- Create a installation floppy. Installation and script can be found [here](../pm_installer/).
 
 ## Usage :
 - `pm-get install <package>` : install the package
