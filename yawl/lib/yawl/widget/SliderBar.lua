@@ -16,7 +16,7 @@ function SliderBar:new(parent, x, y, width, height, min, max, backgroundColor, f
     local o = self.parent(parent, x, y)
     setmetatable(o, {__index = self})
     o._size = {width = 1, height = 1}
-    ---@cast o Rectangle
+    ---@cast o SliderBar
     o:size(width, height)
     o:range(min, max)
     if min and max then 
