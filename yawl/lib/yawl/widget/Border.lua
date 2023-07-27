@@ -40,16 +40,6 @@ function Border:borderSet(value)
     return oldValue
 end
 
----The borderSet characters color
----@param value number
----@return number
-function Border:foregroundColor(value)
-    checkArg(1, value, 'number', 'nil')
-    local oldValue = self._foregroundColor
-    if (value) then self._foregroundColor = value end
-    return oldValue
-end
-
 ---@param value? number
 ---@return number
 function Border:width(value)

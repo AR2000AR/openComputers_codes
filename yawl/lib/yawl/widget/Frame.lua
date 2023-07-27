@@ -109,15 +109,6 @@ function Frame:removeChild(child)
     end
 end
 
----@param value? number|boolean
----@return number|false
-function Frame:backgroundColor(value)
-    checkArg(1, value, 'number', 'boolean', 'nil')
-    local oldValue = self._backgroundColor or false
-    if (value ~= nil) then self._backgroundColor = value end
-    return oldValue
-end
-
 function Frame:propagateEvent(eName, screenAddress, x, y, ...)
     if (not self:enabled()) then return end
     for _, w in pairs(self._childs) do

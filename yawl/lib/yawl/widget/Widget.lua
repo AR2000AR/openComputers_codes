@@ -153,6 +153,24 @@ function Widget:size(width, height)
     return oldW, oldH
 end
 
+---@param value? number|boolean
+---@return number|false
+function Widget:backgroundColor(value)
+    checkArg(1, value, 'number', 'boolean', 'nil')
+    local oldValue = self._backgroundColor or false
+    if (value ~= nil) then self._backgroundColor = value end
+    return oldValue
+end
+
+---@param value? number
+---@return number
+function Widget:foregroundColor(value)
+    checkArg(1, value, 'number', 'nil')
+    local oldValue = self._foregroundColor
+    if (value) then self._foregroundColor = value end
+    return oldValue
+end
+
 ---If value is provided, set if the container is visible and return the old value.\
 ---If value is not provided, return the current visible status
 ---@param value? boolean
