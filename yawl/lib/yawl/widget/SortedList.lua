@@ -139,7 +139,8 @@ end
 function SortedList:scroll(value)
     checkArg(1, value, 'number', 'nil')
     local oldValue = self._scrollindex or 0
-    if (value ~= nil) then self._scrollindex = math.max(math.min(#self._list - self:height(), self._scrollindex + value), 0) end
+    local height, shownheight = self:height(), #self._shown
+    if (value ~= nil) and height >= shownheight then self._scrollindex = math.max(math.min(#self._list - self:height(), self._scrollindex + value), 0) end
     return oldValue
 end
 
