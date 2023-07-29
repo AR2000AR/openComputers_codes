@@ -31,16 +31,6 @@ function Rectangle:new(parent, x, y, width, height, backgroundColor)
     return o
 end
 
----Set the backgroundColor. Return the old backgroundColor or the current one if none is provided
----@param backgroundColor? number
----@return number
-function Rectangle:backgroundColor(backgroundColor)
-    checkArg(1, backgroundColor, 'number', 'nil')
-    local oldValue = self._backgroundColor
-    if (backgroundColor) then self._backgroundColor = backgroundColor end
-    return oldValue
-end
-
 ---Draw the Rectangle on screen
 function Rectangle:draw()
     if (not self:visible()) then return end
