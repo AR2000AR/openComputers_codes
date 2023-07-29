@@ -213,7 +213,6 @@ function SortedList:draw()
     --      note: invert background and text color for selected values
     local formatFunc, isNumbered = self:format(), self:numbered()
     local linePrefix = "%+"..tostring(tostring(#self._shown):len()).."s:%+"..tostring(tostring(#self._list):len()).."s "
-    require('component').ocelot.log(linePrefix)
     for line, index in ipairs (self._shown) do
         if type(index) == 'number' then
             local listValue = self._list[index]
