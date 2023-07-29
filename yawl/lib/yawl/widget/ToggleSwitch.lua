@@ -45,15 +45,6 @@ function ToggleSwitch:defaultCallback(_, eventName)
     end
 end
 
----@param value? number
----@return number
-function ToggleSwitch:backgroundColor(value)
-    checkArg(1, value, 'number', 'nil')
-    local oldValue = self._backgroundColor or 0
-    if (value ~= nil) then self._backgroundColor = value end
-    return oldValue
-end
-
 ---@param value? boolean
 ---@return boolean
 function ToggleSwitch:value(value)

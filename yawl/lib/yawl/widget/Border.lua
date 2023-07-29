@@ -40,16 +40,6 @@ function Border:borderSet(value)
     return oldValue
 end
 
----The borderSet characters color
----@param value number
----@return number
-function Border:foregroundColor(value)
-    checkArg(1, value, 'number', 'nil')
-    local oldValue = self._foregroundColor
-    if (value) then self._foregroundColor = value end
-    return oldValue
-end
-
 ---@param value? number
 ---@return number
 function Border:width(value)
@@ -88,9 +78,10 @@ function Border:draw()
     local defaultBuffer, newBuffer = self:_initBuffer()
 
     --clean background
-    if (self:backgroundColor()) then
+    local newBG = self:backgroundColor() 
+    if newBG then
         local oldBG = gpu.getBackground()
-        gpu.setBackground(self:backgroundColor() --[[@as number]])
+        gpu.setBackground(newBG --[[@as number]])
         gpu.fill(x, y, width, height, " ")
         if self:borderSet() then
             local oldFG = self._foregroundColor and gpu.getForeground()

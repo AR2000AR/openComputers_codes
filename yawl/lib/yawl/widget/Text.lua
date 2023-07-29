@@ -33,15 +33,6 @@ function Text:new(parent, x, y, text, foregroundColor)
     return o
 end
 
----@param value? number
----@return number
-function Text:foregroundColor(value)
-    checkArg(1, value, 'number', 'nil')
-    local oldValue = self._foregroundColor
-    if (value) then self._foregroundColor = value end
-    return oldValue
-end
-
 ---@param value? string
 ---@return string
 function Text:text(value)
@@ -163,15 +154,6 @@ function Text:width(value)
         self:maxWidth(value)
     end
     return math.min(math.max(self:minWidth(), maxTextWidth), self:maxWidth())
-end
-
----@param value? number
----@return number
-function Text:backgroundColor(value)
-    checkArg(1, value, 'number', 'nil')
-    local oldValue = self._backgroundColor or nil
-    if (value ~= nil) then self._backgroundColor = value end
-    return oldValue
 end
 
 ---@param value? boolean
