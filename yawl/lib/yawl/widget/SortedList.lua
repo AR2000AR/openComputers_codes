@@ -1,6 +1,7 @@
 local gpu = require("component").gpu
 local Widget = require("yawl.widget.Widget")
 local unicode = require("unicode")
+local keyboard = require('keyboard')
 
 ---@class SortedList:Widget
 ---@field private _size Size
@@ -36,9 +37,13 @@ function SortedList:new(parent, x, y, width, height, backgroundColor)
 end
 
 function SortedList:select(index, state) --getter/setter
-    checkArg(1, index, 'number', 'nil')
+    checkArg(1, index, 'number')
     checkArg(1, state, 'boolean', 'nil')
-
+    local oldValue = self._selection[index]
+    if state ~= nil then --needs work 
+        self._selection[index] = state --select
+    end
+    return oldValue
 end
 
 function SortedList:insert(value, index)
@@ -123,6 +128,11 @@ function SortedList:clearList() --empty list
     return true
 end
 
+function SortedList:clearSelection() --empty list
+    self._selection = {}
+    return true
+end
+
 function SortedList:mount(object)
     checkArg(1, object, 'table', 'nil', 'boolean')
     --check for duplicates first
@@ -146,11 +156,12 @@ end
 
 function SortedList:defaultCallback(_, eventName, uuid, x, y, button, playerName)
     if eventName == "touch" then
-        y = y - self:abs() --relative y
-        if button == 0 then --left click
-
-        else --right click
-
+        local index = self._shown[y - self:absY() + 1]
+        if button == 0 and not keyboard.isControlDown() then
+            self:clearSelection()
+        end
+        if index then
+            self:select(index, button == 0) 
         end
     elseif eventName == "scroll" then
         self:scroll(-button)
@@ -164,7 +175,7 @@ function SortedList:draw()
     local oldBG, oldFG = gpu.getBackground(), gpu.getForeground()
     local newBG, newFG = self:backgroundColor(), self:foregroundColor()
     if newBG then gpu.setBackground(newBG) end
-    if newFG then gpu.setBackground(newFG) end
+    if newFG then gpu.setForeground(newFG) end
     gpu.fill(x, y, width, height, " ") --overwrite the background
     
     if #self._list == 0 then return end
@@ -226,7 +237,10 @@ function SortedList:draw()
             end
             --might need to gsub the \n escapes
             --if selected then swap bg and foreground 
+            local isSelected = self:select(index)
+            if isSelected and newFG and newBG then gpu.setBackground(newFG) gpu.setForeground(newBG) end
             gpu.set(x, y+line-1, unicode.sub(listValue, 1, width) ) --do the formatting here
+            if isSelected and newFG and newBG then gpu.setBackground(newBG) gpu.setForeground(newFG) end
         else
             local errVal = index:gsub("\n","; ")
             local failedIndex = errVal:match("%d+")
