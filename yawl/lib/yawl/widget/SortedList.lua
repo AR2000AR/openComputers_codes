@@ -127,7 +127,7 @@ function SortedList:mount(object)
     --check for duplicates first
     local oldValue = self._mount
     local objectType = type(object)
-    if objectType == 'table' and object.text then
+    if objectType == 'table' and object.text then --note: could potentially use something that isn't strictly text based, e.g., a toggle switch :value()
         self._mount = object
     elseif object == false then
         self._mount = nil
@@ -137,11 +137,14 @@ end
 
 function SortedList:defaultCallback(_, eventName, uuid, x, y, button, playerName)
     if eventName == "touch" then
+        y = y - self:abs() --relative y
         if button == 0 then --left click
 
         else --right click
 
         end
+    elseif eventName == "scroll" then
+
     end
 end
 
@@ -175,9 +178,10 @@ function SortedList:draw()
     end
     if filterValue == "" then filterValue = nil end
     --local scrollIndex = self._scrollindex
-    for i=1, height do
+    local i, listValue = 1
+    repeat
         local index = i -- for future scrolling do i + scrollIndex
-        local listValue = self._list[index] 
+        listValue = self._list[index] 
         if not listValue then break end
 --      -> if filterfunc and filterByValue, insert values into self._shown that when passed into filterfunc if returns true --inside of pcall, shows same way as sorter err
 --      -> else, insert values into self._shown
@@ -193,8 +197,8 @@ function SortedList:draw()
         else
             table.insert(self._shown, index)
         end
-    end
-    
+        i=i+1
+    until listValue == nil or #self._shown == height
     --iterate through self._shown and use gpu.set per line (if formatFunc, then pass it through and gpu.set the return value substringed to the width of the list)
     --      note: format is inside of pcall, if err then write error to line
     --      note: invert background and text color for selected values
