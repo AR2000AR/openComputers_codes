@@ -83,6 +83,15 @@ function SliderBar:adjust(value)
     return self:value(self:value() + value)
 end
 
+function SliderBar:defaultCallback(_, eventName, _, x)
+    if (eventName ~= 'drag' and eventName ~= 'touch') then return end
+    local t = x - self:x()
+    local a, b = 0, self:width() - 1
+    local c, d = self:range()
+    --math.round = function(a) return math.floor(a+0.5) end
+    self:value(math.floor((c + ((d - c) / (b - a)) * (t - a)) + 0.5))
+end
+
 function SliderBar:draw()
     if (not self:visible()) then return end
     local x, y, width, height = self:absX(), self:absY(), self:width(), self:height()
