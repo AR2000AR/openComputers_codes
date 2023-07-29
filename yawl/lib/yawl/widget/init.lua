@@ -10,7 +10,8 @@ local yaowbglWidget = {
     Border       = require("yawl.widget.Border"),
     Histogram    = require("yawl.widget.Histogram"),
     ToggleSwitch = require("yawl.widget.ToggleSwitch"),
-    SliderBar    = require("yawl.widget.SliderBar")
+    SliderBar    = require("yawl.widget.SliderBar"),
+    SortedList   = require("yawl.widget.SortedList")
 }
 
 return yaowbglWidget
