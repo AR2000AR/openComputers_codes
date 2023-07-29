@@ -212,6 +212,8 @@ function SortedList:draw()
     --      note: format is inside of pcall, if err then write error to line
     --      note: invert background and text color for selected values
     local formatFunc, isNumbered = self:format(), self:numbered()
+    local linePrefix = "%+"..tostring(tostring(#self._shown):len()).."s:%+"..tostring(tostring(#self._list):len()).."s "
+    require('component').ocelot.log(linePrefix)
     for line, index in ipairs (self._shown) do
         if type(index) == 'number' then
             local listValue = self._list[index]
@@ -221,7 +223,7 @@ function SortedList:draw()
             end
             listValue = tostring(listValue):gsub("\n","; ")
             if isNumbered then
-                listValue = string.format("%s:%s ", line, index) .. listValue
+                listValue = string.format(linePrefix, line, index) .. listValue
             end
             --might need to gsub the \n escapes
             --if selected then swap bg and foreground 
@@ -230,7 +232,7 @@ function SortedList:draw()
             local errVal = index:gsub("\n","; ")
             local failedIndex = errVal:match("%d+")
             errVal = unicode.sub(errVal, failedIndex:len()+2)
-            gpu.set(x, y+line-1, unicode.sub( (isNumbered and tostring(line)..":"..failedIndex.." " or "") .. errVal, 1, width) )
+            gpu.set(x, y+line-1, unicode.sub( (isNumbered and string.format(linePrefix, line, failedIndex) or "") .. errVal, 1, width) )
         end
     end
     gpu.setBackground(oldBG)
