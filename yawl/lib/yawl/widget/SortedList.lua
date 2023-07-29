@@ -28,6 +28,7 @@ function SortedList:new(parent, x, y, width, height, backgroundColor)
     o._list = {}
     o._shown = {} --used for selection
     o._selection = {} --for multi selection, selection[index] = index in _list
+    o._scrollindex = 0
     ---@cast o SortedList
     o:size(width, height)
     o:backgroundColor(backgroundColor or 0)
@@ -135,6 +136,13 @@ function SortedList:mount(object)
     return oldValue
 end
 
+function SortedList:scroll(value)
+    checkArg(1, value, 'number', 'nil')
+    local oldValue = self._scrollindex or 0
+    if (value ~= nil) then self._scrollindex = math.max(math.min(#self._list - self:height(), self._scrollindex + value), 0) end
+    return oldValue
+end
+
 function SortedList:defaultCallback(_, eventName, uuid, x, y, button, playerName)
     if eventName == "touch" then
         y = y - self:abs() --relative y
@@ -144,7 +152,7 @@ function SortedList:defaultCallback(_, eventName, uuid, x, y, button, playerName
 
         end
     elseif eventName == "scroll" then
-
+        self:scroll(-button)
     end
 end
 
@@ -178,9 +186,9 @@ function SortedList:draw()
     end
     if filterValue == "" then filterValue = nil end
     --local scrollIndex = self._scrollindex
-    local i, listValue = 1
+    local i, scrollIndex, listValue = 1, self:scroll()
     repeat
-        local index = i -- for future scrolling do i + scrollIndex
+        local index = i + scrollIndex
         listValue = self._list[index] 
         if not listValue then break end
 --      -> if filterfunc and filterByValue, insert values into self._shown that when passed into filterfunc if returns true --inside of pcall, shows same way as sorter err
