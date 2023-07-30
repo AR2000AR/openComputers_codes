@@ -83,6 +83,11 @@ input:minSize(30, 1)                                                            
 input:multilines(true)                                                                                 --set the input to accept multiples lines of text
 input:backgroundColor(0)                                                                               --black background
 --=============================================================================
+local slider = yawl.widget.SliderBar(root, 24, 10, 20, 1, 0, 10, 0, 0xffffff)
+local sliderText = yawl.widget.Text(root, slider:x() + slider:width(), slider:y(), "0", 0)
+sliderText:width(4)
+sliderText:backgroundColor(0xffffff)
+--=============================================================================
 
 local function animate() --animate the text widget. Add one char with each loop
     local MSG = "123456789 123456789 123456789 123456789 abcdefghijklmnopqrstuvwxyz "
@@ -110,6 +115,7 @@ end)
 
 while run do
     os.sleep(0.1)
+    sliderText:text(string.format("%s", slider:value()))
     root:draw()
 end
 term.clear()

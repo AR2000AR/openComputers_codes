@@ -23,11 +23,12 @@ wget https://raw.githubusercontent.com/AR2000AR/openComputers_codes/master/repo-
 ### Usage
 
 ```
-instgen AR2000AR/openComputers_codes /mnt/04d/
+instgen AR2000AR/openComputers_codes /mnt/xxx/
 ```
+Replace /mnt/xxx/ with the path to your floppy.
 
 You can provide a [github personal token](https://github.com/settings/tokens?type=beta) if the package listing fail. It may be because of a rate limit with github's api. To do so set the environment variable `HTTP_BASIC` to the base64 representation of `username:token`.
 
-This will download all the files specified in the programs.cfg specified into */mnt/04d*, in a manner compatible with repoinstaller.
+This will download all the files specified in the programs.cfg specified into */mnt/xxx*, in a manner compatible with repoinstaller.
 
 ~~You must provide your own .prop file.~~ A .prop file is generated with the repository name.
