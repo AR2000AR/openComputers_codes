@@ -8,7 +8,6 @@ local keyboard = require('keyboard')
 ---@operator call:SortedList
 ---@overload fun(parent:Frame,x:number,y:number,width:number,height:number,backgroundColor:number)
 local SortedList = require("libClass2")(Widget)
-SortedList._showsErrors = false
 ---Create a new SortedList
 ---@param parent Frame
 ---@param x number
@@ -30,6 +29,7 @@ function SortedList:new(parent, x, y, width, height, backgroundColor)
     o._shown = {} --used for selection
     o._selection = {} --for multi selection, selection[index] = index in _list
     o._scrollindex = 0
+    o._showsErrors = false
     ---@cast o SortedList
     o:size(width, height)
     o:backgroundColor(backgroundColor or 0)
@@ -112,7 +112,17 @@ end
 function SortedList:filterBy(value) --sets the value that gets passed into filterFunc
     checkArg(1, value, 'string', 'number', 'nil', 'boolean')
     local oldValue = self._filter or false
-    if (value ~= nil) then self._filter = value end
+    if (value ~= nil) then 
+        self._filter = value
+        if value == "" then 
+            self._contextScroll = nil
+            self._contextStart = nil
+            self._contextEnd = nil
+            self._highestContextIndex = nil
+        else 
+            self._contextScroll = 0
+        end
+    end
     return oldValue
 end
 
@@ -133,6 +143,14 @@ function SortedList:clearSelection() --empty list
     return true
 end
 
+function SortedList:getSelection()
+    local selected = {}
+    for i,v in pairs (self._selection) do
+        if v then table.insert(selected, i) end
+    end
+    return selected
+end
+
 function SortedList:mount(object)
     checkArg(1, object, 'table', 'nil', 'boolean')
     --check for duplicates first
@@ -146,19 +164,57 @@ function SortedList:mount(object)
     return oldValue
 end
 
-function SortedList:scroll(value)
+function SortedList:scroll(value) --not perfect, needs refinement for when filter has been applied, needs to differentiate between unfiltered and filtered
     checkArg(1, value, 'number', 'nil')
-    local oldValue = self._scrollindex or 0
-    local height, shownheight = self:height(), #self._shown
-    if (value ~= nil) and height >= shownheight then self._scrollindex = math.max(math.min(#self._list - self:height(), self._scrollindex + value), 0) end
+    local oldValue = self._contextScroll or self._scrollindex or 0
+    
+    if (value ~= nil) then --and height <= shownheight then 
+        if self._filter == "" or not self._filter then --I know, you won't like that I accessed them directly
+            self._scrollindex = math.max(math.min(#self._list - self:height(), self._scrollindex + value), 0)
+        elseif #self._shown > 0 then --filterBy is set and there is something to visually scroll
+            local currentListIndex = self._shown[1]
+            if self._contextScroll == 0 then 
+                self._contextStart = (currentListIndex or 1) - 1 
+                self._contextScroll = self._contextStart 
+            end
+            
+            if value == 1 then
+                local nextListIndex = self._shown[2]
+                if nextListIndex then
+                    value = nextListIndex - currentListIndex
+                end
+            elseif value == -1 and currentListIndex>1 and (self._highestContextIndex == nil or self._highestContextIndex~=currentListIndex) then
+                local nextListIndex, foundHigher = currentListIndex, false
+                local filterFunc, filterValue = self:filter(), self:filterBy()
+                repeat 
+                    nextListIndex = nextListIndex - 1
+                    local nextListValue = self._list[nextListIndex]
+                    local succ, returned = pcall(filterFunc, filterValue, nextListValue)
+                    foundHigher = (succ and returned~=nil and returned~=false ) or (not succ and self._showsErrors)
+                until nextListIndex == 1 or foundHigher
+                value = nextListIndex - currentListIndex
+                if nextListIndex == 1 and not foundHigher then --searched and never found with current filter, gets wiped when new filterby value is passed
+                    self._highestContextIndex = currentListIndex
+                end
+            end
+            self._contextScroll = math.max(math.min((self._contextEnd <= self:height() and self._contextScroll or #self._list), self._contextScroll + value), self._contextStart)
+        
+            self._debugTxt:text(string.format("%d | %d", self._contextScroll, value) )
+        end
+    end
     return oldValue
 end
 
 function SortedList:defaultCallback(_, eventName, uuid, x, y, button, playerName)
     if eventName == "touch" then
         local index = self._shown[y - self:absY() + 1]
-        if button == 0 and not keyboard.isControlDown() then
-            self:clearSelection()
+        if button == 0 then
+            if keyboard.isControlDown() then
+                self:select(index, not self:select(index))
+                return
+            else
+                self:clearSelection()
+            end
         end
         if index then
             self:select(index, button == 0) 
@@ -187,24 +243,23 @@ function SortedList:draw()
             return
         end
     end
+
     self._shown = {}
     local filterFunc, mounted, filterValue = self:filter(), self:mount()
     if mounted then
         local newFilterVal = mounted:text()
-        self:filterBy(newFilterVal)
+        if self:filterBy() ~= newFilterVal then self:filterBy(newFilterVal) end
         filterValue = newFilterVal
     else
         filterValue = self:filterBy()
     end
     if filterValue == "" then filterValue = nil end
-    --local scrollIndex = self._scrollindex
+
     local i, scrollIndex, listValue = 1, self:scroll()
     repeat
         local index = i + scrollIndex
         listValue = self._list[index] 
         if not listValue then break end
---      -> if filterfunc and filterByValue, insert values into self._shown that when passed into filterfunc if returns true --inside of pcall, shows same way as sorter err
---      -> else, insert values into self._shown
         if filterFunc and filterValue then
             local succ, returned = pcall(filterFunc, filterValue, listValue)
             if succ then
@@ -212,31 +267,27 @@ function SortedList:draw()
                     table.insert(self._shown, index)
                 end
             elseif self._showsErrors then
-                table.insert(self._shown, tostring(index).." "..returned)
+                table.insert(self._shown, tostring(index).." (filter)"..returned)
             end
         else
             table.insert(self._shown, index)
         end
         i=i+1
-    until listValue == nil or #self._shown == height
-    --iterate through self._shown and use gpu.set per line (if formatFunc, then pass it through and gpu.set the return value substringed to the width of the list)
-    --      note: format is inside of pcall, if err then write error to line
-    --      note: invert background and text color for selected values
+    until listValue == nil or #self._shown > height --go to at most 1 over
+    
     local formatFunc, isNumbered = self:format(), self:numbered()
     local linePrefix = "%+"..tostring(tostring(#self._shown):len()).."s:%+"..tostring(tostring(#self._list):len()).."s "
+    if filterValue then self._contextEnd = #self._shown end --for scrolling end detection
+    
     for line, index in ipairs (self._shown) do
+        if line > height then break end
         if type(index) == 'number' then
             local listValue = self._list[index]
             if formatFunc then 
-                local _, returned = pcall(formatFunc, listValue)
-                listValue = returned --should be fine
+                local succ, returned = pcall(formatFunc, listValue)
+                listValue = (not succ and '(format)' or '') .. returned --should be fine
             end
-            listValue = tostring(listValue):gsub("\n","; ")
-            if isNumbered then
-                listValue = string.format(linePrefix, line, index) .. listValue
-            end
-            --might need to gsub the \n escapes
-            --if selected then swap bg and foreground 
+            listValue = (isNumbered and string.format(linePrefix, line, index) or "") .. tostring(listValue):gsub("\n","; ")
             local isSelected = self:select(index)
             if isSelected and newFG and newBG then gpu.setBackground(newFG) gpu.setForeground(newBG) end
             gpu.set(x, y+line-1, unicode.sub(listValue, 1, width) ) --do the formatting here
