@@ -153,12 +153,16 @@ function Widget:size(width, height)
     return oldW, oldH
 end
 
----@param value? number|boolean
----@return number|false
+---@param value? number|false
+---@return number
 function Widget:backgroundColor(value)
     checkArg(1, value, 'number', 'boolean', 'nil')
-    local oldValue = self._backgroundColor or false
-    if (value ~= nil) then self._backgroundColor = value end
+    local oldValue = self._backgroundColor
+    if (value == false) then
+        self._backgroundColor = nil
+    elseif (value ~= nil) then
+        self._backgroundColor = value
+    end
     return oldValue
 end
 

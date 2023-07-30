@@ -111,6 +111,8 @@ end
 
 function Frame:propagateEvent(eName, screenAddress, x, y, ...)
     if (not self:enabled()) then return end
+    --TODO : sort child by z, making sure to keep the original order in a new table
+    --TODO : reverse the sort
     for _, w in pairs(self._childs) do
         --TODO : find a new yeilding methods
         --os.sleep()
@@ -118,9 +120,10 @@ function Frame:propagateEvent(eName, screenAddress, x, y, ...)
             if (w:instanceOf(Frame)) then
                 ---@cast w Frame
                 w:propagateEvent(eName, screenAddress, x, y, ...)
-            else
-                w:invokeCallback(eName, screenAddress, x, y, ...)
+                --TODO : return true if returned true
             end
+            w:invokeCallback(eName, screenAddress, x, y, ...)
+            --TODO : return true
         end
     end
 end
