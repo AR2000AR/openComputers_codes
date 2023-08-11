@@ -88,6 +88,10 @@ local sliderText = yawl.widget.Text(root, slider:x() + slider:width(), slider:y(
 sliderText:width(4)
 sliderText:backgroundColor(0xffffff)
 --=============================================================================
+local button = yawl.widget.Button(root, ts:x() + ts:width() + 1, ts:y(), 10, 3, 0xff0000)
+button:foregroundColor(0x00ff00)
+button:resetTime(5)
+--=============================================================================
 
 local function animate() --animate the text widget. Add one char with each loop
     local MSG = "123456789 123456789 123456789 123456789 abcdefghijklmnopqrstuvwxyz "
