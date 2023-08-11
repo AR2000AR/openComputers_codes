@@ -16,7 +16,11 @@ function Button:draw()
     if self:resetTime() > 0 and self:state() and (computer.uptime() - self._pressed) > self:resetTime() then
         self:state(false)
     end
-    local newBG = self:state() and (self:foregroundColor() or 0xffffff - self:backgroundColor()) or self:backgroundColor()
+    local newBG = self:backgroundColor()
+    if (not self:state()) then
+        --set to the foreground color. if there is none, invert the current color
+        newBG = self:foregroundColor() or (0xffffff - self:backgroundColor())
+    end
     local oldBG = gpu.setBackground(newBG)
     gpu.fill(self:absX(), self:absY(), self:width(), self:height(), " ")
     gpu.setBackground(oldBG)
