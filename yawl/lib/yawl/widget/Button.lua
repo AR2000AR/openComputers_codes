@@ -17,7 +17,7 @@ function Button:draw()
     if isActive and self:shouldReset() and computer.uptime() - self._pressed > self:resetTime() then
         self:activate(false)
     end
-    local newBG = isActive and (self:foregroundColor() or 0xffffff-self:backgroundColor()) or self:backgroundColor()
+    local newBG = isActive and (self:foregroundColor() or 0xffffff - self:backgroundColor()) or self:backgroundColor()
     local oldBG = gpu.setBackground(newBG)
     gpu.fill(self:absX(), self:absY(), self:width(), self:height(), " ")
     gpu.setBackground(oldBG)
@@ -26,9 +26,9 @@ end
 function Button:activate(state)
     checkArg(1, state, 'boolean', 'nil')
     local oldValue = self._active or false
-    if (state ~= nil) then 
-        self._active = state 
-        if state then 
+    if (state ~= nil) then
+        self._active = state
+        if state then
             self._pressed = computer.uptime()
         end
     end
@@ -44,7 +44,7 @@ end
 
 function Button:shouldReset(should)
     checkArg(1, should, 'boolean', 'nil')
-    local oldValue 
+    local oldValue
     if self._shouldReset == nil then oldValue = true else oldValue = self._shouldReset end
     if (should ~= nil) then self._shouldReset = should end
     return oldValue
