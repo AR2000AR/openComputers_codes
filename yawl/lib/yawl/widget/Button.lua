@@ -8,16 +8,15 @@ local Button = require('libClass2')(Rectangle)
 
 function Button:defaultCallback(_, eventName, uuid, x, y, button, playerName)
     if (not (eventName == "touch")) then return end
-    if self:shouldReset() then self:state(true) else self:state(not self:state()) end
+    self:state(not self:state())
 end
 
 function Button:draw()
     if (not self:visible()) then return end
-    local isActive = self:state()
-    if isActive and self:shouldReset() and computer.uptime() - self._pressed > self:resetTime() then
+    if self:resetTime() > 0 and self:state() and (computer.uptime() - self._pressed) > self:resetTime() then
         self:state(false)
     end
-    local newBG = isActive and (self:foregroundColor() or 0xffffff - self:backgroundColor()) or self:backgroundColor()
+    local newBG = self:state() and (self:foregroundColor() or 0xffffff - self:backgroundColor()) or self:backgroundColor()
     local oldBG = gpu.setBackground(newBG)
     gpu.fill(self:absX(), self:absY(), self:width(), self:height(), " ")
     gpu.setBackground(oldBG)
@@ -47,12 +46,6 @@ function Button:resetTime(time)
     local oldValue = self._resettime or 0
     if (time ~= nil) then self._resettime = time end
     return oldValue
-end
-
----Should the wiget state retrun to false after a fixed time
----@return boolean
-function Button:shouldReset()
-    return self._resettime > 0
 end
 
 return Button
