@@ -30,37 +30,35 @@ class Network():
 class Networks(Model):
 
     def getNetworkById(self,id:int):
-        self._database.execute("SELECT subnetid,network,nmask FROM networks WHERE id = ?",(id,))
-        res = self._database.fetchone()
+        cursor=self._database.execute("SELECT subnetid,network,nmask FROM networks WHERE id = ?",(id,))
+        res = cursor.fetchone()
         if(not res):
             return False
         return Network(id,res[0],ipaddress.ip_network((res[1],ipaddress.ip_address(res[2]).compressed))) 
     
     def getNetworksInSubnet(self,subnetid:int):
-        self._database.execute("SELECT id,subnetid,network,nmask FROM networks WHERE subnetid = ?",(subnetid,))
-        res = self._database.fetchall()
+        cursor=self._database.execute("SELECT id,subnetid,network,nmask FROM networks WHERE subnetid = ?",(subnetid,))
+        res = cursor.fetchall()
         if(not res):
             return list[Network]()
         return [Network(net[0],subnetid,ipaddress.ip_network(net[2],ipaddress.ip_address(net[3]).compressed))for net in res] 
     
     def getAllNetworks(self):
-        self._database.execute("SELECT id,subnetid,network,nmask FROM networks")
-        res = self._database.fetchall()
+        cursor=self._database.execute("SELECT id,subnetid,network,nmask FROM networks")
+        res = cursor.fetchall()
         if(not res):
             return list[Network]()
         return [Network(net[0],net[1],ipaddress.ip_network((net[2],ipaddress.ip_address(net[3]).compressed)))for net in res] 
 
     def createNetwork(self,subnetwork:int,network:ipaddress.IPv4Network)    :
-        with self._database.semaphore:
-            self._database.execute("INSERT INTO networks(subnetid,network,nmask) VALUES(?,?,?)",(subnetwork,int(network.network_address),int(network.netmask)))
-            self._database.commit()
-        self._database.execute("SELECT id from networks WHERE subnetid = ? AND network = ? and nmask = ?",(subnetwork,int(network.network_address),int(network.netmask)))
-        res = self._database.fetchone()        
+        self._database.execute("INSERT INTO networks(subnetid,network,nmask) VALUES(?,?,?)",(subnetwork,int(network.network_address),int(network.netmask)))
+        self._database.commit()
+        cursor=self._database.execute("SELECT id from networks WHERE subnetid = ? AND network = ? and nmask = ?",(subnetwork,int(network.network_address),int(network.netmask)))
+        res = cursor.fetchone()        
         nt = self.getNetworkById(res[0])
         assert(isinstance(nt,Network))
         return nt
 
     def deleteNetwork(self,network:Network):
-        with self._database.semaphore:
-            self._database.execute("DELETE FROM networks WHERE id = ?",(network.id,))
-            self._database.commit()
+        self._database.execute("DELETE FROM networks WHERE id = ?",(network.id,))
+        self._database.commit()

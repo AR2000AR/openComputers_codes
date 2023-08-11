@@ -13,6 +13,7 @@ from pathlib import Path
 from signal import SIGINT, SIGTERM, signal
 from string import Template
 from urllib.parse import parse_qs
+import pathlib
 
 import models.database
 import models.firewall
@@ -23,7 +24,10 @@ from icable.firewall import *
 from icable.packet import *
 from icable.protocol import *
 
-db = models.database.DatabaseHandler('icable.db')
+dataPath = pathlib.Path(pathlib.Path.home(),'.local','share','icable')
+dataPath.mkdir(parents=True,exist_ok=True)
+
+db = models.database.DatabaseHandler(pathlib.Path(dataPath,'icable.db'))
 users = models.user.Users(db)
 webSessions = models.web.WebSessions(db)
 networks = models.network.Networks(db)
@@ -340,7 +344,7 @@ class WebInterface(BaseHTTPRequestHandler):
         user_networks.sort()
         for network in user_networks:
             dl_button = ""
-            if(self.user.get_network_permission(network)==1 or models.user.User.SubnetworkPermission.OWNER in self.user.subnetwork_permission):
+            if(self.user.get_network_permission(network)==1 or models.user.SubnetworkPermission.OWNER in self.user.subnetwork_permission):
                 dl_button = f"""<form action='/network' method='post'>
                         <input class='ip-cell' type='submit' value='Delete'>
                         <input class='ip-cell' type='hidden' name='cmd' value='delete'>
@@ -357,7 +361,7 @@ class WebInterface(BaseHTTPRequestHandler):
 
         #region firewall
         mapping['firewallDefault']=firewalls[self.user.subnetid].action.name
-        FIREWALL_ALLOWED = models.user.User.SubnetworkPermission.FIREWALL|models.user.User.SubnetworkPermission.OWNER
+        FIREWALL_ALLOWED = models.user.SubnetworkPermission.FIREWALL|models.user.SubnetworkPermission.OWNER
 
         mapping['firewallRuleList']=""
         for rule in firewalls[self.user.subnetid].rules:

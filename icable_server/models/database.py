@@ -2,16 +2,12 @@ import threading
 import pathlib
 import sqlite3
 
-class DatabaseHandler():
+class DatabaseHandler(sqlite3.Connection):
 
-    def __init__(self,dbPath:str):
-        self._semaphore = threading.BoundedSemaphore()
-        dataPath = pathlib.Path(pathlib.Path.home(),'.local','share','icable')
-        dataPath.mkdir(parents=True,exist_ok=True)
-        self._database = sqlite3.connect(pathlib.Path(dataPath,dbPath),check_same_thread=False,detect_types=sqlite3.PARSE_DECLTYPES)
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,check_same_thread=False,detect_types=sqlite3.PARSE_DECLTYPES,**kwargs)
         #self._database.row_factory = Row
-        self._cursor = self._database.cursor()
-        self._cursor.executescript("""
+        self.executescript("""
         BEGIN;
         CREATE TABLE IF NOT EXISTS "users" (
 	        login TEXT PRIMARY KEY CHECK(typeof("login") = 'text'),
@@ -46,28 +42,9 @@ class DatabaseHandler():
         END;
         COMMIT;
         PRAGMA foreign_keys=ON;""")
-
-    def execute(self,*args,**kwargs):
-        return self._cursor.execute(*args,**kwargs)
-    def fetchone(self,*args,**kwargs):
-        return self._cursor.fetchone(*args,**kwargs)
-    def fetchall(self,*args,**kwargs):
-        return self._cursor.fetchall(*args,**kwargs)
-    def fetchmany(self,*args,**kwargs):
-        return self._cursor.fetchmany(*args,**kwargs)
-    def commit(self,*args,**kwargs):
-        return self.database.commit()
-    
-    @property
-    def semaphore(self)->threading.BoundedSemaphore:
-        return self._semaphore
-    
-    @property
-    def database(self):
-        return self._database
     
     def __del__(self):
-        self._cursor.execute("PRAGMA optimize;")
-        self.database.commit()
-        self._cursor.close()
-        self.database.close()
+        self.rollback()
+        self.execute("PRAGMA optimize;")
+        self.commit()
+        self.close()

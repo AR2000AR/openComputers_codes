@@ -1,4 +1,5 @@
 from . import database
+from sqlite3 import Cursor
 
 __all__ = ["user","network","firewall","web","database"]
 

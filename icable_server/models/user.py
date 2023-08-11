@@ -20,12 +20,11 @@ class User(Model):
 
     @property
     def password(self)->str:
-        self._database.execute("SELECT password FROM users WHERE login = ?",(self.login,))
-        return self._database.fetchone()[0]
+        cursor=self._database.execute("SELECT password FROM users WHERE login = ?",(self.login,))
+        return cursor.fetchone()[0]
     
     @password.setter
     def password(self,value:str):
-       with self._database.semaphore:
         self._database.execute("UPDATE users SET password = ? WHERE login = ?",(self.hashpassword(value),self.login))
         self._database.commit()
 
@@ -72,12 +71,11 @@ class User(Model):
 
     @property
     def subnetid(self):
-        self._database.execute("SELECT subnetid FROM users WHERE login = ?",(self.login,))
-        return self._database.fetchone()[0]
+        cursor=self._database.execute("SELECT subnetid FROM users WHERE login = ?",(self.login,))
+        return cursor.fetchone()[0]
     
     @subnetid.setter
     def subnetid(self,value):
-       with self._database.semaphore:
         self._database.execute("UPDATE users SET subnetid = ? WHERE login = ?",(value,self.login))
         self._database.commit()
 
@@ -87,9 +85,9 @@ class User(Model):
     
     @property
     def networks(self)->list[Network]:
-        self._database.execute("""SELECT id from networks WHERE id IN 
+        cursor=self._database.execute("""SELECT id from networks WHERE id IN 
         (SELECT networkid FROM networkUsers WHERE userid = ? OR subnetid = ?);""",(self.login,self.subnetid))
-        networks = self._database.fetchall()
+        networks = cursor.fetchall()
         networksDB = Networks(self._database)
         return [networksDB.getNetworkById(res[0]) for res in networks] 
     
@@ -98,8 +96,8 @@ class User(Model):
         self._database.commit()
 
     def get_network_permission(self,net:Network)->int:
-        self._database.execute("SELECT permissions FROM networkUsers WHERE userid = ? AND networkid = ?",(self.login,net.id))
-        perm = self._database.fetchone()
+        cursor=self._database.execute("SELECT permissions FROM networkUsers WHERE userid = ? AND networkid = ?",(self.login,net.id))
+        perm = cursor.fetchone()
         if(not perm):
             return 0
         else:
@@ -107,28 +105,32 @@ class User(Model):
         
     @property
     def subnetwork_permission(self)->SubnetworkPermission:
-        self._database.execute("SELECT subnetperm FROM users WHERE login = ?",(self.login,))
-        res = self._database.fetchone()
+        cursor=self._database.execute("SELECT subnetperm FROM users WHERE login = ?",(self.login,))
+        res = cursor.fetchone()
         assert(res)
         return SubnetworkPermission(res[0])
 
-class Users():
+class Users(Model):
+    
     def __init__(self,database_handler:DatabaseHandler):
-        self._database = database_handler
-        self._database.execute("SELECT * FROM users LIMIT 1")
-        if(self._database.fetchone()==None):
+        super().__init__(database_handler)
+        self.initUsers()
+
+    def initUsers(self):
+        cursor=self._database.execute("SELECT * FROM users LIMIT 1")
+        if(cursor.fetchone()==None):
             self.createUser('admin','admin')
 
     def getUserFromLogin(self,login:str):
-        self._database.execute("SELECT * FROM users WHERE login = ?",(login,))
-        if(self._database.fetchone()):
+        cursor=self._database.execute("SELECT * FROM users WHERE login = ?",(login,))
+        if(cursor.fetchone()):
            return User(self._database,login)
         else:
             return False
         
     def get_users_in_subnet(self,subnetid:int):
-        self._database.execute("SELECT login FROM users WHERE subnetid = ?",(subnetid,))
-        return [self.getUserFromLogin(res[0]) for res in self._database.fetchall()]
+        cursor=self._database.execute("SELECT login FROM users WHERE subnetid = ?",(subnetid,))
+        return [self.getUserFromLogin(res[0]) for res in cursor.fetchall()]
 
     def createUser(self,login:str,password:str,subnetid=None):
         if(self.getUserFromLogin(login)):
@@ -139,15 +141,13 @@ class Users():
                 subnetid = random.getrandbits(32)
                 subnetperm |= SubnetworkPermission.OWNER
                 #TODO : make sure subnetid is uniq
-            with self._database.semaphore:
-                self._database.execute("INSERT INTO users VALUES(?,?,?,?)",(login,User.hashpassword(password),subnetid,int(subnetperm)))
-                self._database.commit()
+            cursor=self._database.execute("INSERT INTO users VALUES(?,?,?,?)",(login,User.hashpassword(password),subnetid,int(subnetperm)))
+            self._database.commit()
             return self.getUserFromLogin(login)
         
     def deleteUser(self,user:User):
         subnetwork = user.subnetid
-        with self._database.semaphore:
-            self._database.execute("DELETE FROM users WHERE login = ?",(user.login,))
-            if(not self._database.execute("SELECT * FROM users WHERE subnetid = ?",(subnetwork,)).fetchall()):
-                self._database.execute("DELETE FROM networks WHERE subnetid = ?",(subnetwork,))
-            self._database.commit()
+        self._database.execute("DELETE FROM users WHERE login = ?",(user.login,))
+        if(not self._database.execute("SELECT * FROM users WHERE subnetid = ?",(subnetwork,)).fetchall()):
+            self._database.execute("DELETE FROM networks WHERE subnetid = ?",(subnetwork,))
+        self._database.commit()
