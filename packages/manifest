@@ -363,7 +363,7 @@
 	["yawl"] = {
 		["manifestVersion"] = "1.0",
 		["package"] = "yawl",
-		["version"] = "1.5.1",
+		["version"] = "1.5.0",
 		["name"] = "Yet Another Widget Library",
 		["repo"] = "tree/master/yawl",
 		["description"] = "New version of libgui, but using libclass2 and cleaner code and interface.",
