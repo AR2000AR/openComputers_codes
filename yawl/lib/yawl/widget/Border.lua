@@ -44,11 +44,9 @@ end
 ---@return number
 function Border:width(value)
     checkArg(1, value, 'number', 'nil')
-    local oldValue = self:master():width(value) + 2
+    local oldValue = self:master():width() + 2
     if (value ~= nil) then
-        for _, w in pairs(self._childs) do
-            w:width(math.min(1, self:master():width() - 2))
-        end
+        self:master():width(math.max(1, value - 2))
     end
     return oldValue
 end
@@ -57,11 +55,9 @@ end
 ---@return number
 function Border:height(value)
     checkArg(1, value, 'number', 'nil')
-    local oldValue = self:master():height(value) + 2
+    local oldValue = self:master():height() + 2
     if (value ~= nil) then
-        for _, w in pairs(self._childs) do
-            w:height(math.min(1, self:master():height() - 2))
-        end
+        self:master():height(math.max(1, value - 2))
     end
     return oldValue
 end
@@ -78,7 +74,7 @@ function Border:draw()
     local defaultBuffer, newBuffer = self:_initBuffer()
 
     --clean background
-    local newBG = self:backgroundColor() 
+    local newBG = self:backgroundColor()
     if newBG then
         local oldBG = gpu.getBackground()
         gpu.setBackground(newBG --[[@as number]])
