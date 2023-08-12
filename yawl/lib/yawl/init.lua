@@ -9,7 +9,8 @@
 ---@class yaowbgllib
 local yawl = {
     widget = require('yawl.widget'),
-    ImageFile = require("yawl.ImageFile")
+    ImageFile = require("yawl.ImageFile"),
+    utils = require("yawl.utils")
 }
 
 return yawl
