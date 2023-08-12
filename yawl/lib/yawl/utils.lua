@@ -33,4 +33,51 @@ function utils.RGBtoColor(r, g, b)
     return b + (g << 8) + (r << 16)
 end
 
+---Text wrap
+---@param s string string to wrap
+---@param max number maximum line length
+---@return string
+function utils.wrap(s, max)
+    local result = {}
+    for line in s:gmatch('[^\n]*') do
+        local paragraph = ""
+        local spaceLeft = max
+        for word, space in line:gmatch("(%S*)(%s*)") do
+            if (#word > max) then
+                while #word > 0 do
+                    local chunk = ""
+                    chunk, word = word:sub(1, spaceLeft), word:sub(spaceLeft + 1)
+                    paragraph = paragraph .. chunk
+                    spaceLeft = spaceLeft - #chunk
+                    if (spaceLeft == 0) then
+                        paragraph = paragraph .. '\n'
+                        spaceLeft = max
+                    end
+                end
+            elseif (#word == max and spaceLeft == max) then
+                paragraph = paragraph .. word
+                spaceLeft = 0
+            elseif (#word == max and spaceLeft ~= max) then
+                paragraph = paragraph .. '\n' .. word
+                spaceLeft = 0
+            elseif (spaceLeft - #word >= 0) then
+                paragraph = paragraph .. word
+                spaceLeft = spaceLeft - #word
+            else
+                paragraph = paragraph .. '\n' .. word
+                spaceLeft = max - #word
+            end
+            space = space:sub(1, spaceLeft - #space)
+            paragraph = paragraph .. space
+            spaceLeft = spaceLeft - #space
+            if (spaceLeft <= 0) then
+                paragraph = paragraph .. '\n'
+                spaceLeft = max
+            end
+        end
+        table.insert(result, paragraph)
+    end
+    return table.concat(result, '\n')
+end
+
 return utils
