@@ -89,9 +89,9 @@ function Frame:closeListeners()
 end
 
 ---Add a widget container to the container
----@param containerChild Widget|Frame
-function Frame:addChild(containerChild)
-    table.insert(self._childs, containerChild)
+---@param child Widget
+function Frame:addChild(child)
+    table.insert(self._childs, child)
 end
 
 ---Remove a child from the container. Return the removed child on success

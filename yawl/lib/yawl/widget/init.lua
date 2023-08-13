@@ -1,4 +1,4 @@
-local yaowbglWidget = {
+local yawlWidget = {
     Widget       = require('yawl.widget.Widget'),
     Rectangle    = require('yawl.widget.Rectangle'),
     Frame        = require('yawl.widget.Frame'),
@@ -14,4 +14,4 @@ local yaowbglWidget = {
     Button       = require("yawl.widget.Button")
 }
 
-return yaowbglWidget
+return yawlWidget
