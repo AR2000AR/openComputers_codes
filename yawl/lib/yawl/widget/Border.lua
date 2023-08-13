@@ -25,6 +25,15 @@ function Border:new(parent, x, y, borderset)
     return o
 end
 
+---Add a widget container to the container
+---@param child Widget
+function Border:addChild(child)
+    if (self._childs[1] ~= nil) then
+        error("Border can only have one child widget", 2)
+    end
+    return self.parent.addChild(self, child)
+end
+
 ---@return Widget
 function Border:master()
     return self._childs[1]
