@@ -29,7 +29,7 @@ A repository is a collection of packages and a manifest file for the repository,
 The repository owner if free to structure it however they want. The only restriction is that the manifest file `manifest` is placed in the repository's root folder.
 
 ### Manifest file :
-The manifest file is a aggregation of the packages's manifest files in a table. Inside each package's manifest is added a extra field. See [manifest](../packages/manifest) for a example.\
+The manifest file is a aggregation of the packages's manifest files in a table. Inside each package's manifest is added a extra field that point to the package file. See [manifest](../packages/manifest) for a example.\
 Example :
 ```
 {
