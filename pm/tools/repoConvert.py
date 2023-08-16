@@ -1,8 +1,8 @@
+#!/bin/python3
 from slpp import slpp as lua
 import pathlib
 import json
 import re
-from pprint import pprint
 from getopt import gnu_getopt as getopt
 from getopt  import GetoptError
 import colorama
