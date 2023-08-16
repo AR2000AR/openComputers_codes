@@ -1,0 +1,9 @@
+{
+	"files": [
+		[
+			"lib/tar.lua",
+			"/usr/lib/"
+		]
+	],
+	"config": []
+}

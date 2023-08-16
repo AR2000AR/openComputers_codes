@@ -1,0 +1,14 @@
+{
+	["manifestVersion"] = "1.0",
+	["package"] = "bank_server",
+	["version"] = "1.1.0",
+	["name"] = "Bank server",
+	["repo"] = "tree/master/bank_server",
+	["description"] = "The bank server service",
+	["note"] = "enable it with the rc command",
+	["authors"] = "AR2000AR",
+	["dependencies"] = {
+		["libcb"] = "oppm",
+		["osinetwork"] = "oppm"
+	}
+}

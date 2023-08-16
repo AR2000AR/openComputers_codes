@@ -1,0 +1,13 @@
+{
+	["manifestVersion"] = "1.0",
+	["package"] = "door_ctrl",
+	["version"] = "1.0.0",
+	["name"] = "Door controller",
+	["repo"] = "tree/master/doorCtrl",
+	["description"] = "Controll your doors with multiple redstone io block",
+	["authors"] = "AR2000AR",
+	["dependencies"] = {
+		["libgui"] = "oppm",
+		["libclass"] = "oppm"
+	}
+}

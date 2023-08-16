@@ -1,0 +1,12 @@
+{
+	["manifestVersion"] = "1.0",
+	["package"] = "yawl",
+	["version"] = "1.6.3",
+	["name"] = "Yet Another Widget Library",
+	["repo"] = "tree/master/yawl",
+	["description"] = "New version of libgui, but using libclass2 and cleaner code and interface.",
+	["authors"] = "AR2000AR,Renno231",
+	["dependencies"] = {
+		["libclass2"] = "oppm"
+	}
+}

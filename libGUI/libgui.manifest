@@ -1,0 +1,13 @@
+{
+	["manifestVersion"] = "1.0",
+	["package"] = "libgui",
+	["version"] = "1.0.0",
+	["name"] = "libGUI",
+	["repo"] = "tree/master/libGUI",
+	["description"] = "library used to create gui \n The library can load \"pam\" images",
+	["note"] = "transparency in pam image isn't fully supported. Only fully transparent pixel are recognized as such",
+	["authors"] = "AR2000AR",
+	["dependencies"] = {
+		["libclass"] = "oppm"
+	}
+}

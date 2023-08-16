@@ -1,0 +1,14 @@
+{
+	"files": [
+		[
+			"bin",
+			"/usr/bin/"
+		]
+	],
+	"config": [
+		[
+			"etc/doorCtrl.conf",
+			"/etc/"
+		]
+	]
+}

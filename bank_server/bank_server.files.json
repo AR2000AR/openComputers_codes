@@ -1,0 +1,13 @@
+{
+	"files": [
+		[
+			"rc.d",
+			"/etc/rc.d/"
+		],
+		[
+			"bin",
+			"/usr/bin/"
+		]
+	],
+	"config": []
+}

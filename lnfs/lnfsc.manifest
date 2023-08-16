@@ -1,0 +1,9 @@
+{
+	["manifestVersion"] = "1.0",
+	["package"] = "lnfsc",
+	["version"] = "1.0.0",
+	["name"] = "Lua Network File System Client",
+	["repo"] = "tree/master/lnfs",
+	["description"] = "Let you mount a files ystem hosted by a other computer using lnfss and use it as if it was a local file system",
+	["authors"] = "AR2000AR"
+}

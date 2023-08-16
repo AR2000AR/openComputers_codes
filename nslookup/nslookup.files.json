@@ -1,0 +1,9 @@
+{
+	"files": [
+		[
+			"bin/nslookup.lua",
+			"/usr/bin/"
+		]
+	],
+	"config": []
+}

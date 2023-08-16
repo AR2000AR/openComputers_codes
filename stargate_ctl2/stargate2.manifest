@@ -1,0 +1,12 @@
+{
+	["manifestVersion"] = "1.0",
+	["package"] = "stargate2",
+	["version"] = "1.2.0",
+	["name"] = "Stargate Ctl",
+	["repo"] = "tree/master/stargate_ctl2",
+	["description"] = "GUI to controll stargates from SGCraft",
+	["authors"] = "AR2000AR",
+	["dependencies"] = {
+		["yawl"] = "oppm"
+	}
+}

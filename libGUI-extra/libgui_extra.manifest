@@ -1,0 +1,12 @@
+{
+	["manifestVersion"] = "1.0",
+	["package"] = "libgui_extra",
+	["version"] = "1.0.0",
+	["name"] = "libGUI-extra",
+	["repo"] = "tree/master/libGUI-extra",
+	["description"] = "more widgets for the libGUI",
+	["authors"] = "AR2000AR, thofi",
+	["dependencies"] = {
+		["libgui"] = "oppm"
+	}
+}

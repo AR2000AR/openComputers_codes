@@ -1,0 +1,16 @@
+{
+	["manifestVersion"] = "1.0",
+	["package"] = "bank_atm",
+	["version"] = "1.1.0",
+	["name"] = "bank atm",
+	["repo"] = "tree/master/bank_atm",
+	["description"] = "atm that work with my bank server",
+	["authors"] = "AR200AR",
+	["dependencies"] = {
+		["libgui"] = "oppm",
+		["bank_api"] = "oppm",
+		["libcb"] = "oppm",
+		["libcoin"] = "oppm",
+		["libgui_extra"] = "oppm"
+	}
+}

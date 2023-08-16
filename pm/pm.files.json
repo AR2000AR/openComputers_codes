@@ -1,0 +1,13 @@
+{
+	"files": [
+		[
+			"bin/pm.lua",
+			"/usr/bin/"
+		],
+		[
+			"lib/pm.lua",
+			"/usr/lib/"
+		]
+	],
+	"config": []
+}

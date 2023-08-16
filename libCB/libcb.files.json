@@ -1,0 +1,13 @@
+{
+	"files": [
+		[
+			"lib",
+			"/usr/lib/"
+		],
+		[
+			"man",
+			"/usr/man/"
+		]
+	],
+	"config": []
+}

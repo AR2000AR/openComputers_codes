@@ -1,0 +1,13 @@
+{
+	"files": [
+		[
+			"lnfss/rc.d",
+			"/etc/rc.d/"
+		],
+		[
+			"lnfss/man",
+			"/usr/man/"
+		]
+	],
+	"config": []
+}

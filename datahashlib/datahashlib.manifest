@@ -1,0 +1,9 @@
+{
+	["manifestVersion"] = "1.0",
+	["package"] = "datahashlib",
+	["version"] = "1.2.0",
+	["name"] = "data hash library",
+	["repo"] = "tree/master/datahashlib",
+	["description"] = "provide the sha256 algo.",
+	["authors"] = "AR2000AR, Roberto Ierusalimschy"
+}

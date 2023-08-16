@@ -1,0 +1,9 @@
+{
+	["manifestVersion"] = "1.0",
+	["package"] = "autocrafter",
+	["version"] = "1.0.0",
+	["name"] = "AutoCrafter",
+	["repo"] = "tree/master/autocrafter",
+	["description"] = "User a robot linked via a linked card to craft item from a inventory",
+	["authors"] = "AR200AR"
+}

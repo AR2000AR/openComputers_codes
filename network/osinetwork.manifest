@@ -1,0 +1,13 @@
+{
+	["manifestVersion"] = "1.0",
+	["package"] = "osinetwork",
+	["version"] = "2.4.1",
+	["name"] = "OSI Network stack",
+	["repo"] = "tree/master/network",
+	["description"] = "A close to official rfc emulation of the OSI layers for OpenOS. Include Ethernet, ARP, ICMP, UDP. Also provide a luasocket libe librairy",
+	["note"] = "Are provided : ping, ifup, ifdown, arp, nc, netstat. Any one of theses tools may be moved to a separate package at any time",
+	["authors"] = "AR2000AR",
+	["dependencies"] = {
+		["libclass2"] = "oppm"
+	}
+}

@@ -1,0 +1,16 @@
+{
+	["manifestVersion"] = "1.0",
+	["package"] = "bank_client",
+	["version"] = "1.2.0",
+	["name"] = "bank client app",
+	["repo"] = "tree/master/bank_client",
+	["description"] = "The client app for the banker",
+	["note"] = "WIP",
+	["authors"] = "AR2000AR, thofi",
+	["dependencies"] = {
+		["libgui"] = "oppm",
+		["libgui_extra"] = "oppm",
+		["bank_api"] = "oppm",
+		["libcb"] = "oppm"
+	}
+}

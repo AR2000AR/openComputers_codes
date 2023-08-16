@@ -1,0 +1,12 @@
+{
+	["manifestVersion"] = "1.0",
+	["package"] = "bank_account_maker",
+	["version"] = "1.0.0",
+	["name"] = "Account maker",
+	["repo"] = "tree/master/account_maker",
+	["description"] = "Machine to create one account per player and dispense a credit card",
+	["authors"] = "AR2000AR",
+	["dependencies"] = {
+		["bank_api"] = "oppm"
+	}
+}

@@ -1,0 +1,10 @@
+{
+	["manifestVersion"] = "1.0",
+	["package"] = "libcb",
+	["version"] = "2.0.0",
+	["name"] = "libCB",
+	["repo"] = "tree/master/libCB",
+	["description"] = "library used to read and write CB",
+	["note"] = "CB are unmanaged floppies",
+	["authors"] = "AR2000AR"
+}

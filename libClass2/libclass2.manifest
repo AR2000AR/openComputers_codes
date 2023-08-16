@@ -1,0 +1,9 @@
+{
+	["manifestVersion"] = "1.0",
+	["package"] = "libclass2",
+	["version"] = "1.0.0",
+	["name"] = "libClass2",
+	["repo"] = "tree/master/libClass2",
+	["description"] = "A new and improved version of libclass, with cleaner syntax for cleaner code",
+	["authors"] = "AR2000AR"
+}

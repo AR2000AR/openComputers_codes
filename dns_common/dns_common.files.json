@@ -1,0 +1,14 @@
+{
+	"files": [
+		[
+			"lib",
+			"/usr/lib/"
+		]
+	],
+	"config": [
+		[
+			"etc/resolv.conf",
+			"/etc/"
+		]
+	]
+}

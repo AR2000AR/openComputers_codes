@@ -1,0 +1,10 @@
+{
+	["manifestVersion"] = "1.0",
+	["package"] = "item_id_catcher",
+	["version"] = "1.0.0",
+	["name"] = "itemIdCatcher",
+	["repo"] = "tree/master/itemIdCatcher",
+	["description"] = "Write id of item in the chest on the top to a file",
+	["note"] = "item are moved to a other chest",
+	["authors"] = "AR2000AR"
+}

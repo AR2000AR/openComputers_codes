@@ -1,0 +1,12 @@
+{
+	["manifestVersion"] = "1.0",
+	["package"] = "dns_server",
+	["version"] = "1.1.0",
+	["name"] = "DNS server daemon",
+	["repo"] = "tree/master/dns_server",
+	["description"] = "this package provide the dns server",
+	["authors"] = "AR2000AR",
+	["dependencies"] = {
+		["dns_common"] = "oppm"
+	}
+}

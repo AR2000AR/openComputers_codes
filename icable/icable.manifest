@@ -1,0 +1,13 @@
+{
+	["manifestVersion"] = "1.0",
+	["package"] = "icable",
+	["version"] = "0.1.0",
+	["name"] = "icable",
+	["repo"] = "tree/master/icable",
+	["description"] = "Use the internet card instead of the network card with osinetwork",
+	["authors"] = "AR2000AR",
+	["dependencies"] = {
+		["osinetwork"] = "oppm",
+		["datahashlib"] = "oppm"
+	}
+}

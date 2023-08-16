@@ -1,0 +1,9 @@
+{
+	["manifestVersion"] = "1.0",
+	["package"] = "libcoin",
+	["version"] = "1.0.0",
+	["name"] = "libCoin",
+	["repo"] = "tree/master/libCoin",
+	["description"] = "small library used to moved coins from ordinarycoins from one chest to a other",
+	["authors"] = "AR2000AR"
+}

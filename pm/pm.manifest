@@ -1,0 +1,12 @@
+{
+	["manifestVersion"] = "1.0",
+	["package"] = "pm",
+	["version"] = "1.2.3",
+	["name"] = "pm Package Manager",
+	["repo"] = "tree/master/pm",
+	["description"] = "Package manager for OpenOS",
+	["authors"] = "AR2000AR",
+	["dependencies"] = {
+		["libtar"] = "oppm"
+	}
+}

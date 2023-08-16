@@ -1,0 +1,12 @@
+{
+	["manifestVersion"] = "1.0",
+	["package"] = "nslookup",
+	["version"] = "1.0.0",
+	["name"] = "nslookup",
+	["repo"] = "tree/master/nslookup",
+	["description"] = "cmd line tool to querry a name server",
+	["authors"] = "AR2000AR",
+	["dependencies"] = {
+		["dns_common"] = "oppm"
+	}
+}

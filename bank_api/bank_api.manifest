@@ -1,0 +1,13 @@
+{
+	["manifestVersion"] = "1.0",
+	["package"] = "bank_api",
+	["version"] = "1.1.0",
+	["name"] = "Bank API",
+	["repo"] = "tree/master/bank_api",
+	["description"] = "API used to send request to the bank server",
+	["note"] = "You will need to set the server address",
+	["authors"] = "AR2000AR",
+	["dependencies"] = {
+		["osinetwork"] = "oppm"
+	}
+}

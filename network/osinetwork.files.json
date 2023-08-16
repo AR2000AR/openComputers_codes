@@ -1,0 +1,22 @@
+{
+	"files": [
+		[
+			"lib",
+			"/usr/lib/"
+		],
+		[
+			"bin",
+			"/usr/bin/"
+		],
+		[
+			"boot/30_network.lua",
+			"/boot/"
+		]
+	],
+	"config": [
+		[
+			"etc/network/interfaces",
+			"/etc/network/"
+		]
+	]
+}

@@ -1,0 +1,9 @@
+{
+	["manifestVersion"] = "1.0",
+	["package"] = "crypttool",
+	["version"] = "1.0.0",
+	["name"] = "CryptTool",
+	["repo"] = "tree/master/crypttool",
+	["description"] = "Remount a filesystem and store everything as encrypted data. Use managed (default) floppy or HDD",
+	["authors"] = "AR2000AR"
+}

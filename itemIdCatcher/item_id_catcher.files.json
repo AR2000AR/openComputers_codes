@@ -1,0 +1,13 @@
+{
+	"files": [
+		[
+			"bin",
+			"/usr/bin/"
+		],
+		[
+			"man",
+			"/usr/man/"
+		]
+	],
+	"config": []
+}

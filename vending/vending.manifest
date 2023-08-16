@@ -1,0 +1,13 @@
+{
+	["manifestVersion"] = "1.0",
+	["package"] = "vending",
+	["version"] = "1.0.0",
+	["name"] = "Vending",
+	["repo"] = "tree/master/vending",
+	["description"] = "Vending machine program compatible with libCoin and bank_api",
+	["authors"] = "AR2000AR",
+	["dependencies"] = {
+		["libCoin"] = "oppm",
+		["bank_api"] = "oppm"
+	}
+}

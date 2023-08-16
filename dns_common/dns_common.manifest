@@ -1,0 +1,12 @@
+{
+	["manifestVersion"] = "1.0",
+	["package"] = "dns_common",
+	["version"] = "1.0.1",
+	["name"] = "DNS common files",
+	["repo"] = "tree/master/dns_common",
+	["description"] = "basic files used by the dns server as well as the resolver library",
+	["authors"] = "AR2000AR",
+	["dependencies"] = {
+		["osinetwork"] = "oppm"
+	}
+}

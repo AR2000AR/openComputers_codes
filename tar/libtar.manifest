@@ -1,0 +1,9 @@
+{
+	["manifestVersion"] = "1.0",
+	["package"] = "libtar",
+	["version"] = "1.1.0",
+	["name"] = "libtar",
+	["repo"] = "tree/master/tar",
+	["description"] = "Librairy to extract and list the content of tar archive",
+	["authors"] = "AR2000AR, luarock"
+}

@@ -1,0 +1,9 @@
+{
+	["manifestVersion"] = "1.0",
+	["package"] = "instgen",
+	["version"] = "1.0.0",
+	["name"] = "Repo installer",
+	["repo"] = "tree/master/repo-installer",
+	["description"] = "A set of tools for making installable floppies for OpenComputers from OPPM repositories.",
+	["authors"] = "Izaya, AR2000AR"
+}

@@ -1,0 +1,13 @@
+{
+	"files": [
+		[
+			"lnfsc/lib",
+			"/usr/lib/"
+		],
+		[
+			"lnfsc/bin",
+			"/usr/bin/"
+		]
+	],
+	"config": []
+}

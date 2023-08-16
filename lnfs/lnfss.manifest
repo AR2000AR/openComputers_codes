@@ -1,0 +1,9 @@
+{
+	["manifestVersion"] = "1.0",
+	["package"] = "lnfss",
+	["version"] = "1.0.0",
+	["name"] = "Lua Network File System Server",
+	["repo"] = "tree/master/lnfs",
+	["description"] = "Share your local file system with other computers. Root folder is configurable in rc.cfg",
+	["authors"] = "AR2000AR"
+}

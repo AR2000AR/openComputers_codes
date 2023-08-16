@@ -1,0 +1,14 @@
+{
+	"files": [
+		[
+			"bin/pm-get.lua",
+			"/usr/bin/"
+		]
+	],
+	"config": [
+		[
+			"etc/pm/sources.list",
+			"/etc/pm/"
+		]
+	]
+}

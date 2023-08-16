@@ -1,0 +1,13 @@
+{
+	"files": [
+		[
+			"bin",
+			"/usr/bin/"
+		],
+		[
+			"etc/vending",
+			"/etc/vending/"
+		]
+	],
+	"config": []
+}

@@ -1,0 +1,10 @@
+{
+	["manifestVersion"] = "1.0",
+	["package"] = "bank_dev_tools",
+	["version"] = "1.0.0",
+	["name"] = "bank_dev_tools",
+	["repo"] = "tree/master/bank_dev_tools",
+	["description"] = "collection of tools used to help in the bank software development",
+	["note"] = "DEV ONLY",
+	["authors"] = "AR2000AR"
+}

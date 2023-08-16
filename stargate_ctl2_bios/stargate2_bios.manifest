@@ -1,0 +1,10 @@
+{
+	["manifestVersion"] = "1.0",
+	["package"] = "stargate2_bios",
+	["version"] = "1.1.0",
+	["name"] = "Stargate Ctl BIOS",
+	["repo"] = "tree/master/stargate_ctl2_bios",
+	["description"] = "A small BIOS compatible program to make a gate smart",
+	["note"] = "/usr/share/stargate/stargate.bios",
+	["authors"] = "AR2000AR"
+}

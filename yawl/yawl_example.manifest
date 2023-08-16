@@ -1,0 +1,13 @@
+{
+	["manifestVersion"] = "1.0",
+	["package"] = "yawl_example",
+	["version"] = "1.7.0",
+	["name"] = "Yet Another Widget Library Example file",
+	["repo"] = "tree/master/yawl",
+	["description"] = "New version of libgui, but using libclass2 and cleaner code and interface.",
+	["note"] = "This is only a example file",
+	["authors"] = "AR2000AR",
+	["dependencies"] = {
+		["yawl"] = "oppm"
+	}
+}

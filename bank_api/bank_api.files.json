@@ -1,0 +1,18 @@
+{
+	"files": [
+		[
+			"lib",
+			"/usr/lib/"
+		],
+		[
+			"man",
+			"/usr/man/"
+		]
+	],
+	"config": [
+		[
+			"etc/bank/api/api.conf",
+			"/etc/bank/api/"
+		]
+	]
+}

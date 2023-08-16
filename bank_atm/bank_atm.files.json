@@ -1,0 +1,13 @@
+{
+	"files": [
+		[
+			"bin",
+			"/usr/bin/"
+		],
+		[
+			"share",
+			"/usr/share/"
+		]
+	],
+	"config": []
+}
