@@ -1,7 +1,7 @@
 {
 	["manifestVersion"] = "1.0",
 	["package"] = "yawl",
-	["version"] = "1.6.3",
+	["version"] = "1.7.0",
 	["name"] = "Yet Another Widget Library",
 	["repo"] = "tree/master/yawl",
 	["description"] = "New version of libgui, but using libclass2 and cleaner code and interface.",

@@ -4,9 +4,7 @@
 ---@field private _size Size
 ---@field private _enabled boolean
 ---@field private _visible boolean
----@field private _z number
----@field private _callback function
----@field private _callbackArgs table
+---@field private _callback table<string,table>
 ---@operator call:Widget
 ---@overload fun(parent:Frame,x:number,y:number):Widget
 local Widget = require("libClass2")()
@@ -32,10 +30,11 @@ function Widget:new(parent, x, y)
     end
     ---@cast o Widget
     o._parentFrame = parent
-    o._position = {x = 1, y = 1}
+    o._position = {x = x, y = y, z = 0}
     o._size = {width = 1, height = 1}
-    o:position(x, y)
-    if (parent) then parent:addChild(o) end
+    o._callback = {}
+
+    if (parent) then parent:addChild(o) end --Frame may have no parent
     return o
 end
 
@@ -112,8 +111,8 @@ end
 ---@return number
 function Widget:z(value)
     checkArg(1, value, 'number', 'nil')
-    local oldValue = self._z or 0
-    if (value) then self._z = value end
+    local oldValue = self._position.z
+    if (value) then self._position.z = value end
     return oldValue
 end
 
@@ -166,12 +165,16 @@ function Widget:backgroundColor(value)
     return oldValue
 end
 
----@param value? number
+---@param value? number|false
 ---@return number
 function Widget:foregroundColor(value)
-    checkArg(1, value, 'number', 'nil')
+    checkArg(1, value, 'number', 'boolean', 'nil')
     local oldValue = self._foregroundColor
-    if (value) then self._foregroundColor = value end
+    if (value == false) then
+        self._foregroundColor = nil
+    elseif (value ~= nil) then
+        self._foregroundColor = value
+    end
     return oldValue
 end
 
@@ -209,22 +212,41 @@ end
 ---@param ...? any
 ---@return function,any ...
 function Widget:callback(callback, ...)
-    checkArg(1, callback, 'function', 'nil')
-    local oldCallback = self._callback or self.defaultCallback
-    local oldArgs = self._callbackArgs or {}
     if (callback) then
-        self._callback = callback
+        return self:singleCallback("any", callback, ...)
+    else
+        return self:singleCallback("any")
     end
-    if (...) then self._callbackArgs = table.pack(...) end
-    return oldCallback, table.unpack(oldArgs)
+end
+
+---Register a callback function for a signle event type
+---@param eventName string
+---@param callback function
+---@param ...? any
+---@return function,any ...
+---@overload fun(self:Widget,eventName:string):function,any
+function Widget:singleCallback(eventName, callback, ...)
+    checkArg(1, eventName, "string")
+    checkArg(2, callback, "function", "nil")
+    if (callback == nil) then
+        local current = self._callback[eventName]
+        if (not current) then
+            current = self._callback["any"] or {self.defaultCallback}
+        end
+        return table.unpack(current)
+    else
+        local old = table.pack(self:singleCallback(eventName))
+        self._callback[eventName] = {callback, ...}
+        return table.unpack(old)
+    end
 end
 
 ---Invoke the callback method
 ---@param ... any Signal data
-function Widget:invokeCallback(...)
+function Widget:invokeCallback(eName, ...)
     if (not self:enabled()) then return end
-    local callback = self:callback()
-    return callback(self, select(2, self:callback()), ...)
+    local callback = self:singleCallback(eName)
+    return callback(self, select(2, self:callback()), eName, ...)
 end
 
 ---Check if the x,y coordinates match the Widget

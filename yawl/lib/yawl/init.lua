@@ -1,6 +1,7 @@
 ---@class Position
 ---@field x number
 ---@field y number
+---@field z number
 
 ---@class Size
 ---@field width number

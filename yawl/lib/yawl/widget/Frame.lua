@@ -111,19 +111,18 @@ end
 
 function Frame:propagateEvent(eName, screenAddress, x, y, ...)
     if (not self:enabled()) then return end
-    --TODO : sort child by z, making sure to keep the original order in a new table
-    --TODO : reverse the sort
-    for _, w in pairs(self._childs) do
+    table.sort(self._childs, function(a, b) return a:z() < b:z() end)
+    for i = #(self._childs), 1, -1 do
+        local w = self._childs[i]
         --TODO : find a new yeilding methods
         --os.sleep()
         if (w:checkCollision(x, y)) then
             if (w:instanceOf(Frame)) then
                 ---@cast w Frame
-                w:propagateEvent(eName, screenAddress, x, y, ...)
-                --TODO : return true if returned true
+                if (w:propagateEvent(eName, screenAddress, x, y, ...) == true) then return true end
             end
             w:invokeCallback(eName, screenAddress, x, y, ...)
-            --TODO : return true
+            return true
         end
     end
 end
@@ -168,6 +167,19 @@ function Frame:_restoreBuffer(defaultBuffer, newBuffer)
     end
 end
 
+function Frame:_sort()
+    local unsorted = false
+    for i, w in pairs(self._childs) do
+        if (i > 1) then
+            if (self._childs[i - 1]:z() > w:z()) then
+                unsorted = true
+                break
+            end
+        end
+    end
+    if (unsorted) then table.sort(self._childs, function(a, b) return a:z() < b:z() end) end
+end
+
 ---Draw the widgets in the container
 function Frame:draw()
     if (not self:visible()) then return end
@@ -185,16 +197,7 @@ function Frame:draw()
     end
 
     --sort widgets by z
-    local unsorted = false
-    for i, w in pairs(self._childs) do
-        if (i > 1) then
-            if (self._childs[i - 1]:z() > w:z()) then
-                unsorted = true
-                break
-            end
-        end
-    end
-    if (unsorted) then table.sort(self._childs, function(a, b) return a:z() < b:z() end) end
+    self:_sort()
 
     --draw widgets
     for _, element in pairs(self._childs) do

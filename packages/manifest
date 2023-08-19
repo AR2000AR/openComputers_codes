@@ -239,7 +239,7 @@
 	["yawl_example"] = {
 		["manifestVersion"] = "1.0",
 		["package"] = "yawl_example",
-		["version"] = "1.7.0",
+		["version"] = "1.7.1",
 		["name"] = "Yet Another Widget Library Example file",
 		["repo"] = "tree/master/yawl",
 		["description"] = "New version of libgui, but using libclass2 and cleaner code and interface.",
@@ -253,7 +253,7 @@
 	["yawl"] = {
 		["manifestVersion"] = "1.0",
 		["package"] = "yawl",
-		["version"] = "1.6.3",
+		["version"] = "1.7.0",
 		["name"] = "Yet Another Widget Library",
 		["repo"] = "tree/master/yawl",
 		["description"] = "New version of libgui, but using libclass2 and cleaner code and interface.",
