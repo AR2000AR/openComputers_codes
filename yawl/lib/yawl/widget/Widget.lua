@@ -246,7 +246,7 @@ end
 function Widget:invokeCallback(eName, ...)
     if (not self:enabled()) then return end
     local callback = self:singleCallback(eName)
-    return callback(self, select(2, self:callback()), eName, ...)
+    return callback(self, select(2, self:singleCallback(eName)), eName, ...)
 end
 
 ---Check if the x,y coordinates match the Widget
