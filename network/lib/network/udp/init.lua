@@ -1,6 +1,6 @@
 ---@class udpLib
 local udp = {
     UDPLayer = require("network.udp.UDPLayer"),
-    --UDPSocket = require("network.udp.UDPSocket"),
+    UDPDatagram = require("network.udp.UDPDatagram")
 }
 return udp

@@ -12,7 +12,6 @@ local ipv4Consts = require("network.ipv4.constantes")
 local UDPDatagram = class(Payload)
 UDPDatagram.payloadType = ipv4Consts.PROTOCOLS.UDP
 
----@param self UDPDatagram
 ---@param srcPort number
 ---@param dstPort number
 ---@param payload string
@@ -23,7 +22,7 @@ function UDPDatagram:new(srcPort, dstPort, payload)
     checkArg(3, payload, "string")
     local o = self.parent()
     setmetatable(o, {__index = self})
-
+    ---@cast o UDPDatagram
     o:dstPort(dstPort)
     o:srcPort(srcPort)
     o:payload(payload)

@@ -1,4 +1,3 @@
---local UDPSocket   = require("network.udp.UDPSocket")
 local UDPDatagram  = require("network.udp.UDPDatagram")
 local IPv4Packet   = require("network.ipv4.IPv4Packet")
 local ipv4Address  = require("network.ipv4.address")
@@ -9,7 +8,6 @@ local class        = require("libClass2")
 
 ---@class UDPLayer : NetworkLayer
 ---@field private _sockets table<number,table<number,table<number,table<number,UDPSocket>>>>
----@field private _layer NetworkLayer
 ---@operator call:UDPLayer
 ---@overload fun(layer:IPv4Layer):UDPLayer
 local UDPLayer = class(NetworkLayer)
