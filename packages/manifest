@@ -296,7 +296,7 @@
 	["osinetwork"] = {
 		["manifestVersion"] = "1.0",
 		["package"] = "osinetwork",
-		["version"] = "2.4.2",
+		["version"] = "2.5.0",
 		["name"] = "OSI Network stack",
 		["repo"] = "tree/master/network",
 		["description"] = "A close to official rfc emulation of the OSI layers for OpenOS. Include Ethernet, ARP, ICMP, UDP. Also provide a luasocket libe librairy",

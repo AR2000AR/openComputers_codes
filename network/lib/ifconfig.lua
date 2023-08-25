@@ -6,6 +6,7 @@ local network       = require("network")
 local icmp          = require("network.icmp")
 local ipv4          = require("network.ipv4")
 local udp           = require("network.udp")
+local tcp           = require("network.tcp")
 local ethernet      = require("network.ethernet")
 local DummyEthernet = require("network.ethernet.DummyEthernet")
 
@@ -65,6 +66,10 @@ end
 if (not network.interfaces.udp) then
     network.internal.udp = udp.UDPLayer(network.router)
     network.router:higherLayer(network.internal.udp.layerType, network.internal.udp)
+end
+if (not network.interfaces.tcp) then
+    network.internal.tcp = tcp.TCPLayer(network.router)
+    network.router:higherLayer(network.internal.tcp.layerType, network.internal.tcp)
 end
 --=============================================================================
 ---@class iInfo

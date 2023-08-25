@@ -11,7 +11,9 @@ networklib.internal   = {
     ---@type UDPLayer
     udp = nil,
     ---@type ICMPLayer
-    icmp = nil
+    icmp = nil,
+    ---@type TCPLayer
+    tcp = nil
 }
 ---@type table<string,InterfaceTypes>
 networklib.interfaces = {}
@@ -41,6 +43,11 @@ networklib.udp = {}
 
 function networklib.udp.getInterface()
     return networklib.internal.udp
+end
+
+networklib.tcp = {}
+function networklib.tcp.getInterface()
+    return networklib.internal.tcp
 end
 
 --#endregion
