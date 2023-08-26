@@ -68,9 +68,9 @@ local function closePopup(popup)
 end
 
 local function creerCompte(drive)
-  printStatus("demmande du compte")
+  printStatus("Requesting new account")
   local status, acUUID = bank_api.createAccount()
-  printStatus("creation de compte : " .. status)
+  printStatus("Account creation status : " .. status)
   if (status == 0) then
     ---@cast acUUID string
     local pin, rawCBdata
@@ -116,9 +116,9 @@ local function voirCompte(pin, rawData)
       keypad:clearInput()
       keypad:enable(false)
       keypad:setVisible(false)
-      printStatus("demmande des info")
+      printStatus("Asking for informations...")
       local status, solde = bank_api.getCredit(cbData)
-      printStatus("demmande des info : " .. status)
+      printStatus("Asking for informations : " .. status)
       if (status == 0) then
         acUUIDText:setText("uuid : " .. cbData.uuid)
         soldeText:setText("Solde : " .. solde)
@@ -155,7 +155,7 @@ local function buttonEventHandler(buttonName)
       if (component.isAvailable("drive")) then voirCompte(nil, libCB.loadCB(component.drive)) end
     elseif (buttonName == B_NAME_CREATE_ACCOUNT) then
       mode = MODE_CREATE_ACCOUNT_1
-      printStatus("mode création de compte")
+      printStatus("Mod : account creation")
       openPopup(cardSupportPopup)
     end
   elseif (mode == MODE_CREATE_ACCOUNT_1) then
