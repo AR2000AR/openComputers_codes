@@ -243,8 +243,8 @@ function ifconfig.ifup(iName)
 
             --#region find component from interface name
             local modem
-            if (iName:match("^eth%d$")) then
-                local compId = tonumber(iName:match("%d"))
+            if (iName:match("^eth%d+$")) then
+                local compId = tonumber(iName:match("%d+"))
                 for modemCard in component.list("modem") do
                     local proxy = component.proxy(modemCard)
                     if proxy.slot == tonumber(compId) then
@@ -296,7 +296,7 @@ function ifconfig.autoIfup(iName)
     local _, auto = ifconfig.loadInterfaces(INTERFACES_FILE)
     local interface = ifconfig.findInterface(iName)
     if (not interface) then
-        interface = ifconfig.findInterface(string.format("eth%d", component.proxy(iName).slot))
+        interface = ifconfig.findInterface(string.format("eth%d+", component.proxy(iName).slot))
     end
     iName = interface.iName
     if (auto[iName] or auto[component.get(iName, "modem")]) then
