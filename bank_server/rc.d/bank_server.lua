@@ -300,7 +300,7 @@ local function messageHandler(datagram, remote_add, remote_port)
       handlerGetCredit(remote_add, remote_port, arg.cbData)
     else
       log("PROTOCOLE_GET_CREDIT : error cb")
-      sendMsg(remote_add, PROTOCOLE_ERROR_CB, PROTOCOLE_GET_CREDIT)
+      sendMsg(remote_add, remote_port, PROTOCOLE_ERROR_CB, PROTOCOLE_GET_CREDIT)
     end
     -------------------------------------
   elseif (command == PROTOCOLE_MAKE_TRANSACTION) then
@@ -308,7 +308,7 @@ local function messageHandler(datagram, remote_add, remote_port)
       handlerMakeTransaction(remote_add, remote_port, arg.cbData.uuid, arg.dst, arg.amount)
     else
       log("PROTOCOLE_MAKE_TRANSACTION : error cb")
-      sendMsg(remote_add, PROTOCOLE_ERROR_CB, command)
+      sendMsg(remote_add, remote_port, PROTOCOLE_ERROR_CB, command)
     end
     -------------------------------------
   elseif (command == PROTOCOLE_NEW_ACCOUNT) then
@@ -322,7 +322,7 @@ local function messageHandler(datagram, remote_add, remote_port)
       handlerEditBalance(remote_add, remote_port, arg.secret, arg.cbData.uuid, arg.amount)
     else
       log("PROTOCOLE_EDIT : error cb")
-      sendMsg(remote_add, PROTOCOLE_ERROR_CB, command)
+      sendMsg(remote_add, remote_port, PROTOCOLE_ERROR_CB, command)
     end
   else
     log("Unknown error : " .. command)
