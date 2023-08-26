@@ -1,7 +1,7 @@
 {
 	["manifestVersion"] = "1.0",
 	["package"] = "bank_client",
-	["version"] = "1.2.0",
+	["version"] = "1.2.1",
 	["name"] = "bank client app",
 	["repo"] = "tree/master/bank_client",
 	["description"] = "The client app for the banker",
