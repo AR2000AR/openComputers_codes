@@ -7,7 +7,7 @@
 	["description"] = "Vending machine program compatible with libCoin and bank_api",
 	["authors"] = "AR2000AR",
 	["dependencies"] = {
-		["libCoin"] = "oppm",
+		["libcoin"] = "oppm",
 		["bank_api"] = "oppm"
 	}
 }
