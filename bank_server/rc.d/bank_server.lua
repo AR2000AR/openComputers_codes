@@ -345,8 +345,15 @@ local function listenSocket(listenedSocket)
   end
 end
 --=============================================================================
+local function running()
+  if (not listenerThread) then return false end
+  if (listenerThread:status() == "running") then return true end
+  return false
+end
+
 ---@diagnostic disable-next-line: lowercase-global
 function start(msg) --start the service
+  if (running()) then return end
   if (args == "verbose") then
     verbose = true
     log("==========verbose on==========")
@@ -383,7 +390,7 @@ function start(msg) --start the service
 
 
   serverSocket = socket.udp()
-  serverSocket:setsockname("*", SERVER_PORT)
+  assert(serverSocket:setsockname("*", SERVER_PORT))
   listenerThread = thread.create(listenSocket, serverSocket)
   listenerThread:detach()
   --event.listen("modem_message", messageHandler) --register the listener for modem_message
@@ -391,6 +398,7 @@ end
 
 ---@diagnostic disable-next-line: lowercase-global
 function stop()
+  if (not running()) then return end
   event.ignore("modem_message", messageHandler) --delete the listener
   listenerThread:kill()
   serverSocket:close()

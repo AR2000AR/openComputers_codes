@@ -1,7 +1,7 @@
 {
 	["manifestVersion"] = "1.0",
 	["package"] = "bank_server",
-	["version"] = "1.1.1",
+	["version"] = "1.1.2",
 	["name"] = "Bank server",
 	["repo"] = "tree/master/bank_server",
 	["description"] = "The bank server service",
