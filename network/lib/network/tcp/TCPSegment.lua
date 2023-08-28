@@ -1,6 +1,7 @@
 local class = require("libClass2")
 local Payload = require("network.abstract.Payload")
 local ipv4Consts = require("network.ipv4.constantes")
+local utils = require("network.utils")
 
 ---@class TCPSegment:Payload
 ---@operator call:TCPSegment
@@ -123,7 +124,7 @@ end
 ---@return number
 function TCPSegment:windowSize(value)
     checkArg(1, value, 'number', 'nil')
-    local oldValue = self._windowSize or 1
+    local oldValue = self._windowSize or 8000
     if (value ~= nil) then self._windowSize = value end
     return oldValue
 end
@@ -136,6 +137,12 @@ function TCPSegment:checksum(value)
     local oldValue = self._checksum or 0
     if (value ~= nil) then self._checksum = value end
     return oldValue
+end
+
+function TCPSegment:calculateChecksum(src, dst)
+    local packed = self:pack(true)
+    packed = string.pack('>IIxBH', src, dst, 6, #packed) .. packed
+    return utils.checksum(packed)
 end
 
 ---@param value? number
@@ -167,13 +174,17 @@ end
 
 TCPSegment.payloadFormat = ">HHIIBBHHH"
 
-function TCPSegment:pack()
+---@param skipCheksum? boolean
+---@return string
+function TCPSegment:pack(skipCheksum)
+    local chk = self:checksum()
+    if (skipCheksum) then chk = 0 end
     local offsetAndReserved = self:offset() << 4
     local header = string.pack(TCPSegment.payloadFormat,
                                self:srcPort(), self:dstPort(),
                                self:seq(), self:ack(),
                                offsetAndReserved, self:flags(),
-                               self:windowSize(), self:checksum(),
+                               self:windowSize(), chk,
                                self:urgentPtr())
     header = header .. string.pack(">c" .. #(self:options()), self:options())
     header = header .. string.pack(">c" .. #(self:payload()), self:payload())

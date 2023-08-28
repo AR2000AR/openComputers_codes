@@ -1,8 +1,10 @@
-local class = require("libClass2")
-local TCPSegment = require("network.tcp.TCPSegment")
-local network = require("network")
+local class       = require("libClass2")
+local TCPSegment  = require("network.tcp.TCPSegment")
+local network     = require("network")
 local ipv4Address = require("network.ipv4.address")
-local os = require("os")
+local utils       = require("network.utils")
+local os          = require("os")
+
 
 local f = TCPSegment.Flags
 
@@ -34,7 +36,7 @@ local f = TCPSegment.Flags
 ---@operator call:TCPSocket
 ---@field private _sockname table
 ---@field private _peername table
----@field private _buffer table<string>
+---@field private _buffer Buffer
 ---@field private _timeout number
 ---@field private _kind TCPSocketKind
 ---@field private _state TCPSocketState
@@ -42,6 +44,8 @@ local f = TCPSegment.Flags
 ---@field private _backlog table
 ---@field private _seq number current seq number
 ---@field private _ack number last ack value
+---@field private _rcvAck number last recived ack
+---@field private _outBuffer table
 ---@operator call:TCPSocket
 ---@overload fun(self):TCPSocket
 local TCPSocket = class()
@@ -55,11 +59,13 @@ function TCPSocket:new()
     o._peername   = {"0.0.0.0", 0}
     o._backlog    = {}
     o._backlogLen = 0
-    o._buffer     = {}
+    o._buffer     = utils.Buffer()
+    o._outBuffer  = {}
     o._timeout    = 0
     o._kind       = "master"
     o._state      = "CLOSED"
     o._seq        = math.random(0x7fff)
+    o._ack        = 0
     return o
 end
 
@@ -81,6 +87,7 @@ function TCPSocket:_makeDataSegment(data)
     seg:payload(data)
     seg:flag(f.PSH, true)
     seg:seq(self._seq)
+    seg:ack(self._ack)
     return seg
 end
 
@@ -88,7 +95,8 @@ end
 ---@param seg TCPSegment
 ---@param received TCPSegment
 function TCPSocket:_setAck(seg, received)
-    seg:ack(received:seq() + 1)
+    seg:ack(received:seq() + math.max(1, #(received:payload())))
+    self._ack = seg:ack()
     seg:flag(f.ACK, true)
     return seg
 end
@@ -186,7 +194,7 @@ function TCPSocket:connect(address, port)
 end
 
 function TCPSocket:dirty()
-    return #self._buffer > 0
+    return self._buffer:len() > 0
 end
 
 function TCPSocket:getfd()
@@ -232,8 +240,26 @@ function TCPSocket:listen(backlog)
     return 1
 end
 
-function TCPSocket:receive()
-    --TODO write body for recei
+---Reads data from a client object, according to the specified read pattern. Patterns follow the Lua file I/O format, and the difference in performance between all patterns is negligible.\
+---
+---Pattern can be any of the following:
+---- '*a': reads from the socket until the connection is closed. No end-of-line translation is performed;
+---- '*l': reads a line of text from the socket. The line is terminated by a LF character (ASCII 10), optionally preceded by a CR character (ASCII 13). The CR and LF characters are not included in the returned line. In fact, all CR characters are ignored by the pattern. This is the default pattern;
+---- number: causes the method to read a specified number of bytes from the socket.
+---
+---Prefix is an optional string to be concatenated to the beginning of any received data before return.\
+---
+---If successful, the method returns the received pattern. In case of error, the method returns nil followed by an error message, followed by a (possibly empty) string containing the partial that was received. The error message can be the string 'closed' in case the connection was closed before the transmission was completed or the string 'timeout' in case there was a timeout during the operation.
+---@param pattern? string
+---@param prefix? string
+---@return unknown
+function TCPSocket:receive(pattern, prefix)
+    checkArg(1, pattern, "string", 'number', "nil")
+    if (not pattern) then pattern = "*a" end
+    checkArg(2, prefix, "string", "nil")
+    --TODO timeout
+    local data = self._buffer:read(pattern)
+    return (prefix or "") .. data
 end
 
 ---@param data string
@@ -247,7 +273,7 @@ function TCPSocket:sendRaw(seg)
     --TODO buffer outgoing
     local from = ipv4Address.fromString(self:getsockname())
     local to = ipv4Address.fromString(self:getpeername())
-    --seg:windowSize(math.max(seg:windowSize(), network.tcp.getInterface():mtu()))
+    self._outBuffer[seg:seq() + #(seg:payload()) + 1] = seg
     network.tcp.getInterface():send(from, to, seg)
     self._seq = self._seq + #(seg:payload())
 end
@@ -273,7 +299,7 @@ function TCPSocket:settimeout(value)
 end
 
 function TCPSocket:shutdown()
-    --TODO write body for shutd
+    self:close()
 end
 
 ---Handle the payload recived by UDPLayer
@@ -282,10 +308,15 @@ end
 ---@param to number
 ---@param tcpSegment TCPSegment
 function TCPSocket:payloadHandler(from, to, tcpSegment)
-    --TODO send ack
     if (tcpSegment:flag(f.RST)) then
         self._state = "CLOSED"
         network.tcp.getInterface():close(self)
+    end
+    if (tcpSegment:flag(f.ACK)) then
+        self._rcvAck = tcpSegment:ack()
+        if (self._outBuffer[tcpSegment:ack()]) then
+            self._outBuffer[tcpSegment:ack()] = nil
+        end
     end
     if (self._state == "LISTEN") then
         if (tcpSegment:flag(f.SYN)) then
@@ -339,14 +370,18 @@ function TCPSocket:payloadHandler(from, to, tcpSegment)
             seg:flag(f.ACK, true)
             self:sendRaw(seg)
             self._seq = self._seq + 1
+            return
         end
-        --TODO send ack
-        --TODO push event on PSH
-        table.insert(self._buffer, tcpSegment:payload())
+        if (#(tcpSegment:payload()) > 0) then
+            --TODO check ordering and duplication
+            self._buffer:insert(tcpSegment:payload())
+            self:sendRaw(self:_makeAck(tcpSegment))
+        end
     end
 end
 
 ---Create and return a new unconnected TCP socket
+---@return TCPSocket
 local function tcp()
     return TCPSocket()
 end
