@@ -70,7 +70,7 @@ end
 
 ---Get the route for the prodvided network address / mask
 ---@param address? number
----@return Route
+---@return Route? route,string? reason
 function IPv4Router:getRoute(address)
     checkArg(1, address, 'nil', 'number')
     if (not address) then
@@ -85,7 +85,7 @@ function IPv4Router:getRoute(address)
         local address2 = bit32.band(route.network, route.mask)
         if (address1 == address2) then return route end
     end
-    error(string.format("No route found to %s. This is not normal. Make sure a default route is set", ipv4Address.tostring(address)), 2)
+    return nil, "No route found"
 end
 
 ---Remove a route
@@ -144,9 +144,12 @@ function IPv4Router:send(packet)
     packet:ttl(packet:ttl() - 1)
     if (packet:ttl() < 1) then
         --TODO : icmp error if ttl 0
-        return
+        return nil, "TTL"
     end
-    local route = self:getRoute(packet:dst())
+    local route, reason = self:getRoute(packet:dst())
+    if (not route) then
+        return nil, reason
+    end
     if (packet:src() == 0) then
         packet:src(route.interface:addr())
     end
@@ -156,7 +159,6 @@ function IPv4Router:send(packet)
         packet:payload(udpPacket:pack())
     elseif (packet:protocol() == ipv4Consts.PROTOCOLS.TCP) then
         local tcpSegment = TCPSegment.unpack(packet:payload())
-        tcpSegment:windowSize(route.interface:mtu() - 5 * 4)
         tcpSegment:checksum(tcpSegment:calculateChecksum(packet:src(), packet:dst()))
         packet:payload(tcpSegment:pack())
     end
@@ -165,6 +167,7 @@ function IPv4Router:send(packet)
     else
         route.interface:send(route.gateway, packet)
     end
+    return true
 end
 
 ---@param from number
