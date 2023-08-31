@@ -33,8 +33,8 @@ function TCPLayer:payloadHandler(from, to, payload)
         if (not socket) then
             local rstseg = TCPSegment(seg:dstPort(), seg:srcPort(), "")
             rstseg:flags(TCPSegment.Flags.RST|TCPSegment.Flags.ACK)
-            rstseg:seq(0)
-            rstseg:ack(seg:seq() + 1)
+            rstseg:seq(seg:flag(TCPSegment.Flags.ACK) and seg:ack() or 0)
+            rstseg:ack(seg:seq() + seg:len())
             self:send(to, from, rstseg)
             return
         end
@@ -176,6 +176,39 @@ function TCPLayer:mtu()
     return self:layer():mtu() - 5 * 4 -- minimum header size is 5*32 bits or 5*4 bytes
 end
 
+---@param socket TCPSocket
+---@param address number
+---@param port number
+---@return number? port, string? reason
+function TCPLayer:connectSocket(socket, address, port)
+    self:close(socket) --delete the socket from the internal data
+    local lIPString, lPort = socket:getsockname()
+    local lIP
+    if (lIPString == "0.0.0.0") then
+        local r = network.router:getRoute(address)
+        if (r) then lIP = r.interface:addr() end
+    else
+        lIP = ipv4Address.fromString(lIPString)
+    end
+    if (lIP ~= 0 and lPort == 0) then
+        self._sockets[lIP] = self._sockets[lIP] or {}
+        if (lPort == 0) then
+            repeat
+                lPort = math.random(49152, 65535)
+            until not self._sockets[lIP][lPort] or not self._sockets[lIP][lPort][address] or not self._sockets[lIP][lPort][address][port]
+        end
+        if (not self:addSocket(socket, lIP, lPort, address, port)) then
+            return nil, "Port busy"
+        end
+    else
+        if (not self:addSocket(socket, lIP, lPort, address, port)) then
+            return nil, "Port busy"
+        end
+    end
+    socket:_setsockname(ipv4Address.tostring(lIP), lPort)
+    return 1
+end
+
 ---add a socket to the internal list. Return false if could not be added (addrress / port already in use)
 ---@param socket TCPSocket
 ---@param localAddress number
@@ -208,6 +241,8 @@ function TCPLayer:addSocket(socket, localAddress, localPort, remoteAddress, remo
 
     if (not tmp[remotePort]) then
         tmp[remotePort] = socket
+        local r = network.router:getRoute(remoteAddress ~= 0 and remoteAddress or localAddress)
+        if (r) then socket:mss(r.interface:mtu() - 40) end
         return true
     else
         return false

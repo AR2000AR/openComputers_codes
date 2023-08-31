@@ -38,14 +38,24 @@ local f = TCPSegment.Flags
 ---@field private _peername table
 ---@field private _buffer Buffer
 ---@field private _timeout number
+---@field private _timeoutMode "b"|"t"
 ---@field private _kind TCPSocketKind
 ---@field private _state TCPSocketState
 ---@field private _backlogLen number size of a LISTEN socket connexion backlog
 ---@field private _backlog table
----@field private _seq number current seq number
----@field private _ack number last ack value
----@field private _rcvAck number last recived ack
 ---@field private _outBuffer table
+---@field private _sndUna number send unacknowledged
+---@field private _sndNxt number send next
+---@field private _sndWnd number send window
+---@field private _sndUp number send urgent pointer
+---@field private _sndWl1 number segment sequence number used for last winow update
+---@field private _sndWl2 number send acknowledgment number used for last window update
+---@field private _IIS number iniital send sequence number
+---@field private _rcvNxt number receive next
+---@field private _rcvWnd number receive window
+---@field private _rcvUp number recive urgent pointer
+---@field private _IRS number initial recieve sequence number
+---@field private _mss number Maximum Segment Size
 ---@operator call:TCPSocket
 ---@overload fun(self):TCPSocket
 local TCPSocket = class()
@@ -55,18 +65,36 @@ function TCPSocket:new()
     local o = self.parent()
     setmetatable(o, {__index = self})
     ---@cast o TCPSocket
-    o._sockname   = {"0.0.0.0", 0}
-    o._peername   = {"0.0.0.0", 0}
-    o._backlog    = {}
-    o._backlogLen = 0
-    o._buffer     = utils.Buffer()
-    o._outBuffer  = {}
-    o._timeout    = 0
-    o._kind       = "master"
-    o._state      = "CLOSED"
-    o._seq        = math.random(0x7fff)
-    o._ack        = 0
+    o._sockname    = {"0.0.0.0", 0}
+    o._peername    = {"0.0.0.0", 0}
+    o._backlog     = {}
+    o._backlogLen  = 0
+    o._buffer      = utils.Buffer()
+    o._outBuffer   = {}
+    o._timeout     = -1
+    o._timeoutMode = "b"
+    o._kind        = "master"
+    o._state       = "CLOSED"
+    --TODO : https://datatracker.ietf.org/doc/html/rfc9293#section-3.4.1
+    o._ISS         = math.random(0xffffffff)
+    o._sndNxt      = o._ISS
+    o._sndUna      = o._ISS
+    o._rcvNxt      = -1
+    o._rcvUp       = -1
+    o._rcvWnd      = -1
+    o._sndWnd      = 8000
+    o._mss         = 536
     return o
+end
+
+---@package
+---@param value? number
+---@return number
+function TCPSocket:mss(value)
+    checkArg(1, value, 'number', 'nil')
+    local oldValue = self._mss
+    if (value ~= nil) then self._mss = value end
+    return oldValue
 end
 
 ---@protected
@@ -74,8 +102,12 @@ function TCPSocket:_makeSegment()
     local _, srcPort = self:getsockname()
     local _, dstPort = self:getpeername()
     local seg = TCPSegment(srcPort, dstPort, "")
-    seg:seq(self._seq)
-    seg:ack(self._ack)
+    seg:seq(self._sndNxt)
+    seg:windowSize(self:mss())
+    if (self._state == "ESTABLISHED") then
+        seg:ack(self._rcvNxt)
+        seg:flag(f.ACK, true)
+    end
     return seg
 end
 
@@ -86,8 +118,8 @@ function TCPSocket:_makeDataSegment(data)
     local seg = self:_makeSegment()
     seg:payload(data)
     seg:flag(f.PSH, true)
-    seg:seq(self._seq)
-    seg:ack(self._ack)
+    seg:seq(self._sndNxt)
+    seg:ack(self._rcvNxt)
     return seg
 end
 
@@ -96,7 +128,7 @@ end
 ---@param received TCPSegment
 function TCPSocket:_setAck(seg, received)
     seg:ack(received:seq() + math.max(1, #(received:payload())))
-    self._ack = seg:ack()
+    self._rcvNxt = seg:ack()
     seg:flag(f.ACK, true)
     return seg
 end
@@ -115,20 +147,42 @@ end
 function TCPSocket:accept()
     if (not self._kind == "server") then return nil, "not a server socket" end
     if (not self._state == "LISTEN") then return nil, "not a listening socket" end
-    --TODO handle timeout
-    while (#self._backlog == 0) do os.sleep() end
-    local waitingClient = table.remove(self._backlog, 1)
+    local t1 = os.time() --[[@as number]]
+    while (#(self._backlog) == 0) and not self:_hasTimedOut(t1) do os.sleep() end
+    if (#(self._backlog) == 0) then return nil, 'timeout' end
     local client = TCPSocket()
-    client._sockname = self._sockname
-    client._peername = {ipv4Address.tostring(waitingClient[1]), waitingClient[3]:srcPort()}
-    client._state = "SYN-RECEIVED"
-    client._kind = "client"
-    local seg = client:_makeAck(waitingClient[3])
-    seg:flag(f.SYN, true)
-    client:sendRaw(seg)
-    client._seq = client._seq + 1
-    network.tcp.getInterface():addSocket(client)
-    return client
+    local from, to, seg = table.unpack(table.remove(self._backlog, 1))
+    client:_doAccept(from, {ipv4Address.tostring(to), seg:dstPort()}, seg)
+    while client:getState() == "SYN-RECEIVED" and not self:_hasTimedOut(t1) do os.sleep() end
+    if (client:getState() == "ESTABLISHED") then
+        return client
+    else
+        return nil, "timeout"
+    end
+end
+
+---@package
+---@param from number
+---@param to table
+---@param seg TCPSegment
+function TCPSocket:_doAccept(from, to, seg)
+    self._peername = {ipv4Address.tostring(from), seg:srcPort()}
+    self._sockname = to
+    self._state = "SYN-RECEIVED"
+    self._kind = "client"
+    self._remoteWindowSize = seg:windowSize()
+    self._IRS = seg:seq()
+    local ackseg = self:_makeAck(seg)
+    ackseg:flag(f.SYN, true)
+    self:sendRaw(ackseg)
+    network.tcp.getInterface():addSocket(self)
+end
+
+---@package
+---@param address string
+---@param port number
+function TCPSocket:_setsockname(address, port)
+    self._sockname = {address, port}
 end
 
 function TCPSocket:getState()
@@ -147,7 +201,6 @@ function TCPSocket:bind(address, port)
     assert(port <= 0xffff and port >= 0)
     if (not self._kind == "master") then return nil, "Not a master socket" end
     if (address == '*') then address = "0.0.0.0" end
-    --TODO : convert hostname
     local s, r = network.tcp.getInterface():bindSocket(self, ipv4Address.fromString(address), port)
     if (s) then
         self._sockname = {address, s}
@@ -163,7 +216,6 @@ function TCPSocket:close()
         seg:flag(f.FIN, true)
         seg:flag(f.ACK, true)
         self:sendRaw(seg)
-        self._seq = self._seq + 1
         self._state = "FIN-WAIT-1"
     else
         self._state = "CLOSED"
@@ -171,23 +223,26 @@ function TCPSocket:close()
     end
 end
 
+---@param address string
+---@param port number
 function TCPSocket:connect(address, port)
     checkArg(1, address, "string")
     checkArg(2, port, "number")
     if (not self._kind == "master") then return nil, "not a master socket" end
+
     self._kind = "client"
-    self:bind("*", 0)
-    network.tcp.getInterface():close(self) --hack to delete the socket before we change it's peername
-    --TODO resolve address
+
+    local addressNum = ipv4Address.fromString(address)
+    local s, r = network.tcp.getInterface():connectSocket(self, addressNum, port)
+    if (s == nil) then return nil, r end
     self._peername = {address, port}
-    network.tcp.getInterface():addSocket(self)
-    address = ipv4Address.fromString(address)
+
     local seg = self:_makeSegment()
     seg:flags(f.SYN)
     self:sendRaw(seg)
     self._state = "SYN-SENT"
-    --TODO timeout
-    while self._state == "SYN-SENT" do
+    local t1 = os.time() --[[@as number]]
+    while self._state == "SYN-SENT" and not self:_hasTimedOut(t1) do
         os.sleep()
     end
     if (self._state == "ESTABLISHED") then return 1 else return nil, "Connection failed" end
@@ -252,18 +307,25 @@ end
 ---If successful, the method returns the received pattern. In case of error, the method returns nil followed by an error message, followed by a (possibly empty) string containing the partial that was received. The error message can be the string 'closed' in case the connection was closed before the transmission was completed or the string 'timeout' in case there was a timeout during the operation.
 ---@param pattern? string
 ---@param prefix? string
----@return unknown
+---@return string? data, string?reason
 function TCPSocket:receive(pattern, prefix)
     checkArg(1, pattern, "string", 'number', "nil")
     if (not pattern) then pattern = "*a" end
     checkArg(2, prefix, "string", "nil")
-    --TODO timeout
-    local data = self._buffer:read(pattern)
+    local t1 = os.time() --[[@as number]]
+    local data
+    repeat
+        data = self._buffer:read(pattern)
+    until data ~= nil or self:_hasTimedOut(t1)
+    if (not data) then
+        return nil, self:_hasTimedOut(t1) and "timeout" or ""
+    end
     return (prefix or "") .. data
 end
 
 ---@param data string
 function TCPSocket:send(data)
+    --TODO : https://datatracker.ietf.org/doc/html/rfc896
     self:sendRaw(self:_makeDataSegment(data))
 end
 
@@ -273,13 +335,9 @@ function TCPSocket:sendRaw(seg)
     --TODO buffer outgoing
     local from = ipv4Address.fromString(self:getsockname())
     local to = ipv4Address.fromString(self:getpeername())
-    self._outBuffer[seg:seq() + #(seg:payload()) + 1] = seg
+    self._outBuffer[seg:seq()] = seg
     network.tcp.getInterface():send(from, to, seg)
-    self._seq = self._seq + #(seg:payload())
-end
-
-function TCPSocket:setfd()
-    error("NOT IMPLEMENTED", 2)
+    self._sndNxt = self._sndNxt + seg:len()
 end
 
 function TCPSocket:setoption()
@@ -291,15 +349,33 @@ function TCPSocket:setstats()
     error("NOT IMPLEMENTED", 2)
 end
 
----Set the socket's timeout in second
+---@param time number
+---@return boolean
+function TCPSocket:_hasTimedOut(time)
+    checkArg(1, time, "number")
+    if (self._timeout and self._timeout < 0) then return false end
+    return os.time() - time > self._timeout
+end
+
+---Changes the timeout values for the object. By default, all I/O operations are blocking. That is, any call to the methods receive, and accept will block indefinitely, until the operation completes. The settimeout method defines a limit on the amount of time the I/O methods can block. When a timeout is set and the specified amount of time has elapsed, the affected methods give up and fail with an error code.
+---
+---The amount of time to wait is specified as the value parameter, in seconds. There are two timeout modes and both can be used together for fine tuning:
+---- 'b': block timeout. Specifies the upper limit on the amount of time LuaSocket can be blocked by the operating system while waiting for completion of any single I/O operation. This is the default mode;
+---- 't': total timeout. Specifies the upper limit on the amount of time LuaSocket can block a Lua script before returning from a call.
+---
+---The nil timeout value allows operations to block indefinitely. Negative timeout values have the same effect.
 ---@param value number seconds
-function TCPSocket:settimeout(value)
+---@param mode "b"|"t"
+function TCPSocket:settimeout(value, mode)
     checkArg(1, value, 'number')
     self._timeout = value * 100
 end
 
-function TCPSocket:shutdown()
+---@param mode "both"
+function TCPSocket:shutdown(mode)
+    if (mode ~= "both") then error("Only shutdown both is supported", 2) end
     self:close()
+    return 1
 end
 
 ---Handle the payload recived by UDPLayer
@@ -308,15 +384,53 @@ end
 ---@param to number
 ---@param tcpSegment TCPSegment
 function TCPSocket:payloadHandler(from, to, tcpSegment)
-    if (tcpSegment:flag(f.RST)) then
-        self._state = "CLOSED"
-        network.tcp.getInterface():close(self)
+    --TODO : https://datatracker.ietf.org/doc/html/rfc9293#name-reset-generation
+    if (tcpSegment:flag(f.RST) and self._state ~= "LISTEN") then
+        if (self._state == "SYN-SENT") then
+            if (self._sndUna == tcpSegment:ack()) then
+                self._state = "CLOSED"
+                network.tcp.getInterface():close(self)
+                return
+            end
+        else
+            --TODO check seq in window
+            self._state = "CLOSED"
+            network.tcp.getInterface():close(self)
+            return
+        end
+    end
+    self._rcvWnd = tcpSegment:windowSize()
+    if (self._state == "ESTABLISHED" or self._state == "FIN-WAIT-1" or self._state == "FIN-WAIT-2" or self._state == "CLOSE-WAIT" or self._state == "CLOSING" or self._state == "TIME-WAIT") then
+        --must process URG
+        if (tcpSegment:len() > 0 and tcpSegment:flag(f.URG) == false) then
+            if (self._rcvWnd == 0) then
+                require("event").onError("0 window")
+                return
+            end
+            if (self._rcvWnd > 0) then
+                local c1 = (self._rcvNxt <= tcpSegment:seq()) and (tcpSegment:seq() < (self._rcvNxt + self._rcvWnd))
+                local c2 = (self._rcvNxt <= (tcpSegment:seq() + tcpSegment:len() - 1)) and ((tcpSegment:seq() + tcpSegment:len() - 1) < (self._rcvNxt + self._rcvWnd))
+                if (not (c1 or c2)) then
+                    require("event").onError("window error")
+                    return
+                end
+            end
+        end
     end
     if (tcpSegment:flag(f.ACK)) then
-        self._rcvAck = tcpSegment:ack()
-        if (self._outBuffer[tcpSegment:ack()]) then
-            self._outBuffer[tcpSegment:ack()] = nil
+        if (self._sndUna < tcpSegment:ack() and tcpSegment:ack() <= self._sndNxt) then
+            self._sndUna = tcpSegment:ack()
+            local acked = {}
+            local ack = tcpSegment:ack()
+            for i, s in pairs(self._outBuffer) do if (s:seq() + s:len() <= ack) then table.insert(acked, i) end end
+            for _, i in pairs(acked) do self._outBuffer[i] = nil end
+        else
+            require("event").onError("Invalid ack")
+            --TODO log error
         end
+    end
+    if (tcpSegment:offset() > 5) then
+        self:handleOptions(tcpSegment)
     end
     if (self._state == "LISTEN") then
         if (tcpSegment:flag(f.SYN)) then
@@ -335,7 +449,6 @@ function TCPSocket:payloadHandler(from, to, tcpSegment)
             --TODO error
             self._state = "CLOSED"
         elseif (tcpSegment:flag(f.SYN) and tcpSegment:flag(f.ACK)) then
-            self._seq = self._seq + 1
             local seg = self:_makeAck(tcpSegment)
             self:sendRaw(seg)
             self._state = "ESTABLISHED"
@@ -369,10 +482,9 @@ function TCPSocket:payloadHandler(from, to, tcpSegment)
             seg:flag(f.FIN, true)
             seg:flag(f.ACK, true)
             self:sendRaw(seg)
-            self._seq = self._seq + 1
             return
         end
-        if (#(tcpSegment:payload()) > 0) then
+        if (tcpSegment:len() > 0) then
             --TODO check ordering and duplication
             self._buffer:insert(tcpSegment:payload())
             self:sendRaw(self:_makeAck(tcpSegment))
@@ -380,10 +492,22 @@ function TCPSocket:payloadHandler(from, to, tcpSegment)
     end
 end
 
----Create and return a new unconnected TCP socket
----@return TCPSocket
-local function tcp()
-    return TCPSocket()
+---@param seg TCPSegment
+function TCPSocket:handleOptions(seg)
+    --TODO : move parsing to TCPSegment
+    local optionRaw = seg:options()
+    local offset = 0
+    local kind, data
+    while true do
+        kind, offset = string.unpack(">B", optionRaw, offset)
+        if (kind == 0) then
+            break               --End of Option List
+        elseif (kind == 1) then --NO-operation
+        elseif (kind == 2) then -- Maximum segment size
+            data, offset = string.unpack(">xI", optionRaw, offset)
+            self:mss(math.min(self:mss(), data))
+        end
+    end
 end
 
-return tcp
+return TCPSocket

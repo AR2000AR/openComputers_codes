@@ -63,7 +63,10 @@ end
 function TCPSegment:seq(value)
     checkArg(1, value, 'number', 'nil')
     local oldValue = self._seq or 0
-    if (value ~= nil) then self._seq = value end
+    if (value ~= nil) then
+        assert(value >= 0 and value <= 0xffffffff)
+        self._seq = value
+    end
     return oldValue
 end
 
@@ -72,7 +75,10 @@ end
 function TCPSegment:ack(value)
     checkArg(1, value, 'number', 'nil')
     local oldValue = self._ack or 0
-    if (value ~= nil) then self._ack = value end
+    if (value ~= nil) then
+        assert(value >= 0 and value <= 0xffffffff)
+        self._ack = value
+    end
     return oldValue
 end
 
@@ -170,6 +176,13 @@ function TCPSegment:payload(value)
     local oldValue = self._payload or ""
     if (value ~= nil) then self._payload = value end
     return oldValue
+end
+
+function TCPSegment:len()
+    local len = #(self:payload())
+    len = len + (self:flag(TCPSegment.Flags.FIN) and 1 or 0)
+    len = len + (self:flag(TCPSegment.Flags.SYN) and 1 or 0)
+    return len
 end
 
 TCPSegment.payloadFormat = ">HHIIBBHHH"

@@ -42,7 +42,7 @@ end
 
 function Buffer:insert(value)
     checkArg(1, value, "string")
-    self._data = self._data .. value
+    self._data = (self._data or "") .. value
 end
 
 ---Read from the buffer
@@ -51,7 +51,7 @@ end
 function Buffer:read(pattern)
     if (pattern == "*a") then
         local res = self._data
-        self._data = ""
+        self._data = nil
         return res
     elseif (pattern == "*l") then
         local res
