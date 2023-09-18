@@ -4,9 +4,16 @@ local network     = require("network")
 local ipv4Address = require("network.ipv4.address")
 local utils       = require("network.utils")
 local os          = require("os")
+local event       = require("event")
 
 
 local f = TCPSegment.Flags
+
+---@class tcpsockop
+---@field keepalive boolean
+---@field linger boolean
+---@field reuseaddr boolean
+---@field tcp_nodelay boolean
 
 ---@alias TCPSocketState
 --- | "LISTEN"	     Waiting for a connection request from a remote TCP application. This is the state in which you can find the listening socket of a local TCP server.
@@ -36,14 +43,15 @@ local f = TCPSegment.Flags
 ---@operator call:TCPSocket
 ---@field private _sockname table
 ---@field private _peername table
----@field private _buffer Buffer
+---@field private _outBuffer table
+---@field private _inBuffer Buffer
+---@field private _options tcpsockop
 ---@field private _timeout number
 ---@field private _timeoutMode "b"|"t"
 ---@field private _kind TCPSocketKind
 ---@field private _state TCPSocketState
 ---@field private _backlogLen number size of a LISTEN socket connexion backlog
 ---@field private _backlog table
----@field private _outBuffer table
 ---@field private _sndUna number send unacknowledged
 ---@field private _sndNxt number send next
 ---@field private _sndWnd number send window
@@ -68,8 +76,14 @@ function TCPSocket:new()
     o._sockname    = {"0.0.0.0", 0}
     o._peername    = {"0.0.0.0", 0}
     o._backlog     = {}
+    o._options     = {
+        keepalive   = false,
+        linger      = false,
+        reuseaddr   = false,
+        tcp_nodelay = false,
+    }
     o._backlogLen  = 0
-    o._buffer      = utils.Buffer()
+    o._inBuffer    = utils.Buffer()
     o._outBuffer   = {}
     o._timeout     = -1
     o._timeoutMode = "b"
@@ -85,6 +99,24 @@ function TCPSocket:new()
     o._sndWnd      = 8000
     o._mss         = 536
     return o
+end
+
+---@package
+function TCPSocket:_tick()
+    if (#self._outBuffer == 0) then return end
+    local data = ""
+    local seq = -1
+    for curSeq, curData in pairs(self._outBuffer) do
+        if (#data + #curData <= self:mss()) then
+            data = data .. curData
+            if (seq == -1) then seq = curSeq end
+        else
+            break
+        end
+    end
+    local seg = self:_makeDataSegment(data)
+    seg:seq(seq)
+    self:sendSegment(seg)
 end
 
 ---@package
@@ -239,6 +271,7 @@ function TCPSocket:connect(address, port)
 
     local seg = self:_makeSegment()
     seg:flags(f.SYN)
+    seg:addOption(2, self:mss())
     self:sendRaw(seg)
     self._state = "SYN-SENT"
     local t1 = os.time() --[[@as number]]
@@ -249,7 +282,7 @@ function TCPSocket:connect(address, port)
 end
 
 function TCPSocket:dirty()
-    return self._buffer:len() > 0
+    return self._inBuffer:len() > 0
 end
 
 function TCPSocket:getfd()
@@ -315,7 +348,7 @@ function TCPSocket:receive(pattern, prefix)
     local t1 = os.time() --[[@as number]]
     local data
     repeat
-        data = self._buffer:read(pattern)
+        data = self._inBuffer:read(pattern)
     until data ~= nil or self:_hasTimedOut(t1)
     if (not data) then
         return nil, self:_hasTimedOut(t1) and "timeout" or ""
@@ -325,19 +358,25 @@ end
 
 ---@param data string
 function TCPSocket:send(data)
-    --TODO : https://datatracker.ietf.org/doc/html/rfc896
+    if (not self._state == "ESTABLISHED") then return -1, "Connexion not established" end
     self:sendRaw(self:_makeDataSegment(data))
 end
 
 ---@protected
 ---@param seg TCPSegment
 function TCPSocket:sendRaw(seg)
-    --TODO buffer outgoing
+    self._outBuffer[seg:seq()] = seg
+    self:sendSegment(seg)
+    self._sndNxt = self._sndNxt + seg:len()
+end
+
+---Send a segment without any other logic (buffering, window, ...)
+---@protected
+---@param seg TCPSegment
+function TCPSocket:sendSegment(seg)
     local from = ipv4Address.fromString(self:getsockname())
     local to = ipv4Address.fromString(self:getpeername())
-    self._outBuffer[seg:seq()] = seg
     network.tcp.getInterface():send(from, to, seg)
-    self._sndNxt = self._sndNxt + seg:len()
 end
 
 function TCPSocket:setoption()
@@ -425,8 +464,10 @@ function TCPSocket:payloadHandler(from, to, tcpSegment)
             for i, s in pairs(self._outBuffer) do if (s:seq() + s:len() <= ack) then table.insert(acked, i) end end
             for _, i in pairs(acked) do self._outBuffer[i] = nil end
         else
-            require("event").onError("Invalid ack")
-            --TODO log error
+            if (not (self._sndUna >= tcpSegment:ack())) then --if not already ack
+                require("event").onError("Invalid ack")
+                --TODO log error
+            end
         end
     end
     if (tcpSegment:offset() > 5) then
@@ -465,7 +506,7 @@ function TCPSocket:payloadHandler(from, to, tcpSegment)
         if (tcpSegment:flag(f.FIN)) then
             self._state = "TIME-WAIT"
             self:sendRaw(self:_makeAck(tcpSegment))
-            --TODO delay then closed
+            event.timer(5, function() network.tcp.getInterface():close(self) end)
         end
     elseif (self._state == "LAST-ACK") then
         if (tcpSegment:flag(f.ACK)) then
@@ -478,15 +519,13 @@ function TCPSocket:payloadHandler(from, to, tcpSegment)
             local seg = self:_makeAck(tcpSegment)
             self:sendRaw(seg)
             self._state = "LAST-ACK"
-            seg = self:_makeSegment()
+            seg = self:_makeAck(tcpSegment)
             seg:flag(f.FIN, true)
-            seg:flag(f.ACK, true)
             self:sendRaw(seg)
             return
         end
-        if (tcpSegment:len() > 0) then
-            --TODO check ordering and duplication
-            self._buffer:insert(tcpSegment:payload())
+        if (tcpSegment:len() > 0 and tcpSegment:seq() == self._rcvNxt) then
+            self._inBuffer:insert(tcpSegment:payload())
             self:sendRaw(self:_makeAck(tcpSegment))
         end
     end
@@ -495,19 +534,6 @@ end
 ---@param seg TCPSegment
 function TCPSocket:handleOptions(seg)
     --TODO : move parsing to TCPSegment
-    local optionRaw = seg:options()
-    local offset = 0
-    local kind, data
-    while true do
-        kind, offset = string.unpack(">B", optionRaw, offset)
-        if (kind == 0) then
-            break               --End of Option List
-        elseif (kind == 1) then --NO-operation
-        elseif (kind == 2) then -- Maximum segment size
-            data, offset = string.unpack(">xI", optionRaw, offset)
-            self:mss(math.min(self:mss(), data))
-        end
-    end
 end
 
 return TCPSocket

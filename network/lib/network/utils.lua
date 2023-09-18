@@ -70,6 +70,20 @@ function Buffer:len()
     return #self._data
 end
 
+function utils.getTreeBottomValues(tree)
+    local vals = {}
+    for _, v1 in pairs(tree) do
+        for _, v2 in pairs(v1) do
+            for _, v3 in pairs(v2) do
+                for _, socket in pairs(v3) do
+                    table.insert(vals, socket)
+                end
+            end
+        end
+    end
+    return vals
+end
+
 utils.Buffer = Buffer
 
 return utils

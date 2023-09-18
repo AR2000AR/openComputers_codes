@@ -1,13 +1,16 @@
+local event        = require("event")
 local IPv4Packet   = require("network.ipv4.IPv4Packet")
 local TCPSegment   = require("network.tcp.TCPSegment")
 local ipv4Address  = require("network.ipv4.address")
 local NetworkLayer = require('network.abstract.NetworkLayer')
 local network      = require("network")
+local utils = require("network.utils")
 local class        = require("libClass2")
 
 
 ---@class TCPLayer:NetworkLayer
 ---@field private _sockets table<number,table<number,table<number,table<number,TCPSocket>>>>
+---@field private _ticker number
 ---@operator call:TCPLayer
 ---@overload fun(layer:IPv4Layer):TCPLayer
 local TCPLayer = class(NetworkLayer)
@@ -21,7 +24,16 @@ function TCPLayer:new(layer)
     ---@cast o TCPLayer
     o._sockets = {}
     o:layer(layer) --tell the IPv4Layer that we exists
+    o._ticker = event.timer(1, function() o:tick() end, math.huge)
     return o
+end
+
+---@package
+function TCPLayer:tick()
+    for _,s in pairs(utils.getTreeBottomValues(self._sockets)) do
+        ---@cast s TCPSocket
+        s:_tick()
+    end
 end
 
 function TCPLayer:payloadHandler(from, to, payload)
@@ -252,21 +264,8 @@ end
 ---@return table<table>
 function TCPLayer:getOpenPorts()
     local r = {}
-    local function getTreeBottomValues(tree)
-        local vals = {}
-        for _, v1 in pairs(tree) do
-            for _, v2 in pairs(v1) do
-                for _, v3 in pairs(v2) do
-                    for _, socket in pairs(v3) do
-                        table.insert(vals, socket)
-                    end
-                end
-            end
-        end
-        return vals
-    end
 
-    for _, socket in pairs(getTreeBottomValues(self._sockets)) do
+    for _, socket in pairs(utils.getTreeBottomValues(self._sockets)) do
         local lIPString, lPort = socket:getsockname()
         local lIP = ipv4Address.fromString(lIPString)
         local peerIPString, peerPort = socket:getpeername()

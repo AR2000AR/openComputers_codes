@@ -14,7 +14,7 @@ local utils = require("network.utils")
 ---@field private _windowSize number
 ---@field private _checksum number
 ---@field private _urgentPtr number
----@field private _options string
+---@field private _options table
 ---@field private _payload string
 ---@overload fun(srcPort:number,dstPort:number,payload:string):TCPSegment
 local TCPSegment = class(Payload)
@@ -33,6 +33,7 @@ function TCPSegment:new(srcPort, dstPort, payload)
     local o = self.parent()
     setmetatable(o, {__index = self})
     ---@cast o TCPSegment
+    o._options = {}
     o:dstPort(dstPort)
     o:srcPort(srcPort)
     o:payload(payload)
@@ -84,7 +85,7 @@ end
 
 ---@return number
 function TCPSegment:offset()
-    return 5 + math.ceil(#self:options() / 4)
+    return 5 + math.ceil(#self._options / 4)
 end
 
 ---@param value? number
@@ -160,13 +161,54 @@ function TCPSegment:urgentPtr(value)
     return oldValue
 end
 
----@param value? string
----@return string
-function TCPSegment:options(value)
-    checkArg(1, value, 'string', 'nil')
-    local oldValue = self._option or ""
-    if (value ~= nil) then self._option = value end
-    return oldValue
+---return the first matching option
+---@param id number
+---@return any
+function TCPSegment:getOption(id)
+    for _, op in pairs(self._options) do
+        if (op[1] == id) then return op[2] end
+    end
+end
+
+function TCPSegment:options()
+    return self._options
+end
+
+function TCPSegment:addOption(id, value)
+    table.insert(self._options, {id, value})
+end
+
+function TCPSegment:packOptions()
+    local packed = ""
+    table.sort(self._options, function(a, b) return a[1] > b[1] end)
+    for _, op in pairs(self._options) do
+        if (op[1] == 1) then     --noop
+            packed = packed .. string.pack(">B", 1)
+        elseif (op[1] == 2) then -- Maximum segment size
+            packed = packed .. string.pack(">BBH", 2, 4, op[2])
+        end
+    end
+    return string.pack(">!4c" .. #packed .. "XI", packed)
+end
+
+---@param value string
+function TCPSegment:unpackOptions(value)
+    local offset = 1
+    local kind, data
+    while offset < #value do
+        kind, offset = string.unpack(">B", value, offset)
+        if (kind == 0) then
+            break               --End of Option List
+        elseif (kind == 1) then --NO-operation
+        elseif (kind == 2) then -- Maximum segment size
+            data, offset = string.unpack(">xH", value, offset)
+        else
+            local len
+            len, offset = string.unpack(">B", value, offset)
+            data, offset = string.unpack(">c" .. len, value, offset)
+        end
+        table.insert(self._options, {kind, data})
+    end
 end
 
 ---@param value? string
@@ -199,7 +241,7 @@ function TCPSegment:pack(skipCheksum)
                                offsetAndReserved, self:flags(),
                                self:windowSize(), chk,
                                self:urgentPtr())
-    header = header .. string.pack(">c" .. #(self:options()), self:options())
+    header = header .. self:packOptions()
     header = header .. string.pack(">c" .. #(self:payload()), self:payload())
     return header
 end
@@ -229,7 +271,7 @@ function TCPSegment.unpack(data)
     seg:windowSize(windowSize)
     seg:checksum(checksum)
     seg:urgentPtr(urgentPtr)
-    seg:options(options)
+    seg:unpackOptions(options)
     return seg
 end
 
