@@ -72,6 +72,37 @@ elseif (opts.u) then --connect UDP
         if (msg) then udpSocket:send(msg .. "\n") end
     until not msg
     udpSocket:close()
-else
-    help()
+elseif (opts.l) then
+    local tcpsocket = socket.tcp()
+    assert(tcpsocket:bind(opts.b, opts.p))
+    args[2] = assert(tonumber(args[2]), "Invalid port number")
+    assert(tcpsocket:bind(args[1], args[2]))
+    print(string.format("Listening on %s:%d", tcpsocket:getsockname()))
+    tcpsocket:listen(1)
+    local client = tcpsocket:accept()
+    if (client) then
+        listenerThread = thread.create(listenSocket, client)
+        repeat
+            local msg = term.read()
+            if (msg) then client:send(msg .. "\n") end
+        until not msg
+        client:close()
+    end
+    tcpsocket:close()
+else --connect TCP
+    args[2] = assert(tonumber(args[2]), "Invalid port number")
+    local tcpsocket = socket.tcp()
+    tcpsocket:settimeout(5)
+    local s = tcpsocket:connect(args[1], args[2])
+    if (s ~= 1) then
+        print("Timeout")
+        os.exit(1)
+    end
+    print(string.format("Connected to %s:%d", tcpsocket:getpeername()))
+    listenerThread = thread.create(listenSocket, tcpsocket)
+    repeat
+        local msg = term.read()
+        if (msg) then tcpsocket:send(msg .. "\n") end
+    until not msg
+    tcpsocket:close()
 end

@@ -341,7 +341,7 @@ end
 ---@param pattern? string
 ---@param prefix? string
 ---@return string? data, string?reason
-function TCPSocket:receive(pattern, prefix)
+function TCPSocket:recieve(pattern, prefix)
     checkArg(1, pattern, "string", 'number', "nil")
     if (not pattern) then pattern = "*a" end
     checkArg(2, prefix, "string", "nil")
@@ -404,7 +404,7 @@ end
 ---
 ---The nil timeout value allows operations to block indefinitely. Negative timeout values have the same effect.
 ---@param value number seconds
----@param mode "b"|"t"
+---@param mode? "b"|"t"
 function TCPSocket:settimeout(value, mode)
     checkArg(1, value, 'number')
     self._timeout = value * 100
