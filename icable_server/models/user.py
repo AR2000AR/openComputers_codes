@@ -119,7 +119,9 @@ class Users(Model):
     def initUsers(self):
         cursor=self._database.execute("SELECT * FROM users LIMIT 1")
         if(cursor.fetchone()==None):
-            self.createUser('admin','admin')
+            user = self.createUser('admin','admin')
+            user.subnetwork_permission = SubnetworkPermission.OWNER|SubnetworkPermission.FIREWALL
+
 
     def getUserFromLogin(self,login:str):
         cursor=self._database.execute("SELECT * FROM users WHERE login = ?",(login,))
