@@ -6,3 +6,4 @@ libGUI/libGUI/widget/Keypad.lua
 /pm/testpackages
 /packages/.prop
 __pycache__/
+packages/devtools.tar

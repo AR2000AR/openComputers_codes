@@ -1,28 +1,39 @@
 {
-	["bank_dev_tools"] = {
+	["crypttool"] = {
 		["manifestVersion"] = "1.0",
-		["package"] = "bank_dev_tools",
+		["package"] = "crypttool",
 		["version"] = "1.0.0",
-		["name"] = "bank_dev_tools",
-		["repo"] = "tree/master/bank_dev_tools",
-		["description"] = "collection of tools used to help in the bank software development",
-		["note"] = "DEV ONLY",
+		["name"] = "CryptTool",
+		["repo"] = "tree/master/crypttool",
+		["description"] = "Remount a filesystem and store everything as encrypted data. Use managed (default) floppy or HDD",
 		["authors"] = "AR2000AR",
-		["archiveName"] = "bank_dev_tools.tar"
+		["archiveName"] = "crypttool.tar"
 	},
-	["icable"] = {
+	["libclass2"] = {
 		["manifestVersion"] = "1.0",
-		["package"] = "icable",
-		["version"] = "0.1.0",
-		["name"] = "icable",
-		["repo"] = "tree/master/icable",
-		["description"] = "Use the internet card instead of the network card with osinetwork",
+		["package"] = "libclass2",
+		["version"] = "1.0.0",
+		["name"] = "libClass2",
+		["repo"] = "tree/master/libClass2",
+		["description"] = "A new and improved version of libclass, with cleaner syntax for cleaner code",
+		["authors"] = "AR2000AR",
+		["archiveName"] = "libclass2.tar"
+	},
+	["pm_get"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "pm_get",
+		["version"] = "1.3.4",
+		["name"] = "pm get",
+		["repo"] = "tree/master/pm_get",
+		["description"] = "Download and install package for pm",
 		["authors"] = "AR2000AR",
 		["dependencies"] = 	{
-			["osinetwork"] = "oppm",
-			["datahashlib"] = "oppm"
+			["pm"] = "oppm"
 		},
-		["archiveName"] = "icable.tar"
+		["configFiles"] = 	{
+			"/etc/pm/sources.list"
+		},
+		["archiveName"] = "pm_get.tar"
 	},
 	["bank_account_maker"] = {
 		["manifestVersion"] = "1.0",
@@ -37,29 +48,19 @@
 		},
 		["archiveName"] = "bank_account_maker.tar"
 	},
-	["dns_server"] = {
+	["libgui"] = {
 		["manifestVersion"] = "1.0",
-		["package"] = "dns_server",
-		["version"] = "1.1.0",
-		["name"] = "DNS server daemon",
-		["repo"] = "tree/master/dns_server",
-		["description"] = "this package provide the dns server",
+		["package"] = "libgui",
+		["version"] = "1.0.0",
+		["name"] = "libGUI",
+		["repo"] = "tree/master/libGUI",
+		["description"] = "library used to create gui \n The library can load \"pam\" images",
+		["note"] = "transparency in pam image isn't fully supported. Only fully transparent pixel are recognized as such",
 		["authors"] = "AR2000AR",
 		["dependencies"] = 	{
-			["dns_common"] = "oppm"
+			["libclass"] = "oppm"
 		},
-		["archiveName"] = "dns_server.tar"
-	},
-	["stargate2_bios"] = {
-		["manifestVersion"] = "1.0",
-		["package"] = "stargate2_bios",
-		["version"] = "1.1.0",
-		["name"] = "Stargate Ctl BIOS",
-		["repo"] = "tree/master/stargate_ctl2_bios",
-		["description"] = "A small BIOS compatible program to make a gate smart",
-		["note"] = "/usr/share/stargate/stargate.bios",
-		["authors"] = "AR2000AR",
-		["archiveName"] = "stargate2_bios.tar"
+		["archiveName"] = "libgui.tar"
 	},
 	["autocrafter"] = {
 		["manifestVersion"] = "1.0",
@@ -81,86 +82,29 @@
 		["authors"] = "AR2000AR",
 		["archiveName"] = "libclass.tar"
 	},
-	["libclass2"] = {
+	["stargate2"] = {
 		["manifestVersion"] = "1.0",
-		["package"] = "libclass2",
-		["version"] = "1.0.0",
-		["name"] = "libClass2",
-		["repo"] = "tree/master/libClass2",
-		["description"] = "A new and improved version of libclass, with cleaner syntax for cleaner code",
-		["authors"] = "AR2000AR",
-		["archiveName"] = "libclass2.tar"
-	},
-	["lnfss"] = {
-		["manifestVersion"] = "1.0",
-		["package"] = "lnfss",
-		["version"] = "1.0.0",
-		["name"] = "Lua Network File System Server",
-		["repo"] = "tree/master/lnfs",
-		["description"] = "Share your local file system with other computers. Root folder is configurable in rc.cfg",
-		["authors"] = "AR2000AR",
-		["archiveName"] = "lnfss.tar"
-	},
-	["lnfsc"] = {
-		["manifestVersion"] = "1.0",
-		["package"] = "lnfsc",
-		["version"] = "1.0.0",
-		["name"] = "Lua Network File System Client",
-		["repo"] = "tree/master/lnfs",
-		["description"] = "Let you mount a files ystem hosted by a other computer using lnfss and use it as if it was a local file system",
-		["authors"] = "AR2000AR",
-		["archiveName"] = "lnfsc.tar"
-	},
-	["libcb"] = {
-		["manifestVersion"] = "1.0",
-		["package"] = "libcb",
-		["version"] = "2.0.0",
-		["name"] = "libCB",
-		["repo"] = "tree/master/libCB",
-		["description"] = "library used to read and write CB",
-		["note"] = "CB are unmanaged floppies",
-		["authors"] = "AR2000AR",
-		["archiveName"] = "libcb.tar"
-	},
-	["dns_common"] = {
-		["manifestVersion"] = "1.0",
-		["package"] = "dns_common",
-		["version"] = "1.0.1",
-		["name"] = "DNS common files",
-		["repo"] = "tree/master/dns_common",
-		["description"] = "basic files used by the dns server as well as the resolver library",
+		["package"] = "stargate2",
+		["version"] = "1.2.0",
+		["name"] = "Stargate Ctl",
+		["repo"] = "tree/master/stargate_ctl2",
+		["description"] = "GUI to controll stargates from SGCraft",
 		["authors"] = "AR2000AR",
 		["dependencies"] = 	{
-			["osinetwork"] = "oppm"
+			["yawl"] = "oppm"
 		},
-		["configFiles"] = 	{
-			"/etc/resolv.conf"
-		},
-		["archiveName"] = "dns_common.tar"
+		["archiveName"] = "stargate2.tar"
 	},
-	["item_id_catcher"] = {
+	["bank_dev_tools"] = {
 		["manifestVersion"] = "1.0",
-		["package"] = "item_id_catcher",
+		["package"] = "bank_dev_tools",
 		["version"] = "1.0.0",
-		["name"] = "itemIdCatcher",
-		["repo"] = "tree/master/itemIdCatcher",
-		["description"] = "Write id of item in the chest on the top to a file",
-		["note"] = "item are moved to a other chest",
+		["name"] = "bank_dev_tools",
+		["repo"] = "tree/master/bank_dev_tools",
+		["description"] = "collection of tools used to help in the bank software development",
+		["note"] = "DEV ONLY",
 		["authors"] = "AR2000AR",
-		["archiveName"] = "item_id_catcher.tar"
-	},
-	["nslookup"] = {
-		["manifestVersion"] = "1.0",
-		["package"] = "nslookup",
-		["version"] = "1.0.0",
-		["name"] = "nslookup",
-		["repo"] = "tree/master/nslookup",
-		["description"] = "cmd line tool to querry a name server",
-		["authors"] = "AR2000AR",
-		["dependencies"] = 	{
-			["dns_common"] = "oppm"
-		},
-		["archiveName"] = "nslookup.tar"
+		["archiveName"] = "bank_dev_tools.tar"
 	},
 	["bank_atm"] = {
 		["manifestVersion"] = "1.0",
@@ -179,45 +123,72 @@
 		},
 		["archiveName"] = "bank_atm.tar"
 	},
-	["libtar"] = {
+	["dns_server"] = {
 		["manifestVersion"] = "1.0",
-		["package"] = "libtar",
+		["package"] = "dns_server",
 		["version"] = "1.1.0",
-		["name"] = "libtar",
-		["repo"] = "tree/master/tar",
-		["description"] = "Librairy to extract and list the content of tar archive",
-		["authors"] = "AR2000AR, luarock",
-		["archiveName"] = "libtar.tar"
-	},
-	["stargate2"] = {
-		["manifestVersion"] = "1.0",
-		["package"] = "stargate2",
-		["version"] = "1.2.0",
-		["name"] = "Stargate Ctl",
-		["repo"] = "tree/master/stargate_ctl2",
-		["description"] = "GUI to controll stargates from SGCraft",
+		["name"] = "DNS server daemon",
+		["repo"] = "tree/master/dns_server",
+		["description"] = "this package provide the dns server",
 		["authors"] = "AR2000AR",
 		["dependencies"] = 	{
-			["yawl"] = "oppm"
+			["dns_common"] = "oppm"
 		},
-		["archiveName"] = "stargate2.tar"
+		["archiveName"] = "dns_server.tar"
 	},
-	["bank_api"] = {
+	["item_id_catcher"] = {
 		["manifestVersion"] = "1.0",
-		["package"] = "bank_api",
-		["version"] = "1.1.0",
-		["name"] = "Bank API",
-		["repo"] = "tree/master/bank_api",
-		["description"] = "API used to send request to the bank server",
-		["note"] = "You will need to set the server address",
+		["package"] = "item_id_catcher",
+		["version"] = "1.0.0",
+		["name"] = "itemIdCatcher",
+		["repo"] = "tree/master/itemIdCatcher",
+		["description"] = "Write id of item in the chest on the top to a file",
+		["note"] = "item are moved to a other chest",
+		["authors"] = "AR2000AR",
+		["archiveName"] = "item_id_catcher.tar"
+	},
+	["pm"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "pm",
+		["version"] = "1.2.3",
+		["name"] = "pm Package Manager",
+		["repo"] = "tree/master/pm",
+		["description"] = "Package manager for OpenOS",
+		["authors"] = "AR2000AR",
+		["dependencies"] = 	{
+			["libtar"] = "oppm"
+		},
+		["archiveName"] = "pm.tar"
+	},
+	["icable"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "icable",
+		["version"] = "0.1.0",
+		["name"] = "icable",
+		["repo"] = "tree/master/icable",
+		["description"] = "Use the internet card instead of the network card with osinetwork",
+		["authors"] = "AR2000AR",
+		["dependencies"] = 	{
+			["osinetwork"] = "oppm",
+			["datahashlib"] = "oppm"
+		},
+		["archiveName"] = "icable.tar"
+	},
+	["dns_common"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "dns_common",
+		["version"] = "1.0.1",
+		["name"] = "DNS common files",
+		["repo"] = "tree/master/dns_common",
+		["description"] = "basic files used by the dns server as well as the resolver library",
 		["authors"] = "AR2000AR",
 		["dependencies"] = 	{
 			["osinetwork"] = "oppm"
 		},
 		["configFiles"] = 	{
-			"/etc/bank/api/api.conf"
+			"/etc/resolv.conf"
 		},
-		["archiveName"] = "bank_api.tar"
+		["archiveName"] = "dns_common.tar"
 	},
 	["door_ctrl"] = {
 		["manifestVersion"] = "1.0",
@@ -235,6 +206,44 @@
 			"/etc/doorCtrl.conf"
 		},
 		["archiveName"] = "door_ctrl.tar"
+	},
+	["stargate2_bios"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "stargate2_bios",
+		["version"] = "1.1.0",
+		["name"] = "Stargate Ctl BIOS",
+		["repo"] = "tree/master/stargate_ctl2_bios",
+		["description"] = "A small BIOS compatible program to make a gate smart",
+		["note"] = "/usr/share/stargate/stargate.bios",
+		["authors"] = "AR2000AR",
+		["archiveName"] = "stargate2_bios.tar"
+	},
+	["libtar"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "libtar",
+		["version"] = "1.1.0",
+		["name"] = "libtar",
+		["repo"] = "tree/master/tar",
+		["description"] = "Librairy to extract and list the content of tar archive",
+		["authors"] = "AR2000AR, luarock",
+		["archiveName"] = "libtar.tar"
+	},
+	["osinetwork"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "osinetwork",
+		["version"] = "2.5.0",
+		["name"] = "OSI Network stack",
+		["repo"] = "tree/master/network",
+		["description"] = "A close to official rfc emulation of the OSI layers for OpenOS. Include Ethernet, ARP, ICMP, UDP. Also provide a luasocket libe librairy",
+		["note"] = "Are provided : ping, ifup, ifdown, arp, nc, netstat. Any one of theses tools may be moved to a separate package at any time",
+		["authors"] = "AR2000AR",
+		["dependencies"] = 	{
+			["libclass2"] = "oppm"
+		},
+		["configFiles"] = 	{
+			"/etc/network/interfaces"
+		},
+		["archiveName"] = "osinetwork.tar"
 	},
 	["yawl_example"] = {
 		["manifestVersion"] = "1.0",
@@ -262,6 +271,26 @@
 			["libclass2"] = "oppm"
 		},
 		["archiveName"] = "yawl.tar"
+	},
+	["datahashlib"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "datahashlib",
+		["version"] = "1.2.0",
+		["name"] = "data hash library",
+		["repo"] = "tree/master/datahashlib",
+		["description"] = "provide the sha256 algo.",
+		["authors"] = "AR2000AR, Roberto Ierusalimschy",
+		["archiveName"] = "datahashlib.tar"
+	},
+	["instgen"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "instgen",
+		["version"] = "1.0.0",
+		["name"] = "Repo installer",
+		["repo"] = "tree/master/repo-installer",
+		["description"] = "A set of tools for making installable floppies for OpenComputers from OPPM repositories.",
+		["authors"] = "Izaya, AR2000AR",
+		["archiveName"] = "instgen.tar"
 	},
 	["bank_client"] = {
 		["manifestVersion"] = "1.0",
@@ -293,90 +322,6 @@
 		},
 		["archiveName"] = "stargate.tar"
 	},
-	["osinetwork"] = {
-		["manifestVersion"] = "1.0",
-		["package"] = "osinetwork",
-		["version"] = "2.5.0",
-		["name"] = "OSI Network stack",
-		["repo"] = "tree/master/network",
-		["description"] = "A close to official rfc emulation of the OSI layers for OpenOS. Include Ethernet, ARP, ICMP, UDP. Also provide a luasocket libe librairy",
-		["note"] = "Are provided : ping, ifup, ifdown, arp, nc, netstat. Any one of theses tools may be moved to a separate package at any time",
-		["authors"] = "AR2000AR",
-		["dependencies"] = 	{
-			["libclass2"] = "oppm"
-		},
-		["configFiles"] = 	{
-			"/etc/network/interfaces"
-		},
-		["archiveName"] = "osinetwork.tar"
-	},
-	["pm"] = {
-		["manifestVersion"] = "1.0",
-		["package"] = "pm",
-		["version"] = "1.2.3",
-		["name"] = "pm Package Manager",
-		["repo"] = "tree/master/pm",
-		["description"] = "Package manager for OpenOS",
-		["authors"] = "AR2000AR",
-		["dependencies"] = 	{
-			["libtar"] = "oppm"
-		},
-		["archiveName"] = "pm.tar"
-	},
-	["libgui_extra"] = {
-		["manifestVersion"] = "1.0",
-		["package"] = "libgui_extra",
-		["version"] = "1.0.0",
-		["name"] = "libGUI-extra",
-		["repo"] = "tree/master/libGUI-extra",
-		["description"] = "more widgets for the libGUI",
-		["authors"] = "AR2000AR, thofi",
-		["dependencies"] = 	{
-			["libgui"] = "oppm"
-		},
-		["archiveName"] = "libgui_extra.tar"
-	},
-	["crypttool"] = {
-		["manifestVersion"] = "1.0",
-		["package"] = "crypttool",
-		["version"] = "1.0.0",
-		["name"] = "CryptTool",
-		["repo"] = "tree/master/crypttool",
-		["description"] = "Remount a filesystem and store everything as encrypted data. Use managed (default) floppy or HDD",
-		["authors"] = "AR2000AR",
-		["archiveName"] = "crypttool.tar"
-	},
-	["bank_server"] = {
-		["manifestVersion"] = "1.0",
-		["package"] = "bank_server",
-		["version"] = "1.1.2",
-		["name"] = "Bank server",
-		["repo"] = "tree/master/bank_server",
-		["description"] = "The bank server service",
-		["note"] = "enable it with the rc command",
-		["authors"] = "AR2000AR",
-		["dependencies"] = 	{
-			["libcb"] = "oppm",
-			["osinetwork"] = "oppm"
-		},
-		["archiveName"] = "bank_server.tar"
-	},
-	["pm_get"] = {
-		["manifestVersion"] = "1.0",
-		["package"] = "pm_get",
-		["version"] = "1.3.4",
-		["name"] = "pm get",
-		["repo"] = "tree/master/pm_get",
-		["description"] = "Download and install package for pm",
-		["authors"] = "AR2000AR",
-		["dependencies"] = 	{
-			["pm"] = "oppm"
-		},
-		["configFiles"] = 	{
-			"/etc/pm/sources.list"
-		},
-		["archiveName"] = "pm_get.tar"
-	},
 	["libcoin"] = {
 		["manifestVersion"] = "1.0",
 		["package"] = "libcoin",
@@ -401,38 +346,93 @@
 		},
 		["archiveName"] = "vending.tar"
 	},
-	["libgui"] = {
+	["libgui_extra"] = {
 		["manifestVersion"] = "1.0",
-		["package"] = "libgui",
+		["package"] = "libgui_extra",
 		["version"] = "1.0.0",
-		["name"] = "libGUI",
-		["repo"] = "tree/master/libGUI",
-		["description"] = "library used to create gui \n The library can load \"pam\" images",
-		["note"] = "transparency in pam image isn't fully supported. Only fully transparent pixel are recognized as such",
+		["name"] = "libGUI-extra",
+		["repo"] = "tree/master/libGUI-extra",
+		["description"] = "more widgets for the libGUI",
+		["authors"] = "AR2000AR, thofi",
+		["dependencies"] = 	{
+			["libgui"] = "oppm"
+		},
+		["archiveName"] = "libgui_extra.tar"
+	},
+	["bank_api"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "bank_api",
+		["version"] = "1.1.0",
+		["name"] = "Bank API",
+		["repo"] = "tree/master/bank_api",
+		["description"] = "API used to send request to the bank server",
+		["note"] = "You will need to set the server address",
 		["authors"] = "AR2000AR",
 		["dependencies"] = 	{
-			["libclass"] = "oppm"
+			["osinetwork"] = "oppm"
 		},
-		["archiveName"] = "libgui.tar"
+		["configFiles"] = 	{
+			"/etc/bank/api/api.conf"
+		},
+		["archiveName"] = "bank_api.tar"
 	},
-	["instgen"] = {
+	["nslookup"] = {
 		["manifestVersion"] = "1.0",
-		["package"] = "instgen",
+		["package"] = "nslookup",
 		["version"] = "1.0.0",
-		["name"] = "Repo installer",
-		["repo"] = "tree/master/repo-installer",
-		["description"] = "A set of tools for making installable floppies for OpenComputers from OPPM repositories.",
-		["authors"] = "Izaya, AR2000AR",
-		["archiveName"] = "instgen.tar"
+		["name"] = "nslookup",
+		["repo"] = "tree/master/nslookup",
+		["description"] = "cmd line tool to querry a name server",
+		["authors"] = "AR2000AR",
+		["dependencies"] = 	{
+			["dns_common"] = "oppm"
+		},
+		["archiveName"] = "nslookup.tar"
 	},
-	["datahashlib"] = {
+	["bank_server"] = {
 		["manifestVersion"] = "1.0",
-		["package"] = "datahashlib",
-		["version"] = "1.2.0",
-		["name"] = "data hash library",
-		["repo"] = "tree/master/datahashlib",
-		["description"] = "provide the sha256 algo.",
-		["authors"] = "AR2000AR, Roberto Ierusalimschy",
-		["archiveName"] = "datahashlib.tar"
+		["package"] = "bank_server",
+		["version"] = "1.1.2",
+		["name"] = "Bank server",
+		["repo"] = "tree/master/bank_server",
+		["description"] = "The bank server service",
+		["note"] = "enable it with the rc command",
+		["authors"] = "AR2000AR",
+		["dependencies"] = 	{
+			["libcb"] = "oppm",
+			["osinetwork"] = "oppm"
+		},
+		["archiveName"] = "bank_server.tar"
+	},
+	["libcb"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "libcb",
+		["version"] = "2.0.0",
+		["name"] = "libCB",
+		["repo"] = "tree/master/libCB",
+		["description"] = "library used to read and write CB",
+		["note"] = "CB are unmanaged floppies",
+		["authors"] = "AR2000AR",
+		["archiveName"] = "libcb.tar"
+	},
+	["lnfsc"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "lnfsc",
+		["version"] = "1.0.0",
+		["name"] = "Lua Network File System Client",
+		["repo"] = "tree/master/lnfs",
+		["description"] = "Let you mount a files ystem hosted by a other computer using lnfss and use it as if it was a local file system",
+		["authors"] = "AR2000AR",
+		["archiveName"] = "lnfsc.tar"
+	},
+	["lnfss"] = {
+		["manifestVersion"] = "1.0",
+		["package"] = "lnfss",
+		["version"] = "1.0.0",
+		["name"] = "Lua Network File System Server",
+		["repo"] = "tree/master/lnfs",
+		["description"] = "Share your local file system with other computers. Root folder is configurable in rc.cfg",
+		["authors"] = "AR2000AR",
+		["archiveName"] = "lnfss.tar"
 	}
 }
