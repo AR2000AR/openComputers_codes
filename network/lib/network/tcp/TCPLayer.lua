@@ -4,7 +4,7 @@ local TCPSegment   = require("network.tcp.TCPSegment")
 local ipv4Address  = require("network.ipv4.address")
 local NetworkLayer = require('network.abstract.NetworkLayer')
 local network      = require("network")
-local utils = require("network.utils")
+local utils        = require("network.utils")
 local class        = require("libClass2")
 
 
@@ -30,7 +30,7 @@ end
 
 ---@package
 function TCPLayer:tick()
-    for _,s in pairs(utils.getTreeBottomValues(self._sockets)) do
+    for _, s in pairs(utils.getTreeBottomValues(self._sockets)) do
         ---@cast s TCPSocket
         s:_tick()
     end
@@ -42,7 +42,7 @@ function TCPLayer:payloadHandler(from, to, payload)
     if (seg:flag(TCPSegment.Flags.SYN) and not seg:flag(TCPSegment.Flags.ACK)) then
         --initial sync packet
         socket = self:getSocket(to, seg:dstPort(), 0, 0)
-        if (not socket) then
+        if (not socket) then --Send RST
             local rstseg = TCPSegment(seg:dstPort(), seg:srcPort(), "")
             rstseg:flags(TCPSegment.Flags.RST|TCPSegment.Flags.ACK)
             rstseg:seq(seg:flag(TCPSegment.Flags.ACK) and seg:ack() or 0)

@@ -28,7 +28,7 @@ local class = require("libClass2")
 ---@class Buffer:Object
 ---@field private _data string
 ---@operator call:Buffer
-local Buffer = require('libClass2')()
+local Buffer = class()
 
 ---Comment
 ---@return Buffer

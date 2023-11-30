@@ -173,10 +173,4 @@ function UDPSocket:payloadHandler(from, to, udpPacket)
     table.insert(self._buffer, {udpPacket:payload(), ipv4Address.tostring(from), udpPacket:srcPort()})
 end
 
----Create and returns an unconnected UDP socket.
----@return UDPSocket
-local function udp()
-    return UDPSocket()
-end
-
-return udp
+return UDPSocket

@@ -6,21 +6,31 @@ local os     = require("os")
 local socket = require("socket")
 
 
-local args, opts        = shell.parse(...)
-local udpSocket, reason = socket.udp()
+local args, opts = shell.parse(...)
+---@type TCPSocket|UDPSocket
+local localSocket
+---@type TCPSocket|nil
+local clientSocket
+---@type thread
 local listenerThread
 
 
 opts.p = tonumber(opts.p) or 0
 opts.b = opts.b or "0.0.0.0"
 
----@param listenedSocket UDPSocket
+---@param listenedSocket UDPSocket|TCPSocket
 local function listenSocket(listenedSocket)
     checkArg(1, listenedSocket, 'table')
     while true do
-        local datagram = listenedSocket:recieve()
-        if (datagram) then
-            term.write(datagram)
+        if (listenedSocket:instanceOf(socket.tcp)) then
+            ---@cast listenedSocket TCPSocket
+            if (listenedSocket:getState() ~= "ESTABLISHED") then
+                return false
+            end
+        end
+        local data = listenedSocket:recieve()
+        if (data) then
+            term.write(data)
         end
         os.sleep()
     end
@@ -37,8 +47,18 @@ local function help()
     print("\t nc -u 192.168.1.1 9999")
 end
 
-event.listen("interrupted", function(...)
-    if (udpSocket) then udpSocket:close() end
+---read stdin indefenitely and send what's read through the socket
+---@param outSocket TCPSocket|UDPSocket
+local function readUserInput(outSocket)
+    repeat
+        local msg = term.read()
+        if (msg) then outSocket:send(msg .. "\n") end
+    until not msg or listenerThread:status() == "dead"
+end
+
+local function exit()
+    if (localSocket) then localSocket:close() end
+    if (clientSocket) then clientSocket:close() end
     if (listenerThread) then
         if (not listenerThread:join(3)) then
             listenerThread:kill()
@@ -46,63 +66,62 @@ event.listen("interrupted", function(...)
     end
     return false
 end
-)
+
+event.listen("interrupted", exit)
+
 if (opts.h or opts.help) then
     help()
     os.exit()
 elseif (opts.l and opts.u and (tonumber(args[1]) or opts.p)) then --listen UDP
-    assert(udpSocket:setsockname("*", tonumber(args[1]) or opts.p))
-    --udpSocket:setCallback(listenSocket)
-    print(string.format("Listening on %s:%d", udpSocket:getsockname()))
-    listenerThread = thread.create(listenSocket, udpSocket)
+    localSocket = socket.udp()
+    assert(localSocket:setsockname("*", tonumber(args[1]) or opts.p))
+    print(string.format("Listening on %s:%d", localSocket:getsockname()))
+    listenerThread = thread.create(listenSocket, localSocket)
     while true do
         --no remote addr/port. We cannot send msgs
         os.sleep()
     end
-    udpSocket:close()
+    localSocket:close()
 elseif (opts.u) then --connect UDP
-    assert(udpSocket:setsockname(opts.b, opts.p))
+    localSocket = socket.udp()
+    assert(localSocket:setsockname(opts.b, opts.p))
     args[2] = assert(tonumber(args[2]), "Invalid port number")
-    assert(udpSocket:setpeername(args[1], args[2]))
-    --udpSocket:setCallback(listenSocket)
-    print(string.format("Listening on %s:%d", udpSocket:getsockname()))
-    listenerThread = thread.create(listenSocket, udpSocket)
-    repeat
-        local msg = term.read()
-        if (msg) then udpSocket:send(msg .. "\n") end
-    until not msg
-    udpSocket:close()
-elseif (opts.l) then
-    local tcpsocket = socket.tcp()
-    assert(tcpsocket:bind(opts.b, opts.p))
-    args[2] = assert(tonumber(args[2]), "Invalid port number")
-    assert(tcpsocket:bind(args[1], args[2]))
-    print(string.format("Listening on %s:%d", tcpsocket:getsockname()))
-    tcpsocket:listen(1)
-    local client = tcpsocket:accept()
-    if (client) then
-        listenerThread = thread.create(listenSocket, client)
-        repeat
-            local msg = term.read()
-            if (msg) then client:send(msg .. "\n") end
-        until not msg
-        client:close()
+    assert(localSocket:setpeername(args[1], args[2]))
+    print(string.format("Listening on %s:%d", localSocket:getsockname()))
+    listenerThread = thread.create(listenSocket, localSocket)
+    readUserInput(localSocket)
+    localSocket:close()
+elseif (opts.l) then --listen tcp
+    localSocket = socket.tcp()
+    args[1] = args[1] or opts.b
+    args[2] = assert(tonumber(args[2] or opts.p), "Invalid port number")
+    assert(localSocket:bind(args[1], args[2]))
+    print(string.format("Listening on %s:%d", localSocket:getsockname()))
+    localSocket:listen(1)
+    local reason
+    clientSocket = localSocket:accept()
+    localSocket:close() --client connected, we don't need the listening socket anymore
+    if (clientSocket) then
+        print(string.format("Connected to : %s:%d", clientSocket:getpeername()))
+        listenerThread = thread.create(listenSocket, clientSocket)
+        readUserInput(clientSocket)
+        clientSocket:close()
+    else
+        print(reason)
     end
-    tcpsocket:close()
 else --connect TCP
     args[2] = assert(tonumber(args[2]), "Invalid port number")
-    local tcpsocket = socket.tcp()
-    tcpsocket:settimeout(5)
-    local s = tcpsocket:connect(args[1], args[2])
+    localSocket = socket.tcp()
+    localSocket:settimeout(5)
+    local s = localSocket:connect(args[1], args[2])
     if (s ~= 1) then
         print("Timeout")
-        os.exit(1)
+    else
+        print(string.format("Connected to %s:%d", localSocket:getpeername()))
+        listenerThread = thread.create(listenSocket, localSocket)
+        readUserInput(localSocket)
     end
-    print(string.format("Connected to %s:%d", tcpsocket:getpeername()))
-    listenerThread = thread.create(listenSocket, tcpsocket)
-    repeat
-        local msg = term.read()
-        if (msg) then tcpsocket:send(msg .. "\n") end
-    until not msg
-    tcpsocket:close()
+    localSocket:close()
 end
+
+exit()

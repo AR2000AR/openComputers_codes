@@ -155,6 +155,7 @@ function TCPSocket:_makeDataSegment(data)
     return seg
 end
 
+--set the segment `seg` acknowledgment number to acknowledge the `recived` segment
 ---@protected
 ---@param seg TCPSegment
 ---@param received TCPSegment
@@ -165,6 +166,7 @@ function TCPSocket:_setAck(seg, received)
     return seg
 end
 
+---make a new acknowledgment segment for the `recived` segment
 ---@protected
 ---@param received TCPSegment
 ---@return TCPSegment
@@ -243,7 +245,7 @@ function TCPSocket:bind(address, port)
 end
 
 function TCPSocket:close()
-    if (self._kind == "client") then
+    if (self._kind == "client" and self._state ~= "CLOSED") then
         local seg = self:_makeSegment()
         seg:flag(f.FIN, true)
         seg:flag(f.ACK, true)
@@ -338,7 +340,7 @@ end
 ---Prefix is an optional string to be concatenated to the beginning of any received data before return.\
 ---
 ---If successful, the method returns the received pattern. In case of error, the method returns nil followed by an error message, followed by a (possibly empty) string containing the partial that was received. The error message can be the string 'closed' in case the connection was closed before the transmission was completed or the string 'timeout' in case there was a timeout during the operation.
----@param pattern? string
+---@param pattern? "*a"|"*l"|number
 ---@param prefix? string
 ---@return string? data, string?reason
 function TCPSocket:recieve(pattern, prefix)
@@ -349,6 +351,7 @@ function TCPSocket:recieve(pattern, prefix)
     local data
     repeat
         data = self._inBuffer:read(pattern)
+        os.sleep()
     until data ~= nil or self:_hasTimedOut(t1)
     if (not data) then
         return nil, self:_hasTimedOut(t1) and "timeout" or ""
@@ -473,6 +476,7 @@ function TCPSocket:payloadHandler(from, to, tcpSegment)
     if (tcpSegment:offset() > 5) then
         self:handleOptions(tcpSegment)
     end
+
     if (self._state == "LISTEN") then
         if (tcpSegment:flag(f.SYN)) then
             if (#(self._backlog) < self._backlogLen) then
