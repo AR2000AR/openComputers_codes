@@ -1,6 +1,7 @@
 
 updateFiles.bat
 .vscode/
+.vscode
 libGUI/libGUI/widget/Keypad.lua
 /misc/
 /pm/testpackages
