@@ -107,7 +107,7 @@ Let you mount a "decrypted" version of the disk for easy file manipulation.
 ---
 ## Additional library
 
-### [libClass](libClass/)
+### [libClass2](libClass2/)
 add object oriented programming to lua.
 
 ### [libGUI](libGUI/)
