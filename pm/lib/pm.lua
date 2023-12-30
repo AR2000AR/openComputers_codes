@@ -78,9 +78,9 @@ function pm.getInstalled(includeNonPurged)
     if (includeNonPurged) then prefix = "%.manifest$" end
     local installed = {}
     for file in filesystem.list("/etc/pm/info/") do
-        local pacakgeName = file:match("(.+)" .. prefix)
-        if (pacakgeName) then
-            installed[pacakgeName] = pm.getManifestFromInstalled(pacakgeName)
+        local packageName = file:match("(.+)" .. prefix)
+        if (packageName) then
+            installed[packageName] = pm.getManifestFromInstalled(packageName)
         end
     end
     return installed
