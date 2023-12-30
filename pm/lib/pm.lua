@@ -96,12 +96,12 @@ end
 
 ---check if a installed package depend of the package
 ---@return boolean,string?
-function pm.checkDependant(pacakge)
-    printf("Checking for package dependant of %s", pacakge)
+function pm.checkDependant(package)
+    printf("Checking for package dependant of %s", package)
     for pkg, manifest in pairs(pm.getInstalled(false)) do
         ---@cast pkg string
         ---@cast manifest manifest
-        if (manifest.dependencies and manifest.dependencies[pacakge]) then
+        if (manifest.dependencies and manifest.dependencies[package]) then
             return true, pkg
         end
     end
