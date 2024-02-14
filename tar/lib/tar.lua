@@ -251,10 +251,10 @@ function tar.list(filename)
 end
 
 ---Extract files that match filename `fineNameInArchive:match("^"..filename)
----@param tarname string
----@param filename? string|table
+---@param tarname string Tar archive to work with
+---@param filename? string|table file name patern to extract
 ---@param overwrite boolean overwrite existing files.
----@param ignore? string|table
+---@param ignore? string|table file name patern to ignore
 ---@param destdir string
 ---@param newRoot? string
 function tar.extract(tarname, destdir, overwrite, filename, ignore, newRoot)
@@ -286,6 +286,7 @@ function tar.extract(tarname, destdir, overwrite, filename, ignore, newRoot)
                 if (name:match("^" .. fname)) then ok = false end
             end
         end
+        if (name == newRoot) then ok = false end
         return ok
     end
 
@@ -339,7 +340,7 @@ function tar.extract(tarname, destdir, overwrite, filename, ignore, newRoot)
             pathname = filesystem.canonical(pathname)
 
             if header.typeflag == "directory" then
-                make_dir(pathname)
+                if (pathname ~= newRoot) then make_dir(pathname) end
             elseif header.typeflag == "file" then
                 local dirname = filesystem.path(pathname)
                 if dirname ~= "" then
