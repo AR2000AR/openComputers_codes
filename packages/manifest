@@ -30,9 +30,7 @@
 		["dependencies"] = 	{
 			["pm"] = "oppm"
 		},
-		["configFiles"] = 	{
-			"/etc/pm/sources.list"
-		},
+		["configFiles"] = {"/etc/pm/"},
 		["archiveName"] = "pm_get.tar"
 	},
 	["bank_account_maker"] = {
@@ -185,9 +183,7 @@
 		["dependencies"] = 	{
 			["osinetwork"] = "oppm"
 		},
-		["configFiles"] = 	{
-			"/etc/resolv.conf"
-		},
+		["configFiles"] = {"/etc/"},
 		["archiveName"] = "dns_common.tar"
 	},
 	["door_ctrl"] = {
@@ -202,9 +198,7 @@
 			["libgui"] = "oppm",
 			["libclass"] = "oppm"
 		},
-		["configFiles"] = 	{
-			"/etc/doorCtrl.conf"
-		},
+		["configFiles"] = {"/etc/"},
 		["archiveName"] = "door_ctrl.tar"
 	},
 	["stargate2_bios"] = {
@@ -241,7 +235,7 @@
 			["libclass2"] = "oppm"
 		},
 		["configFiles"] = 	{
-			"/etc/network/interfaces"
+			"/etc/network/"
 		},
 		["archiveName"] = "osinetwork.tar"
 	},
@@ -255,7 +249,7 @@
 		["note"] = "This is only a example file",
 		["authors"] = "AR2000AR",
 		["dependencies"] = 	{
-			["yawl"] = "oppm"
+			["yawl"] = ">1.7.0"
 		},
 		["archiveName"] = "yawl_example.tar"
 	},
@@ -372,7 +366,7 @@
 			["osinetwork"] = "oppm"
 		},
 		["configFiles"] = 	{
-			"/etc/bank/api/api.conf"
+			"/etc/bank/api/"
 		},
 		["archiveName"] = "bank_api.tar"
 	},
