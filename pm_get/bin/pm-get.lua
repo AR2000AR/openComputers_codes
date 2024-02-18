@@ -550,9 +550,7 @@ elseif (mode == "upgrade") then
             end
         end
     end
-    for _, pkg in pairs(toUpgrade) do
-        install(pkg, false)
-    end
+    install(toUpgrade, false)
 elseif (mode == "sources") then
     if (args[1] == "list") then
         local sources = getSources()
