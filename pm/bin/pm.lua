@@ -42,6 +42,14 @@ local function printHelp()
     printf("\t--allow-same-version : allow a package of the same version to be used for to update the installed version")
 end
 
+local function isConfigPath(configPaths, test)
+    for path, _ in pairs(configPaths) do
+        if (string.match(test, "^" .. path)) then
+            return true
+        end
+    end
+    return false
+end
 
 ---Extract the package tar and return the extracted path
 ---@param packagePath string
@@ -209,7 +217,7 @@ elseif (mode == "install") then
     for _, header in pairs(assert(tar.list(args[1]))) do
         if (header.name:match("^DATA/") and header.typeflag == "file") then
             local destination = header.name:sub(#("DATA/"))
-            if (not installedFiles[destination] and (filesystem.exists(destination) and not configFiles[destination])) then
+            if (not installedFiles[destination] and (filesystem.exists(destination) and not isConfigPath(configFiles, destination))) then
                 printf("\27[37mFile already exists %s\27[m", destination)
                 os.exit(1)
             end
@@ -287,7 +295,7 @@ elseif (mode == "uninstall") then
     local dirs = {}
     --delete the files
     for path in fileListFile:lines() do
-        if (not configFiles[path] or opts.purge) then
+        if (not isConfigPath(configFiles, path) or opts.purge) then
             if (not filesystem.isDirectory(path)) then
                 rm(f("%q", path))
             else
