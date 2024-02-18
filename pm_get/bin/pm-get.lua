@@ -4,6 +4,7 @@ local io                  = require("io")
 local component           = require("component")
 local serialization       = require("serialization")
 local pm                  = require("pm")
+local term                = require("term")
 ---@type ComponentInternet
 local internet
 
@@ -42,6 +43,33 @@ end
 
 local function printferr(...)
     io.error():write(f("%s\n", f(...)))
+end
+
+---Compare a with b
+---@return -1|0|1 cmp `-1 a<b, 0 a=b, 1 a>b`
+local function compareVersion(a, b)
+    local aMajor, aMinor, aPatch = a:match("(%d+)%.(%d+)%.(%d+)")
+    local bMajor, bMinor, bPatch = b:match("(%d+)%.(%d+)%.(%d+)")
+    if (aMajor > bMajor) then return 1 elseif (aMajor < bMajor) then return -1 end
+    if (aMinor > bMinor) then return 1 elseif (aMinor < bMinor) then return -1 end
+    if (aPatch > bPatch) then return 1 elseif (aPatch < bPatch) then return -1 end
+    return 0 --equal
+end
+
+local function confirm(prompt, default)
+    if (opts["y"]) then return true end
+    while true do
+        local y = default and "Y" or "y"
+        local n = default and "n" or "N"
+        term.write(f("%s [%s/%s] ", prompt, y, n))
+        local op = term.read()
+        require("event").onError(op)
+        if op == false or op == nil then return false end
+        if op == "\n" and default then return true end
+        if op == "\n" and not default then return false end
+        if op == "y\n" or op == "Y\n" then return true end
+        if op == "n\n" or op == "N\n" then return false end
+    end
 end
 
 ---Return the sources list
@@ -100,7 +128,7 @@ end
 ---@param name string
 ---@param targetRepo? string
 ---@return manifest? manifest, string? originRepo
-local function getCachedPacketManifest(name, targetRepo)
+local function getCachedPackageManifest(name, targetRepo)
     for repoName, repo in pairs(getCachedPackageList()) do
         if (not targetRepo or repoName == targetRepo) then
             if (repo[name]) then
@@ -112,28 +140,38 @@ local function getCachedPacketManifest(name, targetRepo)
 end
 
 ---@param package string
----@return table<number,string>? dep ordered list of dependances
+---@param dep? table<number,table> Current dependance list.
+---@param cleanup? boolean cleanup the dep list. Default `true`
+---@return table<number,table>? dep ordered list of dependances
 ---@return string? error
-local function buildDepList(package)
-    local dependances = {}
-    local manifest = getCachedPacketManifest(package)
-    if (manifest) then
-        if (manifest.dependencies) then
-            for dep, ver in pairs(manifest.dependencies) do
-                table.insert(dependances, dep)
-                local extraDeps, reason = buildDepList(dep)
-                if (extraDeps) then
-                    for _, dep2 in pairs(extraDeps) do
-                        table.insert(dependances, dep2)
-                    end
-                else
-                    return nil, f("Cannot fuffil dependancie %s for %s", dep, package)
-                end
-            end
+local function buildDepList(package, dep, cleanup)
+    if not dep then dep = {} end
+    assert(dep)
+    if cleanup == nil then cleanup = true end
+    local packageManifest = getCachedPackageManifest(package)
+    if (not packageManifest) then return nil, string.format("Package %q cannot be found", package) end
+    if (packageManifest.dependencies) then
+        for dependance, requiredVersion in pairs(packageManifest.dependencies) do
+            table.insert(dep, {dependance, requiredVersion})
+            buildDepList(dependance, dep, false)
         end
     end
-    --TODO : filter dependances to remove duplicates
-    return dependances
+
+    if (cleanup) then
+        local hash = {}
+        local rm = {}
+        for k, v in ipairs(dep) do
+            if not hash[v[1]] then
+                table.insert(hash, v[1])
+            else
+                table.insert(rm, 1, k)
+            end
+        end
+        for _, v in ipairs(rm) do
+            table.remove(dep, v)
+        end
+    end
+    return dep
 end
 
 ---Download from url and return it
@@ -181,96 +219,135 @@ local function markManual(package)
     autoFile:close()
 end
 
-local function getNotNeededIfUninstalled(package)
-    local oldDep = {}
-    local manifest = pm.getManifestFromInstalled(package)
-    if (manifest.dependencies) then
-        for dep, ver in pairs(manifest.dependencies) do
-            if (#(pm.getDependantOf(dep)) == 1 and isAuto(dep)) then
-                table.insert(oldDep, dep)
-                local extraDeps = getNotNeededIfUninstalled(dep)
-                for _, extraDep in pairs(extraDeps) do
-                    if (isAuto(extraDep)) then
-                        table.insert(oldDep, extraDep)
-                    end
-                end
-            end
-        end
-    end
-    return oldDep
-end
-
----Return true if version number a is strictly higher than b.
-local function compareVersion(a, b)
-    local aMajor, aMinor, aPatch = a:match("(%d+)%.(%d+)%.(%d+)")
-    local bMajor, bMinor, bPatch = b:match("(%d+)%.(%d+)%.(%d+)")
-    if (aMajor > bMajor) then return true elseif (aMajor < bMajor) then return false end
-    if (aMinor > bMinor) then return true elseif (aMinor < bMinor) then return false end
-    if (aPatch > bPatch) then return true elseif (aPatch < bPatch) then return false end
-    return false --equal
-end
-
 --=============================================================================
 
+---Install a package
 ---@param package string
+---@param markAuto boolean
+---@return any? code
+---@return string? errorReason
+local function doInstall(package, markAuto)
+    local targetManifest, repoName = getCachedPackageManifest(package)
+    if (not targetManifest) then
+        return nil, string.format("Cannot find package : %s", package)
+    end
+    --install the package
+    filesystem.makeDirectory(DOWNLOAD_DIR)
+    --download
+    printf("Downloading : %s", package)
+    local data, reason = wget(f("%s/%s", repoName, targetManifest.archiveName))
+    if (not data) then
+        printferr("Failed to download %s", package)
+        printferr(reason)
+        return -1, reason
+    end
+    --write downloaded archive in download dir
+    io.open(f("%s/%s", DOWNLOAD_DIR, targetManifest.archiveName), "w"):write(data):close()
+    --build opts for pm
+    local pmOptions = ""
+    if (opts["allow-same-version"]) then
+        pmOptions = "--allow-same-version"
+    end
+    --run pm
+    local _, code = shell.execute(f("pm install %s %s", pmOptions, f("%s/%s", DOWNLOAD_DIR, targetManifest.archiveName)))
+    --cleanup
+    filesystem.remove(f("%s/%s", DOWNLOAD_DIR, targetManifest.archiveName))
+    --mark the pacakge as auto if asked for
+    if (markAuto) then
+        io.open(AUTO_INSTALLED, "a"):write(targetManifest.package .. "\n"):close()
+    end
+    return code
+end
+
+---@param packages table|string
 ---@param markAuto? boolean
 ---@param buildDepTree? boolean
-local function install(package, markAuto, buildDepTree)
+local function install(packages, markAuto, buildDepTree)
     if (buildDepTree == nil) then buildDepTree = true end
-    local targetManifest, repoName = getCachedPacketManifest(package)
-    --check that the packet exists
-    if (not targetManifest) then
-        printferr("Package %s not found", package)
-        os.exit(1)
-    end
-    if (buildDepTree) then
-        local dependances, reason = buildDepList(package)
-        if (not dependances) then
-            printferr(reason)
+    if (type(packages) == "string") then packages = {packages} end
+    ---get the dependance list
+    local depList = {}
+    for _, package in pairs(packages) do
+        local targetManifest, repoName = getCachedPackageManifest(package)
+        --check that the packet exists
+        if (not targetManifest) then
+            printferr("Package %s not found", package)
             os.exit(1)
         end
-        local notInstalledDep = {}
-        for _, dep in pairs(dependances) do
-            if (not pm.isInstalled(dep)) then
-                table.insert(notInstalledDep, 1, dep)
-            end
-        end
-        if (#notInstalledDep > 0) then printf("Will be installed : %s", table.concat(notInstalledDep, ', ')) end
-        for _, dep in pairs(notInstalledDep) do
-            printf("Installing non installed dependancie : %s", dep)
-            install(dep, true, false)
+        if (buildDepTree) then
+            buildDepList(package, depList)
         end
     end
 
+    local toInstall = {}
+    local toUpgrade = {}
+    for _, dep in pairs(depList) do
+        if (not pm.isInstalled(dep[1])) then
+            local exists = getCachedPackageManifest(dep[1])
+            if (not exists) then
+                printferr("Cannot fuffil dependency : %s (%s)", dep[1], dep[2])
+                return -1
+            end
+            table.insert(toInstall, dep[1])
+        else
+            --TODO : check version
+        end
+    end
+    local display = {}
+    for _, v in pairs(toInstall) do table.insert(display, v) end
+    for _, v in pairs(packages) do table.insert(display, v) end
+    printf("Will be installed :\n %s", table.concat(display, ', '))
+    if (#toUpgrade > 0) then printf("Will be updated :\n %s", table.concat(toUpgrade, ', ')) end
+    printf("%d upgraded, %d newly installed", #toUpgrade, #toInstall + #packages)
+    if not confirm("Proceed") then return end
+
     if (not opts['dry-run']) then
-        --install the package
-        filesystem.makeDirectory(DOWNLOAD_DIR)
-        --download
-        printf("Downloading : %s", package)
-        local data, reason = wget(f("%s/%s", repoName, targetManifest.archiveName))
-        if (not data) then
-            printferr("Failed to download %s", package)
-            printferr(reason)
-            os.exit(1)
+        for _, dep in pairs(toUpgrade) do
+            --TODO : upgrade
+            printf("Updating dependency : %s", dep)
+            error("UNIMPLEMENTED")
         end
-        --write downloaded archive in download dir
-        io.open(f("%s/%s", DOWNLOAD_DIR, targetManifest.archiveName), "w"):write(data):close()
-        --build opts for pm
-        local pmOptions = ""
-        if (opts["allow-same-version"]) then
-            pmOptions = "--allow-same-version"
+        for _, dep in pairs(toInstall) do
+            printf("Installing dependency : %s", dep)
+            local code, errorReason = doInstall(dep, true)
+            if (errorReason) then
+                printferr("Failed to install %q. Abording", dep)
+                return -1
+            end
         end
-        --run pm
-        local _, code = shell.execute(f("pm install %s %s", pmOptions, f("%s/%s", DOWNLOAD_DIR, targetManifest.archiveName)))
-        --cleanup
-        filesystem.remove(f("%s/%s", DOWNLOAD_DIR, targetManifest.archiveName))
-        --mark the pacakge as auto if asked for
-        if (markAuto) then
-            io.open(AUTO_INSTALLED, "a"):write(targetManifest.package .. "\n"):close()
+        for _, package in pairs(packages) do
+            printf("Installing : %s", package)
+            local code, errorReason = doInstall(package, false)
+            if (errorReason) then
+                printferr("Failed to install %q. Abording", package)
+                return -1
+            end
         end
-        return code
     end
     return 0
+end
+
+local function uninstall(packages)
+    local toUninstall = {}
+    for _, package in pairs(packages) do
+        table.insert(toUninstall, package)
+    end
+
+    printf("Will be uninstalled :\n %s", table.concat(toUninstall, ', '))
+
+    if not confirm("Proceed") then return end
+    --uninstallation
+    local options = ""
+    if (opts.purge) then options = options .. "--purge" end
+    shell.execute(f("pm uninstall %s %s", options, args[1]))
+    for _, pkg in pairs(toUninstall) do
+        shell.execute(f("pm uninstall %s %s", options, pkg))
+        markManual(pkg)
+    end
+
+    if (opts["autoremove"]) then
+        shell.execute(f("pm-get autoremove -y %s", options))
+    end
 end
 
 local function update()
@@ -326,6 +403,7 @@ local function printHelp()
     print("mode :")
     print("\tinstall <packageFile>")
     print("\tuninstall <packageName>")
+    print("\tpruge <packageName>")
     print("\tautoremove")
     print("\tinfo <packageName>|<packageFile>")
     print("\tlist")
@@ -337,12 +415,16 @@ local function printHelp()
     print("\t--installed : only list installed packages")
 end
 
+
+
 --=============================================================================
+
 
 if (component.isAvailable("internet")) then
     internet = component.internet
-else
+elseif (mode == "update" or mode == "install") then
     printferr("Need a internet card")
+    os.exit(1)
 end
 
 --Remove uninstalled files from autoInstalled file
@@ -356,6 +438,11 @@ if (filesystem.exists(AUTO_INSTALLED)) then
         for _, pkg in pairs(tokeep) do file:write(f("%s\n", pkg)) end
         file:close()
     end
+end
+
+if (mode == "purge") then
+    mode = "uninstall"
+    opts["purge"] = true
 end
 
 if (mode == "update") then
@@ -389,7 +476,7 @@ elseif (mode == "list") then
         end
     end
 elseif (mode == "info") then
-    local manifest, repoName = getCachedPacketManifest(args[1])
+    local manifest, repoName = getCachedPackageManifest(args[1])
     if (not manifest) then
         printferr("Package %s not found", args[1])
         os.exit(1)
@@ -408,33 +495,13 @@ elseif (mode == "info") then
     printf("Repo : %s", repoName)
     os.exit(0)
 elseif (mode == "install") then
-    markManual(args[1])
-    --TODO : check version
-    install(args[1])
+    install(args)
+    for _, p in pairs(args) do
+        markManual(p)
+    end
     os.exit(0)
 elseif (mode == "uninstall") then
-    if (not pm.isInstalled(args[1])) then
-        printf("Package not installed : %s", args[1])
-        os.exit(0)
-    end
-    local oldDep = {}
-    if (opts.autoremove) then
-        for _, dep in pairs(getNotNeededIfUninstalled(args[1])) do
-            if (isAuto(dep)) then
-                table.insert(oldDep, dep)
-            end
-        end
-        if (#oldDep > 0) then printf("The following dependances are no longer required and will be uninstalled : %s", table.concat(oldDep, ', ')) end
-    end
-    --TODO : ask for confirmation
-    --uninstallation
-    local options = ""
-    if (opts.purge) then options = options .. " --purge" end
-    shell.execute(f("pm uninstall %s %s", options, args[1]))
-    for _, dep in pairs(oldDep) do
-        shell.execute(f("pm uninstall %s %s", options, dep))
-    end
-    markManual(args[1])
+    uninstall(args)
 elseif (mode == "autoremove") then
     local oldDep = {}
     if (filesystem.exists(AUTO_INSTALLED)) then
@@ -444,7 +511,8 @@ elseif (mode == "autoremove") then
             end
         end
     end
-    --TODO : ask for confirmation
+    printf("Will be uninstalled :\n %s", table.concat(oldDep, ', '))
+    if not confirm("Proceed") then return end
     --uninstallation
     local options = ""
     if (opts.purge) then options = options .. " --purge" end
@@ -461,7 +529,7 @@ elseif (mode == "upgrade") then
             local manifest = assert(pm.getManifestFromInstalled(args[1]))
             if (manifest.dependencies) then
                 for dep, ver in pairs(manifest.dependencies) do
-                    local remoteManifest = getCachedPacketManifest(dep) --TODO : add target repo
+                    local remoteManifest = getCachedPackageManifest(dep) --TODO : add target repo
                     local localManifest = pm.getManifestFromInstalled(dep)
                     if (remoteManifest and (remoteManifest.version == "oppm" or compareVersion(remoteManifest.version, localManifest.version) or opts["allow-same-version"])) then
                         table.insert(toUpgrade, dep)
@@ -475,7 +543,7 @@ elseif (mode == "upgrade") then
                 printf("Found oppm version for %q.", pkg)
                 table.insert(toUpgrade, pkg)
             else
-                local remoteManifest = getCachedPacketManifest(pkg)
+                local remoteManifest = getCachedPackageManifest(pkg)
                 if (remoteManifest and (remoteManifest.version == "oppm" or compareVersion(remoteManifest.version, manifest.version))) then
                     table.insert(toUpgrade, pkg)
                 end
