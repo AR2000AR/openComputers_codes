@@ -5,10 +5,7 @@ local shell       = require('shell')
 local os          = require('os')
 local term        = require("term")
 
-if (network.interfaces['tun0']) then
-    network.interfaces['tun0'].ethernet --[[@as IcableDataLayer]]:close()
-end
-local args, opts = shell.parse(...)
+local args, opts  = shell.parse(...)
 if (#args ~= 1 or opts.h) then
     print('icable [--c=][--p=][--u=][--k] CIDR')
     print('\t--c : Server address')
@@ -38,7 +35,11 @@ if (not opts.k) then
     term.write("\n")
 end
 
+if (network.interfaces['tun0']) then
+    network.interfaces['tun0'].ethernet --[[@as IcableDataLayer]]:close()
+end
 local interface, reason = icable.connect(opts.u, opts.k, opts.c, opts.p, ipv4address.fromCIDR(args[1]))
+
 if (not interface) then
     print(reason)
 else

@@ -161,7 +161,7 @@
 	["icable"] = {
 		["manifestVersion"] = "1.0",
 		["package"] = "icable",
-		["version"] = "0.1.1",
+		["version"] = "0.1.2",
 		["name"] = "icable",
 		["repo"] = "tree/master/icable",
 		["description"] = "Use the internet card instead of the network card with osinetwork",
