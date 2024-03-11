@@ -101,7 +101,6 @@ class Node(threading.Thread):
             self.socket.close()
 
     def error(self, kind: SERVER_ERROR_KIND, msg=None):
-        breakpoint()
         self.socket.send(IcablePacket(
             ICABLE_PACKET_KIND.SERVER_ERROR, IcableServerError(kind, msg).pack()).pack())
 
@@ -543,7 +542,7 @@ webserverThread = threading.Thread(
 webserverThread.start()
 print(f'Web server on {webserver.socket.getsockname()}')
 
-s = socket.create_server(("127.0.0.1", 4222), reuse_port=True)
+s = socket.create_server(("0.0.0.0", 4222), reuse_port=True)
 s.listen()
 print(f'icable tcp socket listening on {s.getsockname()}')
 while run.is_set():
