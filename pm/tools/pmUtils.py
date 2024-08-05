@@ -36,46 +36,49 @@ def removeMetadata(tarObject: tarfile.TarInfo):
 def makePackage(projectDir: pathlib.Path, manifestPath: pathlib.Path, filesListJsonPath: pathlib.Path, outputDirectory=pathlib.Path('./packages/')):
     global opts
 
-    with tempfile.TemporaryDirectory(prefix="packager.") as tmpDir:
+    try:
+        with tempfile.TemporaryDirectory(prefix="packager.") as tmpDir:
+            # parse the files
+            manifest = {}
+            with open(manifestPath, 'r') as manifestFile:
+                manifest = lua.decode(manifestFile.read())
+            parsedFilesList = {}
+            with open(filesListJsonPath, 'r') as filesListFile:
+                parsedFilesList = json.load(filesListFile)
 
-        # parse the files
-        manifest = {}
-        with open(manifestPath, 'r') as manifestFile:
-            manifest = lua.decode(manifestFile.read())
-        parsedFilesList = {}
-        with open(filesListJsonPath, 'r') as filesListFile:
-            parsedFilesList = json.load(filesListFile)
+            os.mkdir(tmpDir+"/CONTROL/")
+            os.mkdir(tmpDir+"/DATA/")
+            if not projectDir:
+                projectDir = os.getcwd()
 
-        os.mkdir(tmpDir+"/CONTROL/")
-        os.mkdir(tmpDir+"/DATA/")
-        if not projectDir:
-            projectDir = os.getcwd()
+            # copy the required files
+            if "files" in parsedFilesList:
+                for (fileInfo, destination) in parsedFilesList["files"]:
+                    addFileToPackage(tmpDir, projectDir, fileInfo, destination)
+            if "config" in parsedFilesList:
+                for (fileInfo, destination) in parsedFilesList["config"]:
+                    addFileToPackage(tmpDir, projectDir, fileInfo, destination)
+                    if not "configFiles" in manifest:
+                        manifest["configFiles"] = []
+                    manifest["configFiles"].append(str(destination))
 
-        # copy the required files
-        if "files" in parsedFilesList:
-            for (fileInfo, destination) in parsedFilesList["files"]:
-                addFileToPackage(tmpDir, projectDir, fileInfo, destination)
-        if "config" in parsedFilesList:
-            for (fileInfo, destination) in parsedFilesList["config"]:
-                addFileToPackage(tmpDir, projectDir, fileInfo, destination)
-                if not "configFiles" in manifest:
-                    manifest["configFiles"] = []
-                manifest["configFiles"].append(str(destination))
+            # write the package's manifest file
+            with open(tmpDir+"/CONTROL/manifest", 'w') as file:
+                file.write(lua.encode(manifest))
 
-        # write the package's manifest file
-        with open(tmpDir+"/CONTROL/manifest", 'w') as file:
-            file.write(lua.encode(manifest))
+            if any(item in ['-s', '--strip-comments'] for item, v in opts):
+                for luaFile in glob(root_dir=tmpDir+"/DATA/", pathname="**/*.lua", recursive=True):
+                    os.system(f'sed -i s/^--.*// {tmpDir+"/DATA/"+luaFile}')
 
-        if any(item in ['-s', '--strip-comments'] for item, v in opts):
-            for luaFile in glob(root_dir=tmpDir+"/DATA/", pathname="**/*.lua", recursive=True):
-                os.system(f'sed -i s/^--.*// {tmpDir+"/DATA/"+luaFile}')
-
-        manifest["archiveName"] = f"{manifest['package']}.tar"
-        with tarfile.open(pathlib.Path(outputDirectory, manifest["archiveName"]), 'w') as tar:
-            tar.add(tmpDir+"/CONTROL", arcname="CONTROL",
-                    filter=removeMetadata)
-            tar.add(tmpDir+'/DATA/', arcname="DATA", filter=removeMetadata)
-        return manifest
+            manifest["archiveName"] = f"{manifest['package']}.tar"
+            with tarfile.open(pathlib.Path(outputDirectory, manifest["archiveName"]), 'w') as tar:
+                tar.add(tmpDir+"/CONTROL", arcname="CONTROL",
+                        filter=removeMetadata)
+                tar.add(tmpDir+'/DATA/', arcname="DATA", filter=removeMetadata)
+            return manifest
+    except e:
+        printError(
+            f'Failed to buid package in {projectDir} from manifest {manifestPath}')
 
 
 def addFileToPackage(tmpDir, source, fileInfo, destination):
@@ -130,7 +133,9 @@ if __name__ == '__main__':
             continue
         packageManifest = makePackage(
             projectDir, manifestPath, filesJson, outputDirectory)
-        repoManifest[packageManifest["package"]] = packageManifest
+
+        if (packageManifest):
+            repoManifest[packageManifest["package"]] = packageManifest
 
     with open(pathlib.Path(outputDirectory, "manifest"), "w") as repoManifestFile:
         repoManifestFile.write(lua.encode(repoManifest))
