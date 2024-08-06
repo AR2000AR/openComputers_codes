@@ -1,7 +1,7 @@
 {
 	["manifestVersion"] = "1.0",
 	["package"] = "pm_get",
-	["version"] = "1.4.1",
+	["version"] = "1.4.2",
 	["name"] = "pm get",
 	["repo"] = "tree/master/pm_get",
 	["description"] = "Download and install package for pm",
