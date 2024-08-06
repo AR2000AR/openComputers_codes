@@ -13,6 +13,7 @@ or
 - `pm-get uninstall <package> [--autoremove] [--purge]` : uninstall the package. Optionally remove configurations files and/or old dependance no longer needed
 - `pm-get autoremove` : remove no longer required dependance.
 - `pm-get update` : update the local package cache
+- `pm-get upgrade` : apply all upgrades possible"
 - `pm-get sources list` : list configured source repository
 - `pm-get sources add <url>` : add a source repository url to `/etc/pm/sources.list.d/custom.list`
 - `pm-get list` : list available packages
