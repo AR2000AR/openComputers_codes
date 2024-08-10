@@ -48,12 +48,18 @@ end
 ---Compare a with b
 ---@return -1|0|1 cmp `-1 a<b, 0 a=b, 1 a>b`
 local function compareVersion(a, b)
-    local aMajor, aMinor, aPatch = a:match("(%d+)%.(%d+)%.(%d+)")
-    local bMajor, bMinor, bPatch = b:match("(%d+)%.(%d+)%.(%d+)")
-    if (aMajor > bMajor) then return 1 elseif (aMajor < bMajor) then return -1 end
-    if (aMinor > bMinor) then return 1 elseif (aMinor < bMinor) then return -1 end
-    if (aPatch > bPatch) then return 1 elseif (aPatch < bPatch) then return -1 end
-    return 0 --equal
+    local aVersion = a:gmatch("%d+")
+    local bVersion = b:gmatch("%d+")
+    while true do
+        local vA = aVersion()
+        local vB = bVersion()
+        if vA == nil and vB == nil then return 0 end
+        vA = tonumber(vA)
+        vB = tonumber(vB)
+        if vA == nil then vA = 0 end
+        if vB == nil then vB = 0 end
+        if (vA > vB) then return 1 elseif (vA < vB) then return -1 end
+    end
 end
 
 local function confirm(prompt, default)

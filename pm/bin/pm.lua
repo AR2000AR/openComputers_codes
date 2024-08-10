@@ -82,12 +82,18 @@ end
 
 ---Return true if version number a is higher than b. Still return true when equals
 local function compareVersion(a, b)
-    local aMajor, aMinor, aPatch = a:match("(%d+)%.(%d+)%.(%d+)")
-    local bMajor, bMinor, bPatch = b:match("(%d+)%.(%d+)%.(%d+)")
-    if (aMajor > bMajor) then return true elseif (aMajor < bMajor) then return false end
-    if (aMinor > bMinor) then return true elseif (aMinor < bMinor) then return false end
-    if (aPatch > bPatch) then return true elseif (aPatch < bPatch) then return false end
-    return true --equal
+    local aVersion = a:gmatch("%d+")
+    local bVersion = b:gmatch("%d+")
+    while true do
+        local vA = aVersion()
+        local vB = bVersion()
+        if vA == nil and vB == nil then return true end
+        vA = tonumber(vA)
+        vB = tonumber(vB)
+        if vA == nil then vA = 0 end
+        if vB == nil then vB = 0 end
+        if (vA > vB) then return true elseif (vA < vB) then return false end
+    end
 end
 
 --=============================================================================
