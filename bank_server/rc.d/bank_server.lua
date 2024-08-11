@@ -46,7 +46,10 @@ local listenerThread
 ---------------------------------------
 
 local function log(msg)
-  if (verbose) then io.open("/tmp/bank_server.log", "a"):write("\n" .. msg):flush():close() end
+  if (verbose) then
+    local logFile = io.open("/tmp/bank_server.log", "a")
+    if (logFile) then logFile:write("\n" .. msg):flush():close() end
+  end
 end
 
 ---Send a message
