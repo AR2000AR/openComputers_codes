@@ -76,9 +76,10 @@ def makePackage(projectDir: pathlib.Path, manifestPath: pathlib.Path, filesListJ
                         filter=removeMetadata)
                 tar.add(tmpDir+'/DATA/', arcname="DATA", filter=removeMetadata)
             return manifest
-    except e:
+    except Exception as e:
         printError(
             f'Failed to buid package in {projectDir} from manifest {manifestPath}')
+        printError('\t'+str(e))
 
 
 def addFileToPackage(tmpDir, source, fileInfo, destination):
