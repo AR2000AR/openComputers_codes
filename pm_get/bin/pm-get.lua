@@ -225,6 +225,17 @@ local function markManual(package)
     autoFile:close()
 end
 
+local function needUpgrade(pkg)
+    local remoteManifest = getCachedPackageManifest(pkg)
+    if not remoteManifest then return false end
+    local localManifest = pm.getManifestFromInstalled(pkg)
+    if not localManifest then return false end
+    if remoteManifest.version == "oppm" or localManifest == "oppm" then return true end
+    if compareVersion(remoteManifest.version, localManifest.version) > 0 then return true end
+    if compareVersion(remoteManifest.version, localManifest.version) == 0 and opts["allow-same-version"] then return true end
+    return false
+end
+
 --=============================================================================
 
 ---Install a package
@@ -302,9 +313,10 @@ local function install(packages, markAuto, buildDepTree)
     local display = {}
     for _, v in pairs(toInstall) do table.insert(display, v) end
     for _, v in pairs(packages) do table.insert(display, v) end
-    printf("Will be installed :\n %s", table.concat(display, ', '))
+    if (#display > 0) then printf("Will be installed :\n %s", table.concat(display, ', ')) end
     if (#toUpgrade > 0) then printf("Will be updated :\n %s", table.concat(toUpgrade, ', ')) end
-    printf("%d upgraded, %d newly installed", #toUpgrade, #toInstall + #packages)
+    printf("%d upgraded, %d newly installed", #toUpgrade, #display)
+    if (#display == 0 and #toUpgrade == 0) then return end
     if not confirm("Proceed") then return end
 
     if (not opts['dry-run']) then
@@ -360,22 +372,11 @@ local function update()
     local repos = getSources()
     local manifests = {}
     for _, repoURL in pairs(repos) do
-        local request = internet.request(repoURL .. "/manifest")
-        local ready, reason
-        repeat
-            ready, reason = request.finishConnect()
-        until ready or reason
-        if (not ready) then
+        local data, reason = wget(repoURL .. "/manifest")
+        if (not data) then
             printferr("Could not get manifest from %s\ns", repoURL, reason)
-            request.close()
         else
             printf("Found repository : %s", repoURL)
-            local data = ""
-            repeat
-                local read = request.read()
-                if (read) then data = data .. read end
-            until not read
-            request.close()
             local pcalled
             pcalled, data = pcall(serialization.unserialize, data)
             if (pcalled == false) then
@@ -391,14 +392,9 @@ local function update()
     local canBeUpgraded = 0
     local remotePackages = getCachedPackageList()
     local installedPackages = pm.getInstalled()
-    for pkgName, pkgManifest in pairs(installedPackages) do
-        for src, srcManifests in pairs(remotePackages) do
-            if (srcManifests[pkgName]) then
-                if (compareVersion(srcManifests[pkgName].version, pkgManifest.version)) then
-                    canBeUpgraded = canBeUpgraded + 1
-                    break --next package
-                end
-            end
+    for pkgName in pairs(installedPackages) do
+        if (needUpgrade(pkgName)) then
+            canBeUpgraded = canBeUpgraded + 1
         end
     end
     printf("%s package(s) can be upgraded", canBeUpgraded)
@@ -537,13 +533,13 @@ elseif (mode == "upgrade") then
             local manifest = assert(pm.getManifestFromInstalled(args[1]))
             if (manifest.dependencies) then
                 for dep, ver in pairs(manifest.dependencies) do
-                    local remoteManifest = getCachedPackageManifest(dep) --TODO : add target repo
-                    local localManifest = pm.getManifestFromInstalled(dep)
-                    if (remoteManifest and (remoteManifest.version == "oppm" or compareVersion(remoteManifest.version, localManifest.version) or opts["allow-same-version"])) then
+                    if (needUpgrade(dep)) then
                         table.insert(toUpgrade, dep)
                     end
                 end
             end
+        else
+            --TODO : pkg not installed
         end
     else
         for pkg, manifest in pairs(installed) do

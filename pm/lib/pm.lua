@@ -77,6 +77,7 @@ function pm.getInstalled(includeNonPurged)
     local prefix = "%.files$"
     if (includeNonPurged) then prefix = "%.manifest$" end
     local installed = {}
+    if (not filesystem.exists("/etc/pm/info")) then filesystem.makeDirectory("/etc/pm/info") end
     for file in filesystem.list("/etc/pm/info/") do
         local packageName = file:match("(.+)" .. prefix)
         if (packageName) then

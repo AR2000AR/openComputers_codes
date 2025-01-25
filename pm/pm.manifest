@@ -1,7 +1,7 @@
 {
 	["manifestVersion"] = "1.0",
 	["package"] = "pm",
-	["version"] = "1.2.6",
+	["version"] = "1.2.7",
 	["name"] = "pm Package Manager",
 	["repo"] = "tree/master/pm",
 	["description"] = "Package manager for OpenOS",
