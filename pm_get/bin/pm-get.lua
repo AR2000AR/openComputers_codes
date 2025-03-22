@@ -37,6 +37,21 @@ local reposRuntimeCache
 
 local f = string.format
 
+local function tableMergeUniq(target, source)
+    local newElements = {}
+    for _, v in pairs(source) do
+        local new = true
+        for _, vv in pairs(target) do
+            if v == vv then
+                new = false
+                break
+            end
+        end
+        if (new) then table.insert(newElements, v) end
+    end
+    for _, v in pairs(newElements) do table.insert(target, v) end
+end
+
 local function printf(...)
     print(f(...))
 end
@@ -60,6 +75,22 @@ local function compareVersion(a, b)
         if vB == nil then vB = 0 end
         if (vA > vB) then return 1 elseif (vA < vB) then return -1 end
     end
+end
+
+---Check if the pkg version is compatible with dep
+---@param dep string
+---@param pkg string
+---@return boolean
+local function checkDepVersion(dep, pkg)
+    checkArg(1, dep, 'string')
+    checkArg(2, pkg, 'string')
+    if (dep == "oppm" or dep == "") then return true end
+    if (dep:sub(1, 1) == ">") then
+        return compareVersion(pkg, dep:sub(2, -1)) <= 0
+    elseif (dep:sub(1, 1) == "=") then
+        return compareVersion(pkg, dep:sub(2, -1)) == 0
+    end
+    error(f("Something went wrong with dep=%q and pkg=%q", dep, pkg))
 end
 
 local function confirm(prompt, default)
@@ -120,7 +151,7 @@ end
 local function getCachedPackageList()
     if (not reposRuntimeCache) then
         if (not filesystem.exists(REPO_MANIFEST_CACHE)) then
-            printferr("No data. Run `pm-get upddate` or add repositorys")
+            printferr("No data. Run `pm-get update` or add repository")
             return {}
         end
         local cache = assert(io.open(REPO_MANIFEST_CACHE))
@@ -145,39 +176,33 @@ local function getCachedPackageManifest(name, targetRepo)
     return nil, nil
 end
 
----@param package string
----@param dep? table<number,table> Current dependance list.
----@param cleanup? boolean cleanup the dep list. Default `true`
----@return table<number,table>? dep ordered list of dependances
+---@param package string|table
+---@param resolved? table<number,table> Current dependency list.
+---@return table<number,table>? dep ordered list of dependency
 ---@return string? error
-local function buildDepList(package, dep, cleanup)
-    if not dep then dep = {} end
-    assert(dep)
-    if cleanup == nil then cleanup = true end
-    local packageManifest = getCachedPackageManifest(package)
+local function resolveDepTree(package, resolved)
+    if (type(package) == "string") then package = {package, "oppm"} end
+    if not resolved then resolved = {} end
+    local packageManifest = getCachedPackageManifest(package[1])
     if (not packageManifest) then return nil, string.format("Package %q cannot be found", package) end
     if (packageManifest.dependencies) then
-        for dependance, requiredVersion in pairs(packageManifest.dependencies) do
-            table.insert(dep, {dependance, requiredVersion})
-            buildDepList(dependance, dep, false)
-        end
-    end
-
-    if (cleanup) then
-        local hash = {}
-        local rm = {}
-        for k, v in ipairs(dep) do
-            if not hash[v[1]] then
-                table.insert(hash, v[1])
-            else
-                table.insert(rm, 1, k)
+        for dep, requiredVersion in pairs(packageManifest.dependencies) do
+            local new = -1
+            for i, v in pairs(resolved) do
+                if (v[1] == dep) then
+                    new = i
+                    break
+                end
             end
-        end
-        for _, v in ipairs(rm) do
-            table.remove(dep, v)
+            if (new == -1) then
+                resolveDepTree({dep, requiredVersion}, resolved)
+            elseif (compareVersion(resolved[new][2], requiredVersion:sub(2, -1)) < 0) then
+                resolved[new][2] = requiredVersion
+            end
+            table.insert(resolved, package)
         end
     end
-    return dep
+    return resolved
 end
 
 ---Download from url and return it
@@ -236,6 +261,59 @@ local function needUpgrade(pkg)
     return false
 end
 
+---List the packages than can be upgraded
+---@return table
+local function listNeedUpgrade()
+    local canBeUpgraded = {}
+    for pkgName in pairs(pm.getInstalled()) do
+        if (needUpgrade(pkgName)) then table.insert(canBeUpgraded, pkgName) end
+    end
+    return canBeUpgraded
+end
+
+---Find missing dependencies for the package
+---@param pkg string
+---@return table<number,string>?, table|string
+local function findMissingDep(pkg)
+    local missingDep = {}
+    local outdatedDep = {}
+    ---@type manifest?
+    local packageManifest
+    if pm.isInstalled(pkg) then
+        packageManifest = pm.getManifestFromInstalled(pkg)
+    else
+        packageManifest = getCachedPackageManifest(pkg)
+    end
+    if (not packageManifest) then return nil, f("Cannot find dependencies for %s. Package not found", pkg) end
+
+    local resolvedDepTree, msg = resolveDepTree(pkg)
+    if (not resolvedDepTree) then
+        ---@cast msg -nil
+        return nil, msg
+    end
+
+    for _, dep in pairs(resolvedDepTree) do
+        if (not pm.isInstalled(dep[1])) then
+            local manifest = getCachedPackageManifest(dep[1])
+            if (not manifest or not checkDepVersion(dep[2], manifest.version)) then
+                return nil, f("Cannot fulfil dependency : %s (%s) for %s for (%s)", dep[1], dep[2], pkg, packageManifest.version)
+            end
+            table.insert(missingDep, dep[1])
+        else
+            local manifest = pm.getManifestFromInstalled(dep[1])
+            if (checkDepVersion(dep[2], manifest.version) == false) then
+                ---@diagnostic disable-next-line: cast-local-type
+                manifest = getCachedPackageManifest(dep[2])
+                if (not manifest or not checkDepVersion(dep[2], manifest.version)) then
+                    return nil, f("Cannot fulfil dependency : %s (%s) for %s for (%s)", dep[1], dep[2], pkg, packageManifest.version)
+                end
+                table.insert(outdatedDep, dep[1])
+            end
+        end
+    end
+    return missingDep, outdatedDep
+end
+
 --=============================================================================
 
 ---Install a package
@@ -278,12 +356,12 @@ end
 
 ---@param packages table|string
 ---@param markAuto? boolean
----@param buildDepTree? boolean
-local function install(packages, markAuto, buildDepTree)
-    if (buildDepTree == nil) then buildDepTree = true end
+---@return number 1=ok,0=nothing done, -1=error
+---@return string? error
+local function install(packages, markAuto)
     if (type(packages) == "string") then packages = {packages} end
-    ---get the dependance list
-    local depList = {}
+    ---get the dependency list
+    local depList, toInstall, toUpgrade = {}, {}, {}
     for _, package in pairs(packages) do
         local targetManifest, repoName = getCachedPackageManifest(package)
         --check that the packet exists
@@ -291,45 +369,42 @@ local function install(packages, markAuto, buildDepTree)
             printferr("Package %s not found", package)
             os.exit(1)
         end
-        if (buildDepTree) then
-            buildDepList(package, depList)
+        local newInstall, newUpgrade = findMissingDep(package)
+        if (not newInstall) then
+            ---@cast newUpgrade -table
+            return -1, newUpgrade
         end
+        assert(type(newInstall) == "table")
+        assert(type(newUpgrade) == "table")
+        tableMergeUniq(toInstall, newInstall)
+        tableMergeUniq(toUpgrade, newUpgrade)
     end
 
-    local toInstall = {}
-    local toUpgrade = {}
-    for _, dep in pairs(depList) do
-        if (not pm.isInstalled(dep[1])) then
-            local exists = getCachedPackageManifest(dep[1])
-            if (not exists) then
-                printferr("Cannot fuffil dependency : %s (%s)", dep[1], dep[2])
-                return -1
-            end
-            table.insert(toInstall, dep[1])
-        else
-            --TODO : check version
-        end
-    end
+
     local display = {}
     for _, v in pairs(toInstall) do table.insert(display, v) end
     for _, v in pairs(packages) do table.insert(display, v) end
     if (#display > 0) then printf("Will be installed :\n %s", table.concat(display, ', ')) end
     if (#toUpgrade > 0) then printf("Will be updated :\n %s", table.concat(toUpgrade, ', ')) end
     printf("%d upgraded, %d newly installed", #toUpgrade, #display)
-    if (#display == 0 and #toUpgrade == 0) then return end
-    if not confirm("Proceed") then return end
+    if (#display == 0 and #toUpgrade == 0) then return 0 end
+    if not confirm("Proceed") then return 0 end
 
     if (not opts['dry-run']) then
         for _, dep in pairs(toUpgrade) do
-            --TODO : upgrade
             printf("Updating dependency : %s", dep)
-            error("UNIMPLEMENTED")
+            printf("Installing dependency : %s", dep)
+            local code, errorReason = doInstall(dep, true)
+            if (errorReason) then
+                printferr("Failed to install %q. Giving up.", dep)
+                return -1
+            end
         end
         for _, dep in pairs(toInstall) do
             printf("Installing dependency : %s", dep)
             local code, errorReason = doInstall(dep, true)
             if (errorReason) then
-                printferr("Failed to install %q. Abording", dep)
+                printferr("Failed to install %q. Giving up.", dep)
                 return -1
             end
         end
@@ -337,12 +412,12 @@ local function install(packages, markAuto, buildDepTree)
             printf("Installing : %s", package)
             local code, errorReason = doInstall(package, false)
             if (errorReason) then
-                printferr("Failed to install %q. Abording", package)
+                printferr("Failed to install %q. Giving up.", package)
                 return -1
             end
         end
     end
-    return 0
+    return 1
 end
 
 local function uninstall(packages)
@@ -388,16 +463,7 @@ local function update()
     end
     io.open(REPO_MANIFEST_CACHE, "w"):write(serialization.serialize(manifests)):close()
 
-    --check if packages need updating
-    local canBeUpgraded = 0
-    local remotePackages = getCachedPackageList()
-    local installedPackages = pm.getInstalled()
-    for pkgName in pairs(installedPackages) do
-        if (needUpgrade(pkgName)) then
-            canBeUpgraded = canBeUpgraded + 1
-        end
-    end
-    printf("%s package(s) can be upgraded", canBeUpgraded)
+    printf("%s package(s) can be upgraded", #listNeedUpgrade())
 end
 
 local function printHelp()
@@ -499,11 +565,14 @@ elseif (mode == "info") then
     printf("Repo : %s", repoName)
     os.exit(0)
 elseif (mode == "install") then
-    install(args)
-    for _, p in pairs(args) do
-        markManual(p)
+    if (install(args)) then
+        for _, p in pairs(args) do
+            markManual(p)
+        end
+        os.exit(0)
+    else
+        os.exit(1)
     end
-    os.exit(0)
 elseif (mode == "uninstall") then
     uninstall(args)
 elseif (mode == "autoremove") then
@@ -525,7 +594,6 @@ elseif (mode == "autoremove") then
     end
     markManual(args[1])
 elseif (mode == "upgrade") then
-    local installed = pm.getInstalled(false)
     local toUpgrade = {}
     if (args[1]) then
         if (pm.isInstalled(args[1])) then
@@ -539,20 +607,11 @@ elseif (mode == "upgrade") then
                 end
             end
         else
-            --TODO : pkg not installed
+            printf("Package %s is not installed")
+            os.exit(1)
         end
     else
-        for pkg, manifest in pairs(installed) do
-            if (manifest.version == "oppm") then
-                printf("Found oppm version for %q.", pkg)
-                table.insert(toUpgrade, pkg)
-            else
-                local remoteManifest = getCachedPackageManifest(pkg)
-                if (remoteManifest and (remoteManifest.version == "oppm" or compareVersion(remoteManifest.version, manifest.version))) then
-                    table.insert(toUpgrade, pkg)
-                end
-            end
-        end
+        toUpgrade = listNeedUpgrade()
     end
     install(toUpgrade, false)
 elseif (mode == "sources") then
